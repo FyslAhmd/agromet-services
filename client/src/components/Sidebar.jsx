@@ -29,7 +29,7 @@ const Sidebar = () => {
   };
 
   return (
-    <ul className="menu bg-[#026666] text-white rounded-r-3xl min-h-full w-72 space-y-3 overflow-y-auto scrollbar-hide z-[60]">
+    <ul className="menu bg-[#026666] text-white rounded-r-3xl min-h-full w-72 space-y-3 overflow-y-auto scrollbar-hide z-60">
       {/* Logo Section */}
       <div className="mx-auto">
         <div className="flex flex-col items-center">

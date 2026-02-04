@@ -734,7 +734,7 @@ const CISMonthlyChart = () => {
               <div className="h-5 md:h-6 bg-gray-200 rounded w-40 md:w-48 mb-2"></div>
               <div className="h-3 md:h-4 bg-gray-200 rounded w-48 md:w-64"></div>
             </div>
-            <div className="text-right flex-shrink-0">
+            <div className="text-right shrink-0">
               <div className="h-6 md:h-8 bg-gray-200 rounded w-12 md:w-16 mb-1"></div>
               <div className="h-3 bg-gray-200 rounded w-16 md:w-20"></div>
             </div>
@@ -988,7 +988,7 @@ const CISMonthlyChart = () => {
       <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
         <div className="bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
-            <div className="hidden sm:flex w-10 h-10 bg-blue-100 rounded-lg items-center justify-center flex-shrink-0">
+            <div className="hidden sm:flex w-10 h-10 bg-blue-100 rounded-lg items-center justify-center shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-blue-600"
@@ -1015,7 +1015,7 @@ const CISMonthlyChart = () => {
 
         <div className="bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
-            <div className="hidden sm:flex w-10 h-10 bg-green-100 rounded-lg items-center justify-center flex-shrink-0">
+            <div className="hidden sm:flex w-10 h-10 bg-green-100 rounded-lg items-center justify-center shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-green-600"
@@ -1050,7 +1050,7 @@ const CISMonthlyChart = () => {
 
         <div className="bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
-            <div className="hidden sm:flex w-10 h-10 bg-red-100 rounded-lg items-center justify-center flex-shrink-0">
+            <div className="hidden sm:flex w-10 h-10 bg-red-100 rounded-lg items-center justify-center shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-red-600"

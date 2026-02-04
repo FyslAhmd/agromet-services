@@ -36,6 +36,9 @@ const uploadMinimumTempData = async (req, res) => {
       },
     };
 
+    // Process all rows and prepare data
+    const recordsToProcess = [];
+    
     for (let i = 0; i < data.length; i++) {
       try {
         const row = data[i];
@@ -79,49 +82,84 @@ const uploadMinimumTempData = async (req, res) => {
           dayData[dayKey] = parseNumericValue(value);
         }
 
-        // Check if record exists
-        const existingRecord = await MinimumTemp.findOne({
-          where: {
+        recordsToProcess.push({
+          rowIndex: i + 1,
+          recordData: {
             station: station.trim(),
             year: yearInt,
             month: monthInt,
+            ...dayData,
           },
         });
-
-        const recordData = {
-          station: station.trim(),
-          year: yearInt,
-          month: monthInt,
-          ...dayData,
-        };
-
-        if (existingRecord) {
-          // Update existing record
-          await existingRecord.update(recordData);
-          results.updated++;
-          results.details.updated.push({
-            station: station.trim(),
-            year: yearInt,
-            month: monthInt,
-          });
-        } else {
-          // Create new record
-          await MinimumTemp.create(recordData);
-          results.successful++;
-          results.details.success.push({
-            station: station.trim(),
-            year: yearInt,
-            month: monthInt,
-          });
-        }
       } catch (error) {
-        console.error(`Error processing row ${i + 1}:`, error);
+        console.error(`Error parsing row ${i + 1}:`, error);
         results.failed++;
         results.details.failed.push({
           row: i + 1,
           error: error.message,
           data: data[i],
         });
+      }
+    }
+
+    // Use bulkCreate with updateOnDuplicate for efficient upsert
+    if (recordsToProcess.length > 0) {
+      try {
+        const recordDataArray = recordsToProcess.map(r => r.recordData);
+        
+        // Bulk upsert - insert or update if exists
+        await MinimumTemp.bulkCreate(recordDataArray, {
+          updateOnDuplicate: [
+            'day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day7', 'day8', 'day9', 'day10',
+            'day11', 'day12', 'day13', 'day14', 'day15', 'day16', 'day17', 'day18', 'day19', 'day20',
+            'day21', 'day22', 'day23', 'day24', 'day25', 'day26', 'day27', 'day28', 'day29', 'day30', 'day31'
+          ],
+        });
+        
+        results.successful = recordsToProcess.length;
+        results.details.success = recordsToProcess.map(r => ({
+          station: r.recordData.station,
+          year: r.recordData.year,
+          month: r.recordData.month,
+        }));
+      } catch (bulkError) {
+        console.error("Bulk insert error:", bulkError);
+        // Fallback to individual inserts if bulk fails
+        for (const record of recordsToProcess) {
+          try {
+            const existingRecord = await MinimumTemp.findOne({
+              where: {
+                station: record.recordData.station,
+                year: record.recordData.year,
+                month: record.recordData.month,
+              },
+            });
+
+            if (existingRecord) {
+              await existingRecord.update(record.recordData);
+              results.updated++;
+              results.details.updated.push({
+                station: record.recordData.station,
+                year: record.recordData.year,
+                month: record.recordData.month,
+              });
+            } else {
+              await MinimumTemp.create(record.recordData);
+              results.successful++;
+              results.details.success.push({
+                station: record.recordData.station,
+                year: record.recordData.year,
+                month: record.recordData.month,
+              });
+            }
+          } catch (error) {
+            results.failed++;
+            results.details.failed.push({
+              row: record.rowIndex,
+              error: error.message,
+            });
+          }
+        }
       }
     }
 

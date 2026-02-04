@@ -742,7 +742,7 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
         {/* Chart Header */}
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-xl sm:text-2xl flex-shrink-0">{icon}</span>
+            <span className="text-xl sm:text-2xl shrink-0">{icon}</span>
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-gray-800 text-sm sm:text-base truncate">
                 {title}
@@ -913,8 +913,8 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
 
             {/* Table Section */}
             <div className="lg:col-span-5">
-              <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4 min-h-[16rem] sm:min-h-[20rem] lg:h-96 flex flex-col">
-                <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center gap-2 flex-shrink-0">
+              <div className="bg-white rounded-lg border border-gray-100 p-3 sm:p-4 min-h-64 sm:min-h-80 lg:h-96 flex flex-col">
+                <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center gap-2 shrink-0">
                   📊 <span className="hidden sm:inline">Recent 7 Days</span>
                   <span className="sm:hidden">7 Days</span>
                   {parameter === "Air Temperature"
