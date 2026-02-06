@@ -7,13 +7,14 @@ import RequestDataModal from "./components/RequestDataModal";
 import { dataParameters } from "./components/chartConfig";
 
 const HistoricalData = () => {
-  // State management
-  const [selectedParameter, setSelectedParameter] = useState("");
-  const [selectedStations, setSelectedStations] = useState([]);
+  // State management - default to Maximum Temperature with Gazipur station
+  const [selectedParameter, setSelectedParameter] = useState("maximum-temp");
+  const [selectedStations, setSelectedStations] = useState(["Gazipur"]);
   const [availableStations, setAvailableStations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [allStations, setAllStations] = useState([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Fetch available stations when parameter changes
   useEffect(() => {
@@ -30,8 +31,12 @@ const HistoricalData = () => {
               const newStations = response.data.data.filter(s => !prev.includes(s));
               return [...prev, ...newStations];
             });
-            // Show modal when stations are fetched
-            setShowModal(true);
+            // Only show modal when user manually changes parameter (not on initial load)
+            if (!isInitialLoad) {
+              setShowModal(true);
+            } else {
+              setIsInitialLoad(false);
+            }
           }
         } catch (error) {
           console.error("Error fetching stations:", error);
