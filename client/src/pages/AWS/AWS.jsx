@@ -321,334 +321,210 @@ const AWS = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-2 sm:p-4 lg:p-6">
-      <div className="space-y-4 sm:space-y-6">
-        {/* Header Section */}
-        <div className="text-center mb-4 sm:mb-8 px-2">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-base-content mb-2 leading-tight">
-            🌤️ Agromet Weather Station (AgWS)
+    <div className="w-full min-h-full">
+      {/* Page Header */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            Agromet Weather Station (AgWS)
           </h1>
-          <p className="text-base-content/70 text-sm sm:text-base lg:text-lg px-2 sm:px-0">
+          <p className="text-sm text-gray-500 mt-1">
             Acknowledged by{" "}
-            <span className="font-semibold text-primary">
+            <span className="font-semibold text-teal-700">
               Bangladesh Meteorological Department
             </span>{" "}
-            &{" "}
-            <span className="font-semibold text-secondary">
+            &amp;{" "}
+            <span className="font-semibold text-teal-700">
               Department of Agricultural Extension
             </span>
           </p>
-          <div className="flex justify-center mt-2 sm:mt-3">
-            <div className="badge badge-outline badge-sm sm:badge-md lg:badge-lg">
-              Real-time Weather Data Analysis
-            </div>
-          </div>
         </div>
+        <span className="text-xs text-gray-400 whitespace-nowrap">
+          Real-time Weather Data Analysis
+        </span>
+      </div>
 
-        {/* Compact Station Selection Bar */}
-        <div className="card bg-linear-to-r from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 mx-1 sm:mx-0">
-          <div className="card-body p-3 sm:p-4 lg:p-5">
-            <div className="flex flex-col gap-3 sm:gap-4">
-              {/* Station Info */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-linear-to-br from-primary to-primary-focus rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0">
-                  <span className="text-white text-sm sm:text-lg">🏢</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 text-sm sm:text-base truncate">
-                    Weather Station
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">
-                    {stations.length} monitoring sites available
-                  </p>
-                </div>
-                <button
-                  onClick={openRequestModal}
-                  className="btn btn-primary btn-sm sm:btn-md shrink-0"
-                >
-                  📋 Request Data
-                </button>
-              </div>
-
-              {/* Selection Controls */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <div className="relative flex-1">
-                  <select
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="select select-bordered select-sm sm:select-md w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-700 shadow-sm hover:shadow-md transition-all duration-200 text-xs sm:text-sm"
-                  >
-                    <option value="">🔍 Choose weather station...</option>
-                    {stations.map((station) => (
-                      <option
-                        key={station.station_id}
-                        value={station.station_id}
-                      >
-                        {getStationDisplayName(station)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Weather Charts Grid */}
-        {location && (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              {weatherParameters.map((param, index) => (
-                <WeatherChart
-                  key={`${location}-${param.parameter}`}
-                  stationId={location}
-                  parameter={param.parameter}
-                  title={param.title}
-                  unit={param.unit}
-                  icon={param.icon}
-                />
+      {/* Station Selection Bar */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Station select */}
+          <div className="flex-1 min-w-0">
+            <label htmlFor="station-select" className="block text-xs font-medium text-gray-500 mb-1">
+              Weather Station
+            </label>
+            <select
+              id="station-select"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all cursor-pointer font-medium text-gray-700 shadow-sm"
+            >
+              <option value="">Choose weather station...</option>
+              {stations.map((station) => (
+                <option key={station.station_id} value={station.station_id}>
+                  {getStationDisplayName(station)}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-        )}
 
-        {/* Empty State */}
-        {!location && (
-          <div className="card bg-base-100 shadow-xl mx-1 sm:mx-0">
-            <div className="card-body p-6 sm:p-8 lg:p-12">
-              <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-6">
-                <div className="text-4xl sm:text-6xl lg:text-8xl opacity-30">
-                  🌤️
-                </div>
-                <div className="text-center max-w-sm sm:max-w-md px-2">
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-base-content/70 mb-2 sm:mb-3">
-                    Select a Weather Station
-                  </h3>
-                  <p className="text-sm sm:text-base text-base-content/50 leading-relaxed">
-                    Choose a weather station from the dropdown above to view
-                    comprehensive climate data across 7 different parameters
-                    including temperature, humidity, rainfall, wind, and solar
-                    radiation.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 sm:self-end">
+            <span className="text-xs text-gray-400 hidden sm:inline">
+              {stations.length} stations
+            </span>
+            <button
+              onClick={openRequestModal}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] transition-colors shadow-sm shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              Request Data
+            </button>
           </div>
-        )}
-
-        {/* Timestamp */}
-        <div className="mt-4 sm:mt-6 py-3 sm:py-4 text-center px-2">
-          <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed">
-            🕒 Last updated:{" "}
-            <span className="hidden sm:inline">
-              {new Date().toLocaleString("en-BD", {
-                timeZone: "Asia/Dhaka",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
-              BD Time
-            </span>
-            <span className="sm:hidden">
-              {new Date().toLocaleString("en-BD", {
-                timeZone: "Asia/Dhaka",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
-              BD
-            </span>
-          </p>
         </div>
+      </div>
+
+      {/* Weather Charts */}
+      {location && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-5">
+            {weatherParameters.map((param, index) => (
+              <WeatherChart
+                key={`${location}-${param.parameter}`}
+                stationId={location}
+                parameter={param.parameter}
+                title={param.title}
+                unit={param.unit}
+                icon={param.icon}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!location && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-12">
+          <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-teal-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Select a Weather Station
+            </h3>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Choose a weather station from the dropdown above to view
+              comprehensive climate data across 7 different parameters
+              including temperature, humidity, rainfall, wind, and solar
+              radiation.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Timestamp */}
+      <div className="mt-5 text-center">
+        <p className="text-xs text-gray-400">
+          Last updated:{" "}
+          {new Date().toLocaleString("en-BD", {
+            timeZone: "Asia/Dhaka",
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}{" "}
+          BD Time
+        </p>
       </div>
 
       {/* Request Data Modal */}
       {isModalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">📋 Request Weather Data</h3>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { closeDropdowns(); setIsModalOpen(false); }} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-6 py-4 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">Request Weather Data</h3>
+                <button onClick={() => { closeDropdowns(); setIsModalOpen(false); }} className="p-1 rounded-lg text-teal-200/70 hover:text-white hover:bg-white/10 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Name */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Name *</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+                  <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
 
                 {/* Designation */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Designation *</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="designation"
-                    value={formData.designation}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Designation *</label>
+                  <input type="text" name="designation" value={formData.designation} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
 
                 {/* Organization */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Organization *</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="organization"
-                    value={formData.organization}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Organization *</label>
+                  <input type="text" name="organization" value={formData.organization} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
 
                 {/* Address */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Address *</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Address *</label>
+                  <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
 
                 {/* Email */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Email *</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Email *</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
 
                 {/* Mobile */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Mobile *</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={handleInputChange}
-                    className="input input-bordered"
-                    required
-                  />
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Mobile *</label>
+                  <input type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
                 </div>
               </div>
 
-              {/* Date Range Type Selection */}
-              <div className="form-control mt-4">
-                <label className="label">
-                  <span className="label-text font-semibold">Date Range Selection Method *</span>
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center cursor-pointer gap-2">
-                    <input
-                      type="radio"
-                      name="dateRangeType"
-                      className="radio radio-primary"
-                      checked={!formData.useCustomDateRange}
-                      onChange={() => setFormData(prev => ({ 
-                        ...prev, 
-                        useCustomDateRange: false,
-                        startDate: "",
-                        endDate: ""
-                      }))}
-                    />
-                    <span className="label-text">Use Preset Time Interval</span>
+              {/* Date Range Type */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">Date Range Selection Method *</label>
+                <div className="flex flex-wrap gap-4">
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="radio" name="dateRangeType" className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500" checked={!formData.useCustomDateRange} onChange={() => setFormData(prev => ({ ...prev, useCustomDateRange: false, startDate: "", endDate: "" }))} />
+                    Preset Time Interval
                   </label>
-                  
-                  <label className="flex items-center cursor-pointer gap-2">
-                    <input
-                      type="radio"
-                      name="dateRangeType"
-                      className="radio radio-primary"
-                      checked={formData.useCustomDateRange}
-                      onChange={() => setFormData(prev => ({ 
-                        ...prev, 
-                        useCustomDateRange: true,
-                        timeInterval: ""
-                      }))}
-                    />
-                    <span className="label-text">Use Custom Date Range</span>
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="radio" name="dateRangeType" className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500" checked={formData.useCustomDateRange} onChange={() => setFormData(prev => ({ ...prev, useCustomDateRange: true, timeInterval: "" }))} />
+                    Custom Date Range
                   </label>
                 </div>
               </div>
 
-              {/* Conditional Rendering: Custom Date Range OR Time Interval */}
+              {/* Conditional: Custom Date Range OR Time Interval */}
               {formData.useCustomDateRange ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">From Date *</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="input input-bordered"
-                      max={getTodayDate()}
-                      required
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">From Date *</label>
+                    <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" max={getTodayDate()} required />
                   </div>
-
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">To Date *</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="input input-bordered"
-                      min={formData.startDate}
-                      max={getTodayDate()}
-                      required
-                    />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">To Date *</label>
+                    <input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" min={formData.startDate} max={getTodayDate()} required />
                   </div>
                 </div>
               ) : (
-                <div className="form-control mt-4">
-                  <label className="label">
-                    <span className="label-text">Time Interval *&nbsp;</span>
-                  </label>
-                  <select
-                    name="timeInterval"
-                    value={formData.timeInterval}
-                    onChange={handleInputChange}
-                    className="select select-bordered"
-                    required
-                  >
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Time Interval *</label>
+                  <select name="timeInterval" value={formData.timeInterval} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all cursor-pointer" required>
                     <option value="day">1 Day</option>
                     <option value="week">1 Week</option>
                     <option value="month">1 Month</option>
@@ -661,17 +537,9 @@ const AWS = () => {
               )}
 
               {/* Data Interval */}
-              <div className="form-control mt-4">
-                <label className="label">
-                  <span className="label-text">Data Interval *&nbsp;</span>
-                </label>
-                <select
-                  name="dataInterval"
-                  value={formData.dataInterval}
-                  onChange={handleInputChange}
-                  className="select select-bordered"
-                  required
-                >
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Data Interval *</label>
+                <select name="dataInterval" value={formData.dataInterval} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all cursor-pointer" required>
                   <option value={1}>1 Hour</option>
                   <option value={4}>4 Hours</option>
                   <option value={8}>8 Hours</option>
@@ -683,40 +551,32 @@ const AWS = () => {
               </div>
 
               {/* Station and Weather Parameter Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Station Selection */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Weather Stations *</span>
-                  </label>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Weather Stations *</label>
                   <div className="relative w-full">
                     <button
                       type="button"
-                      className="btn btn-outline w-full justify-start"
-                      onClick={() => {
-                        setStationDropdownOpen(!stationDropdownOpen);
-                        setParameterDropdownOpen(false);
-                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left"
+                      onClick={() => { setStationDropdownOpen(!stationDropdownOpen); setParameterDropdownOpen(false); }}
                     >
-                      {formData.selectedStations.length === 0 
-                        ? "Select stations..." 
-                        : `${formData.selectedStations.length} station(s) selected`}
-                      <svg className={`w-4 h-4 ml-auto transition-transform ${stationDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-gray-700 truncate">
+                        {formData.selectedStations.length === 0
+                          ? "Select stations..."
+                          : `${formData.selectedStations.length} station(s) selected`}
+                      </span>
+                      <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${stationDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {stationDropdownOpen && (
-                      <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
+                      <ul className="absolute top-full left-0 right-0 z-50 mt-1 p-1.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
                         {stations.map((station) => (
-                          <li key={station.station_id} className="w-full">
-                            <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
-                              <input
-                                type="checkbox"
-                                className="checkbox checkbox-sm"
-                                checked={formData.selectedStations.includes(station.station_id)}
-                                onChange={() => handleStationChange(station.station_id)}
-                              />
-                              <span className="text-sm flex-1">{getStationDisplayName(station)}</span>
+                          <li key={station.station_id}>
+                            <label className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md cursor-pointer hover:bg-teal-50 transition-colors">
+                              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" checked={formData.selectedStations.includes(station.station_id)} onChange={() => handleStationChange(station.station_id)} />
+                              <span className="text-sm text-gray-700">{getStationDisplayName(station)}</span>
                             </label>
                           </li>
                         ))}
@@ -726,38 +586,30 @@ const AWS = () => {
                 </div>
 
                 {/* Weather Parameter Selection */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Weather Parameters *</span>
-                  </label>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Weather Parameters *</label>
                   <div className="relative w-full">
                     <button
                       type="button"
-                      className="btn btn-outline w-full justify-start"
-                      onClick={() => {
-                        setParameterDropdownOpen(!parameterDropdownOpen);
-                        setStationDropdownOpen(false);
-                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left"
+                      onClick={() => { setParameterDropdownOpen(!parameterDropdownOpen); setStationDropdownOpen(false); }}
                     >
-                      {formData.selectedWeatherParameters.length === 0 
-                        ? "Select parameters..." 
-                        : `${formData.selectedWeatherParameters.length} parameter(s) selected`}
-                      <svg className={`w-4 h-4 ml-auto transition-transform ${parameterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-gray-700 truncate">
+                        {formData.selectedWeatherParameters.length === 0
+                          ? "Select parameters..."
+                          : `${formData.selectedWeatherParameters.length} parameter(s) selected`}
+                      </span>
+                      <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${parameterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {parameterDropdownOpen && (
-                      <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
+                      <ul className="absolute top-full left-0 right-0 z-50 mt-1 p-1.5 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
                         {weatherParameters.map((param) => (
-                          <li key={param.parameter} className="w-full">
-                            <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
-                              <input
-                                type="checkbox"
-                                className="checkbox checkbox-sm"
-                                checked={formData.selectedWeatherParameters.includes(param.parameter)}
-                                onChange={() => handleWeatherParameterChange(param.parameter)}
-                              />
-                              <span className="text-sm flex-1">{param.icon} {param.title}</span>
+                          <li key={param.parameter}>
+                            <label className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md cursor-pointer hover:bg-teal-50 transition-colors">
+                              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" checked={formData.selectedWeatherParameters.includes(param.parameter)} onChange={() => handleWeatherParameterChange(param.parameter)} />
+                              <span className="text-sm text-gray-700">{param.icon} {param.title}</span>
                             </label>
                           </li>
                         ))}
@@ -767,47 +619,27 @@ const AWS = () => {
                 </div>
               </div>
 
-              {/* Data Format Selection */}
-              <div className="form-control mt-4" onClick={closeDropdowns}>
-                <label className="label">
-                  <span className="label-text">Required Data Formats *</span>
-                </label>
+              {/* Data Format */}
+              <div onClick={closeDropdowns}>
+                <label className="block text-xs font-medium text-gray-500 mb-2">Required Data Formats *</label>
                 <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center cursor-pointer gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={formData.selectedDataFormats.includes('CSV')}
-                      onChange={() => handleDataFormatChange('CSV')}
-                    />
-                    <span className="label-text">CSV Data</span>
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" checked={formData.selectedDataFormats.includes('CSV')} onChange={() => handleDataFormatChange('CSV')} />
+                    CSV Data
                   </label>
-                  
-                  <label className="flex items-center cursor-pointer gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={formData.selectedDataFormats.includes('Image')}
-                      onChange={() => handleDataFormatChange('Image')}
-                    />
-                    <span className="label-text">Chart Image</span>
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" checked={formData.selectedDataFormats.includes('Image')} onChange={() => handleDataFormatChange('Image')} />
+                    Chart Image
                   </label>
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div className="modal-action" onClick={closeDropdowns}>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    closeDropdowns();
-                    setIsModalOpen(false);
-                  }}
-                >
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100" onClick={closeDropdowns}>
+                <button type="button" onClick={() => { closeDropdowns(); setIsModalOpen(false); }} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="px-5 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-lg transition-colors shadow-sm">
                   Submit Request
                 </button>
               </div>
