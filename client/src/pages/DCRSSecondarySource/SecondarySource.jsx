@@ -15,21 +15,21 @@ import RequestDataModal from "./Modals/RequestDataModal";
 import CroppingIntensityModal from "./Modals/CroppingIntensityModal";
 
 const SecondarySource = () => {
-  const [selectedDataSource, setSelectedDataSource] = useState("");
+  const [selectedDataSource, setSelectedDataSource] = useState("seasonal-rice");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDistrictModalOpen, setIsDistrictModalOpen] = useState(false);
   const [isSeasonalModalOpen, setIsSeasonalModalOpen] = useState(false);
   const [isVarietalModalOpen, setIsVarietalModalOpen] = useState(false);
   const [isAdoptionModalOpen, setIsAdoptionModalOpen] = useState(false);
   const [isCroppingModalOpen, setIsCroppingModalOpen] = useState(false);
-  const [showGraphs, setShowGraphs] = useState(false);
+  const [showGraphs, setShowGraphs] = useState(true);
   
   const [districtFilter, setDistrictFilter] = useState({
     selectedDistricts: [],
     selectedSeason: "",
   });
   const [seasonalFilter, setSeasonalFilter] = useState({
-    selectedSeason: "",
+    selectedSeason: "Boro",
   });
   const [varietalFilter, setVarietalFilter] = useState({
     selectedVarieties: [],
@@ -405,7 +405,7 @@ const SecondarySource = () => {
           <div className="space-y-3 sm:space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
                   <svg
                     className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"
                     fill="none"
@@ -431,7 +431,7 @@ const SecondarySource = () => {
               </div>
               <motion.button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap w-full sm:w-auto justify-center"
+                className="bg-linear-to-r from-blue-600 to-blue-700 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap w-full sm:w-auto justify-center"
                 whileHover={{
                   scale: 1.02,
                   boxShadow:
@@ -489,7 +489,7 @@ const SecondarySource = () => {
                       setShowGraphs(false);
                     }
                   }}
-                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 md:py-4 border-2 border-gray-200 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-white hover:to-gray-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-gray-700 text-sm sm:text-base font-medium cursor-pointer appearance-none shadow-sm hover:shadow-md focus:shadow-lg"
+                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 md:py-4 border-2 border-gray-200 rounded-xl bg-linear-to-r from-gray-50 to-white hover:from-white hover:to-gray-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-gray-700 text-sm sm:text-base font-medium cursor-pointer appearance-none shadow-sm hover:shadow-md focus:shadow-lg"
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233B82F6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                     backgroundRepeat: "no-repeat",

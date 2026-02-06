@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../config/api";
 import HistoricalDataChart from "./components/HistoricalDataChart";
 import DistrictModal from "./components/DistrictModal";
+import RequestDataModal from "./components/RequestDataModal";
 import { dataParameters } from "./components/chartConfig";
 
 const HistoricalData = () => {
@@ -11,6 +12,8 @@ const HistoricalData = () => {
   const [selectedStations, setSelectedStations] = useState([]);
   const [availableStations, setAvailableStations] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [allStations, setAllStations] = useState([]);
 
   // Fetch available stations when parameter changes
   useEffect(() => {
@@ -22,6 +25,11 @@ const HistoricalData = () => {
           );
           if (response.data.success) {
             setAvailableStations(response.data.data);
+            // Update allStations for request modal
+            setAllStations(prev => {
+              const newStations = response.data.data.filter(s => !prev.includes(s));
+              return [...prev, ...newStations];
+            });
             // Show modal when stations are fetched
             setShowModal(true);
           }
@@ -33,6 +41,24 @@ const HistoricalData = () => {
     };
     fetchStations();
   }, [selectedParameter]);
+
+  // Fetch all unique stations for request modal on mount
+  useEffect(() => {
+    const fetchAllStations = async () => {
+      try {
+        // Fetch stations from a common parameter to get the list
+        const response = await axios.get(
+          `${API_BASE_URL}/maximum-temp/stations`
+        );
+        if (response.data.success) {
+          setAllStations(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching all stations:", error);
+      }
+    };
+    fetchAllStations();
+  }, []);
 
   // Get parameter info
   const getParameterInfo = () => {
@@ -76,10 +102,10 @@ const HistoricalData = () => {
         </div>
 
         {/* Parameter Selection */}
-        <div className="card bg-gradient-to-r from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 mx-1 sm:mx-0">
+        <div className="card bg-linear-to-r from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 mx-1 sm:mx-0">
           <div className="card-body p-3 sm:p-4 lg:p-5">
             <div className="flex items-center gap-3 sm:gap-4 mb-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-primary-focus rounded-lg sm:rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-linear-to-br from-primary to-primary-focus rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0">
                 <span className="text-white text-sm sm:text-lg">
                   {paramInfo ? paramInfo.icon : "📊"}
                 </span>
@@ -93,8 +119,8 @@ const HistoricalData = () => {
                 </p>
               </div>
               <button
-                onClick={() => {/* TODO: Implement request data modal */}}
-                className="btn btn-primary btn-sm sm:btn-md flex-shrink-0"
+                onClick={() => setShowRequestModal(true)}
+                className="btn btn-primary btn-sm sm:btn-md shrink-0"
               >
                 📋 Request Data
               </button>
@@ -144,6 +170,13 @@ const HistoricalData = () => {
           onClose={() => setShowModal(false)}
           stations={availableStations}
           onConfirm={handleModalConfirm}
+        />
+
+        {/* Request Data Modal */}
+        <RequestDataModal
+          isOpen={showRequestModal}
+          onClose={() => setShowRequestModal(false)}
+          availableStations={allStations}
         />
 
         {/* Combined Chart for All Selected Stations */}

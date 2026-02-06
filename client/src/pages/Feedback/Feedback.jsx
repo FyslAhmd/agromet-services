@@ -64,12 +64,12 @@ const Feedback = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 sm:p-6 flex items-center justify-center">
       <div className="w-full max-w-lg">
         {/* Header Card */}
         <div className="bg-white rounded-t-2xl shadow-lg p-6 border-b-0">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-[#026666] to-[#024444] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-linear-to-r from-[#026666] to-[#024444] rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -160,7 +160,7 @@ const Feedback = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#026666] to-[#024444] hover:from-[#024444] hover:to-[#013333] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-linear-to-r from-[#026666] to-[#024444] hover:from-[#024444] hover:to-[#013333] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

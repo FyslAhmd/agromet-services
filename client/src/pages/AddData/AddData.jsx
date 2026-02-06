@@ -241,7 +241,7 @@ const AddData = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-blue-50 to-gray-100 p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -379,7 +379,7 @@ const AddData = () => {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="
-                          bg-gradient-to-r from-blue-600 to-blue-700
+                          bg-linear-to-r from-blue-600 to-blue-700
                           hover:from-blue-700 hover:to-blue-800
                           text-white font-semibold text-sm sm:text-base md:text-lg
                           px-6 sm:px-7 md:px-8 py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl
@@ -411,7 +411,7 @@ const AddData = () => {
                         </div>
                       </div>
 
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 px-2 break-words">
+                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 px-2 wrap-break-word">
                         {uploadedFile.name}
                       </h3>
 
@@ -437,7 +437,7 @@ const AddData = () => {
                           }}
                           disabled={isUploading}
                           className="
-                            bg-gradient-to-r from-blue-600 to-blue-700
+                            bg-linear-to-r from-blue-600 to-blue-700
                             hover:from-blue-700 hover:to-blue-800
                             disabled:from-gray-400 disabled:to-gray-500
                             text-white font-semibold text-sm sm:text-base

@@ -21,6 +21,7 @@ import solarRadiationRoutes from "./routes/solarRadiationRoutes.js";
 import evapoTranspirationRoutes from "./routes/evapoTranspirationRoutes.js";
 import dcrsProxyRoutes from "./routes/dcrsProxyRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
+import historicalDataRequestRoutes from "./routes/historicalDataRequestRoutes.js";
 
 // Import models
 import User from "./models/User.js";
@@ -36,6 +37,7 @@ import AverageTemperature from "./models/AverageTemperature.js";
 import SolarRadiation from "./models/SolarRadiation.js";
 import EvapoTranspiration from "./models/EvapoTranspiration.js";
 import Feedback from "./models/Feedback.js";
+import HistoricalDataRequest from "./models/HistoricalDataRequest.js";
 import bcrypt from "bcrypt";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -81,6 +83,7 @@ app.use("/api/solar-radiation", solarRadiationRoutes);
 app.use("/api/evapo-transpiration", evapoTranspirationRoutes);
 app.use("/api/dcrs-proxy", dcrsProxyRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
+app.use("/api/historical-data-requests", historicalDataRequestRoutes);
 
 // Health check route
 app.get("/api", (req, res) => {

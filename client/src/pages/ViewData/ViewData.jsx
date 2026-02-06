@@ -297,7 +297,7 @@ const ViewData = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -508,7 +508,7 @@ const ViewData = () => {
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <table className="min-w-full bg-white">
                   <thead>
-                    <tr className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <tr className="bg-linear-to-r from-blue-600 to-blue-700 text-white">
                       <th className="px-2 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold border-b-2 border-r">
                         Station
                       </th>
@@ -681,7 +681,7 @@ const ViewData = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8"
             >
-              <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
+              <div className="sticky top-0 bg-linear-to-r from-blue-600 to-blue-700 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
                 <h2 className="text-xl sm:text-2xl font-bold">Edit Record</h2>
                 <button
                   onClick={closeEditModal}
@@ -812,7 +812,7 @@ const ViewData = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8"
             >
-              <div className="sticky top-0 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
+              <div className="sticky top-0 bg-linear-to-r from-green-600 to-green-700 text-white px-6 py-4 flex justify-between items-center rounded-t-xl z-10">
                 <h2 className="text-xl sm:text-2xl font-bold">Add New Record</h2>
                 <button
                   onClick={closeAddModal}

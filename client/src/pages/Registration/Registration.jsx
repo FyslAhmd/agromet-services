@@ -141,7 +141,7 @@ const Registration = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#026666] via-[#035555] to-[#024444] py-6 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#026666] via-[#035555] to-[#024444] py-6 px-4">
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 opacity-10">
         <div
@@ -154,7 +154,7 @@ const Registration = () => {
 
       <div className="w-full max-w-xl bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl relative z-10 overflow-hidden">
         {/* Header with gradient background */}
-        <div className="bg-gradient-to-r from-[#026666] to-[#024444] px-6 py-4 text-center">
+        <div className="bg-linear-to-r from-[#026666] to-[#024444] px-6 py-4 text-center">
           <div className="flex items-center justify-center gap-3">
             <img src="/logo.png" alt="BRRI Logo" className="w-12 h-12" />
             <div>
@@ -395,7 +395,7 @@ const Registration = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-gradient-to-r from-[#026666] to-[#024444] hover:from-[#024444] hover:to-[#013333] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            className="w-full py-2.5 px-4 bg-linear-to-r from-[#026666] to-[#024444] hover:from-[#024444] hover:to-[#013333] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
           >
             {isLoading ? (
               <>

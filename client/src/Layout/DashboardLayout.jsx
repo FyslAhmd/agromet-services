@@ -32,7 +32,7 @@ const DashboardLayout = () => {
           </div>
           <div className="text-base md:text-2xl font-medium flex-1 text-center">
             <p className="font-semibold">
-              Agromet Services
+              Welcome to Agromet Services Portal
             </p>
           </div>
         </div>

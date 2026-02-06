@@ -1,7 +1,7 @@
 // API Configuration for Agromet Services
 // Switch between development and production environments
 
-const isDevelopment = false;
+const isDevelopment = true;
 
 // API Base URLs
 const API_URLS = {

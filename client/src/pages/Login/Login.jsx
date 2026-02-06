@@ -24,7 +24,7 @@ function Login() {
   // Show loading while checking auth status
   if (loadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#026666] via-[#035555] to-[#024444]">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#026666] via-[#035555] to-[#024444]">
         <div className="text-center">
           <span className="loading loading-spinner loading-lg text-white"></span>
           <p className="mt-4 text-white/70">Loading...</p>
@@ -77,7 +77,7 @@ function Login() {
     <>
       <div className="min-h-screen w-screen flex items-center justify-center relative overflow-hidden">
         {/* Background with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#026666] via-[#035555] to-[#024444]"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-[#026666] via-[#035555] to-[#024444]"></div>
 
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-10">
@@ -238,7 +238,7 @@ function Login() {
                 {/* Login Button */}
                 <button
                   type="submit"
-                  className={`w-full bg-gradient-to-r from-[#026666] to-[#024444] text-white py-3 px-4 rounded-xl font-semibold text-lg shadow-lg hover:from-[#035555] hover:to-[#026666] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04cccc] transition duration-300 transform hover:scale-[1.02] border border-[#04cccc]/20 ${
+                  className={`w-full bg-linear-to-r from-[#026666] to-[#024444] text-white py-3 px-4 rounded-xl font-semibold text-lg shadow-lg hover:from-[#035555] hover:to-[#026666] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04cccc] transition duration-300 transform hover:scale-[1.02] border border-[#04cccc]/20 ${
                     isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   disabled={isLoading}

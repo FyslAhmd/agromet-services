@@ -151,7 +151,7 @@ const UserManagement = () => {
   const rejectedCount = users.filter((u) => u.status === "rejected").length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -254,7 +254,7 @@ const UserManagement = () => {
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-[#026666] to-[#024444] text-white">
+                    <tr className="bg-linear-to-r from-[#026666] to-[#024444] text-white">
                       <th className="px-4 py-4 text-left text-sm font-semibold">User</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Contact</th>
                       <th className="px-4 py-4 text-left text-sm font-semibold">Organization</th>

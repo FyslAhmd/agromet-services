@@ -53,7 +53,7 @@ const DistrictModal = ({ isOpen, onClose, stations, onConfirm }) => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary to-primary-focus text-white p-6 rounded-t-2xl">
+        <div className="bg-linear-to-r from-primary to-primary-focus text-white p-6 rounded-t-2xl">
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold mb-1">Select Research Stations</h2>

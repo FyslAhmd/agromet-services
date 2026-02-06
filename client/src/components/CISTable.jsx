@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
 import CISMonthlyChart from "./CISMonthlyChart";
+import { API_BASE_URL } from "../config/api";
 
 const CISTable = () => {
   const [requests, setRequests] = useState([]);
@@ -16,7 +17,7 @@ const CISTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch CIS requests from API
+  // Fetch CIS requests from API (AgWS)
   const fetchCISRequests = async () => {
     try {
       setLoading(true);
@@ -48,10 +49,51 @@ const CISTable = () => {
     }
   };
 
+  // Fetch Historical Data requests from Agromet-Services API
+  const fetchHistoricalRequests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log("Fetching Historical Data requests from API...");
+      const response = await axios.get(`${API_BASE_URL}/historical-data-requests`);
+
+      console.log("Historical API Response:", response.data);
+
+      // Handle response structure
+      const requestsData = response.data.success && response.data.data
+        ? response.data.data
+        : [];
+
+      // Normalize the data to match AgWS structure
+      const normalizedData = requestsData.map(req => ({
+        ...req,
+        submitTime: req.requestDateTime || req.createdAt,
+        selectedWeatherParameters: req.selectedParameters || [],
+        selectedStations: req.selectedStations || [],
+        selectedDataFormats: req.selectedDataFormats || [],
+        timeInterval: req.timeInterval || "Custom",
+        dataInterval: req.dataAverage || "N/A",
+      }));
+
+      setRequests(normalizedData);
+      setFilteredRequests(normalizedData);
+    } catch (error) {
+      console.error("Error fetching Historical Data requests:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sample data - replace with actual API call
   useEffect(() => {
-    fetchCISRequests();
-  }, []);
+    if (dataType === "agws") {
+      fetchCISRequests();
+    } else {
+      fetchHistoricalRequests();
+    }
+  }, [dataType]);
 
   // Filter and search functionality
   useEffect(() => {
@@ -144,6 +186,7 @@ const CISTable = () => {
 
   const getTimeIntervalLabel = (interval) => {
     const labels = {
+      // AgWS labels
       day: "1 Day",
       week: "1 Week",
       month: "1 Month",
@@ -151,8 +194,37 @@ const CISTable = () => {
       "6month": "6 Months",
       "1year": "1 Year",
       all: "All Data",
+      // Historical Data labels
+      "1D": "1 Day",
+      "1W": "1 Week",
+      "1M": "1 Month",
+      "3M": "3 Months",
+      "6M": "6 Months",
+      "1Y": "1 Year",
+      "5Y": "5 Years",
+      "10Y": "10 Years",
+      "20Y": "20 Years",
+      "30Y": "30 Years",
+      "50Y": "50 Years",
+      "All": "All Data",
     };
     return labels[interval] || interval;
+  };
+
+  const getDataAverageLabel = (average) => {
+    const labels = {
+      none: "None (Raw Data)",
+      "1W": "Weekly Average",
+      "1M": "Monthly Average",
+      "3M": "3-Month Average",
+      "6M": "6-Month Average",
+      "1Y": "Yearly Average",
+      "5Y": "5-Year Average",
+      "10Y": "10-Year Average",
+      "20Y": "20-Year Average",
+      "30Y": "30-Year Average",
+    };
+    return labels[average] || average;
   };
 
   // Action handlers
@@ -164,7 +236,7 @@ const CISTable = () => {
   const handleAcceptRequest = async (requestId, requestName) => {
     const result = await Swal.fire({
       title: "Accept Request?",
-      text: `Are you sure you want to accept the weather data request from ${requestName}?`,
+      text: `Are you sure you want to accept the ${dataType === "agws" ? "weather" : "historical"} data request from ${requestName}?`,
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#10b981",
@@ -185,14 +257,26 @@ const CISTable = () => {
           },
         });
 
-        // Make API call to update status
-        const response = await axios.put(
-          `https://saads.brri.gov.bd/api/cis/${requestId}/status`,
-          {
-            status: "Approved",
-            remarks: "Request approved for processing",
-          }
-        );
+        let response;
+        if (dataType === "agws") {
+          // Make API call to update AgWS status
+          response = await axios.put(
+            `https://saads.brri.gov.bd/api/cis/${requestId}/status`,
+            {
+              status: "Approved",
+              remarks: "Request approved for processing",
+            }
+          );
+        } else {
+          // Make API call to update Historical Data status
+          response = await axios.put(
+            `${API_BASE_URL}/historical-data-requests/${requestId}/status`,
+            {
+              status: "Approved",
+              remarks: "Request approved for processing",
+            }
+          );
+        }
 
         console.log("Accept API Response:", response.data);
 
@@ -206,14 +290,18 @@ const CISTable = () => {
         // Show success message
         Swal.fire({
           title: "Request Accepted!",
-          text: "The weather data request has been successfully approved.",
+          text: `The ${dataType === "agws" ? "weather" : "historical"} data request has been successfully approved.`,
           icon: "success",
           confirmButtonColor: "#10b981",
           draggable: true,
         });
 
         // Refresh data from server to ensure sync
-        fetchCISRequests();
+        if (dataType === "agws") {
+          fetchCISRequests();
+        } else {
+          fetchHistoricalRequests();
+        }
       } catch (error) {
         console.error("Error accepting request:", error);
         Swal.fire({
@@ -231,7 +319,7 @@ const CISTable = () => {
   const handleRejectRequest = async (requestId, requestName) => {
     const result = await Swal.fire({
       title: "Reject Request?",
-      text: `Are you sure you want to reject the weather data request from ${requestName}?`,
+      text: `Are you sure you want to reject the ${dataType === "agws" ? "weather" : "historical"} data request from ${requestName}?`,
       icon: "warning",
       input: "textarea",
       inputLabel: "Reason for rejection (required)",
@@ -262,14 +350,26 @@ const CISTable = () => {
 
         const remarks = result.value || "Request rejected";
 
-        // Make API call to update status
-        const response = await axios.put(
-          `https://saads.brri.gov.bd/api/cis/${requestId}/status`,
-          {
-            status: "Rejected",
-            remarks: remarks,
-          }
-        );
+        let response;
+        if (dataType === "agws") {
+          // Make API call to update AgWS status
+          response = await axios.put(
+            `https://saads.brri.gov.bd/api/cis/${requestId}/status`,
+            {
+              status: "Rejected",
+              remarks: remarks,
+            }
+          );
+        } else {
+          // Make API call to update Historical Data status
+          response = await axios.put(
+            `${API_BASE_URL}/historical-data-requests/${requestId}/status`,
+            {
+              status: "Rejected",
+              remarks: remarks,
+            }
+          );
+        }
 
         console.log("Reject API Response:", response.data);
 
@@ -283,14 +383,18 @@ const CISTable = () => {
         // Show success message
         Swal.fire({
           title: "Request Rejected!",
-          text: "The weather data request has been rejected.",
+          text: `The ${dataType === "agws" ? "weather" : "historical"} data request has been rejected.`,
           icon: "success",
           confirmButtonColor: "#ef4444",
           draggable: true,
         });
 
         // Refresh data from server to ensure sync
-        fetchCISRequests();
+        if (dataType === "agws") {
+          fetchCISRequests();
+        } else {
+          fetchHistoricalRequests();
+        }
       } catch (error) {
         console.error("Error rejecting request:", error);
         Swal.fire({
@@ -498,7 +602,7 @@ const CISTable = () => {
                   Filter by Status
                 </label>
                 <select
-                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-[140px]"
+                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-35"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
@@ -819,7 +923,7 @@ const CISTable = () => {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              Weather Data Request Details
+              {dataType === "agws" ? "Weather Data Request Details" : "Historical Climate Data Request Details"}
               <div className="ml-auto">
                 {getStatusBadge(selectedRequest.status)}
               </div>
@@ -959,11 +1063,11 @@ const CISTable = () => {
                       d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                     />
                   </svg>
-                  Selected Weather Stations (
-                  {selectedRequest.selectedStations.length})
+                  {dataType === "agws" ? "Selected Weather Stations" : "Selected Research Stations"} (
+                  {selectedRequest.selectedStations?.length || 0})
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedRequest.selectedStations.map((station, index) => (
+                  {(selectedRequest.selectedStations || []).map((station, index) => (
                     <div
                       key={index}
                       className="badge badge-outline badge-lg p-3"
@@ -995,7 +1099,7 @@ const CISTable = () => {
               </div>
             </div>
 
-            {/* Weather Parameters */}
+            {/* Weather/Climate Parameters */}
             <div className="card bg-base-200 mt-6">
               <div className="card-body p-4">
                 <h4 className="card-title text-base mb-3 flex items-center gap-2">
@@ -1013,11 +1117,11 @@ const CISTable = () => {
                       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                     />
                   </svg>
-                  Weather Parameters (
-                  {selectedRequest.selectedWeatherParameters.length})
+                  {dataType === "agws" ? "Weather Parameters" : "Climate Parameters"} (
+                  {selectedRequest.selectedWeatherParameters?.length || 0})
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {selectedRequest.selectedWeatherParameters.map(
+                  {(selectedRequest.selectedWeatherParameters || []).map(
                     (parameter, index) => (
                       <div
                         key={index}
@@ -1227,10 +1331,13 @@ const CISTable = () => {
                     </div>
                     <div className="flex items-center justify-between p-3 bg-base-100 rounded">
                       <span className="text-sm font-medium">
-                        Data Interval:
+                        {dataType === "agws" ? "Data Interval:" : "Data Average:"}
                       </span>
                       <span className="badge badge-success">
-                        {selectedRequest.dataInterval} Hours
+                        {dataType === "agws" 
+                          ? `${selectedRequest.dataInterval} Hours`
+                          : getDataAverageLabel(selectedRequest.dataInterval)
+                        }
                       </span>
                     </div>
                   </div>

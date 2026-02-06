@@ -328,7 +328,7 @@ const DataAccessRequests = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-[#026666] to-[#024444] text-white">
+              <thead className="bg-linear-to-r from-[#026666] to-[#024444] text-white">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
                     #
@@ -394,7 +394,7 @@ const DataAccessRequests = () => {
                             <button
                               onClick={() => handleAccept(request.id)}
                               disabled={processingId === request.id}
-                              className={`px-2 py-1.5 text-white text-sm font-medium rounded transition-colors min-w-[32px] flex items-center justify-center ${
+                              className={`px-2 py-1.5 text-white text-sm font-medium rounded transition-colors min-w-8 flex items-center justify-center ${
                                 processingId === request.id
                                   ? "bg-green-400 cursor-not-allowed"
                                   : "bg-green-600 hover:bg-green-700"
@@ -434,7 +434,7 @@ const DataAccessRequests = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-[#026666] to-[#024444] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+            <div className="sticky top-0 bg-linear-to-r from-[#026666] to-[#024444] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold">Request Details</h3>
                 <p className="text-white/70 text-sm">ID: #{selectedRequest.id}</p>
@@ -602,7 +602,7 @@ const DataAccessRequests = () => {
                 <button
                   onClick={() => handleAccept(selectedRequest.id)}
                   disabled={processingId === selectedRequest.id}
-                  className={`px-6 py-2.5 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 min-w-[160px] justify-center ${
+                  className={`px-6 py-2.5 text-white rounded-lg font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 min-w-40 justify-center ${
                     processingId === selectedRequest.id
                       ? "bg-green-400 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700"

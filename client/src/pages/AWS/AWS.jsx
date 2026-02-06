@@ -346,12 +346,12 @@ const AWS = () => {
         </div>
 
         {/* Compact Station Selection Bar */}
-        <div className="card bg-gradient-to-r from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 mx-1 sm:mx-0">
+        <div className="card bg-linear-to-r from-white to-gray-50 shadow-lg hover:shadow-xl transition-all duration-300 mx-1 sm:mx-0">
           <div className="card-body p-3 sm:p-4 lg:p-5">
             <div className="flex flex-col gap-3 sm:gap-4">
               {/* Station Info */}
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-primary-focus rounded-lg sm:rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-linear-to-br from-primary to-primary-focus rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0">
                   <span className="text-white text-sm sm:text-lg">🏢</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -364,7 +364,7 @@ const AWS = () => {
                 </div>
                 <button
                   onClick={openRequestModal}
-                  className="btn btn-primary btn-sm sm:btn-md flex-shrink-0"
+                  className="btn btn-primary btn-sm sm:btn-md shrink-0"
                 >
                   📋 Request Data
                 </button>
@@ -706,7 +706,7 @@ const AWS = () => {
                       </svg>
                     </button>
                     {stationDropdownOpen && (
-                      <ul className="absolute top-full left-0 right-0 z-[100] p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
+                      <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
                         {stations.map((station) => (
                           <li key={station.station_id} className="w-full">
                             <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
@@ -747,7 +747,7 @@ const AWS = () => {
                       </svg>
                     </button>
                     {parameterDropdownOpen && (
-                      <ul className="absolute top-full left-0 right-0 z-[100] p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
+                      <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
                         {weatherParameters.map((param) => (
                           <li key={param.parameter} className="w-full">
                             <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
