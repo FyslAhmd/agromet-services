@@ -121,7 +121,7 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
     return (
       <div className="bg-red-50 border-l-4 border-red-500 p-4 sm:p-5 md:p-6 rounded-r-lg">
         <div className="flex items-center">
-          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-red-500 mr-2 sm:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-red-500 mr-2 sm:mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="min-w-0">
@@ -138,7 +138,7 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 sm:p-5 md:p-6 rounded-r-lg">
         <div className="flex items-center">
-          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-500 mr-2 sm:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-500 mr-2 sm:mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="min-w-0">
@@ -158,7 +158,7 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
       {/* Season Header */}
       <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] text-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2 sm:gap-3">
-          <span className="text-2xl sm:text-3xl flex-shrink-0">🌾</span>
+          <span className="text-2xl sm:text-3xl shrink-0">🌾</span>
           <span className="min-w-0 truncate">{selectedSeason} Season Rice Statistics</span>
         </h2>
         <p className="text-teal-200/70 mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">

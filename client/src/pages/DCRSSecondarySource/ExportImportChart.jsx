@@ -90,7 +90,7 @@ const ExportImportChart = () => {
     return (
       <div className="bg-red-50 border-l-4 border-red-500 p-4 sm:p-5 md:p-6 rounded-r-lg">
         <div className="flex items-center gap-2 sm:gap-3">
-          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="min-w-0">
@@ -107,7 +107,7 @@ const ExportImportChart = () => {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 sm:p-5 md:p-6 rounded-r-lg">
         <div className="flex items-center gap-2 sm:gap-3">
-          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="min-w-0">
