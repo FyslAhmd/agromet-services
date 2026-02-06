@@ -12,6 +12,7 @@ import {
   ClockIcon,
   CheckIcon,
   XMarkIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 
 const UserManagement = () => {
@@ -23,6 +24,18 @@ const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [pageSize] = useState(20);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    username: "",
+    email: "",
+    mobileNumber: "",
+    organization: "",
+    designation: "",
+    role: "user",
+    status: "pending",
+  });
 
   // Fetch users
   const fetchUsers = async () => {
@@ -113,6 +126,54 @@ const UserManagement = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete user");
     }
+  };
+
+  // Handle edit user
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name || "",
+      username: user.username || "",
+      email: user.email || "",
+      mobileNumber: user.mobileNumber || "",
+      organization: user.organization || "",
+      designation: user.designation || "",
+      role: user.role || "user",
+      status: user.status || "pending",
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle update user
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API_BASE_URL}/users/${editingUser.id}`,
+        editFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success("User updated successfully!");
+      setShowEditModal(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update user");
+    }
+  };
+
+  // Handle form input change
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // Filter users by search query
@@ -329,6 +390,13 @@ const UserManagement = () => {
                               </>
                             )}
                             <button
+                              onClick={() => handleEdit(user)}
+                              className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <PencilIcon className="w-5 h-5" />
+                            </button>
+                            <button
                               onClick={() => handleDelete(user.id)}
                               className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
                               title="Delete"
@@ -392,6 +460,177 @@ const UserManagement = () => {
           )}
         </motion.div>
       </motion.div>
+
+      {/* Edit User Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <PencilIcon className="w-6 h-6 text-[#026666]" />
+                Edit User: {editingUser?.name}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingUser(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editFormData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={editFormData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editFormData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="text"
+                  name="mobileNumber"
+                  value={editFormData.mobileNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Organization */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Organization
+                </label>
+                <input
+                  type="text"
+                  name="organization"
+                  value={editFormData.organization}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Designation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Designation
+                </label>
+                <input
+                  type="text"
+                  name="designation"
+                  value={editFormData.designation}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent"
+                />
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role *
+                </label>
+                <select
+                  name="role"
+                  value={editFormData.role}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent bg-white"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status *
+                </label>
+                <select
+                  name="status"
+                  value={editFormData.status}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#026666] focus:border-transparent bg-white"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-[#026666] hover:bg-[#024444] text-white rounded-lg transition-colors font-medium"
+                >
+                  Update User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

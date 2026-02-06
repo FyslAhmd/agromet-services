@@ -128,12 +128,12 @@ const Sidebar = () => {
             </NavLink>
           </li>
 
-          <li className="text-base font-medium">
+          {/* <li className="text-base font-medium">
             <NavLink to="/data-access-requests">
               <ClipboardDocumentListIcon className="w-5 h-5 mr-2" />
               Data Access Requests
             </NavLink>
-          </li>
+          </li> */}
 
           <li className="text-base font-medium">
             <NavLink to="/user-management">

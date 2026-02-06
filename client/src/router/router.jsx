@@ -79,14 +79,14 @@ const router = createBrowserRouter([
           </AdminRoute>
         ),
       },
-      {
-        path: "data-access-requests",
-        element: (
-          <AdminRoute>
-            <DataAccessRequests />
-          </AdminRoute>
-        ),
-      },
+      // {
+      //   path: "data-access-requests",
+      //   element: (
+      //     <AdminRoute>
+      //       <DataAccessRequests />
+      //     </AdminRoute>
+      //   ),
+      // },
       {
         path: "feedback",
         element: <Feedback />,

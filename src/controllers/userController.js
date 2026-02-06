@@ -231,7 +231,7 @@ export const getUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, email, mobileNumber, designation, organization } = req.body;
+    const { name, username, email, mobileNumber, designation, organization, role, status } = req.body;
 
     const user = await User.findByPk(userId);
 
@@ -239,12 +239,35 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Check if username is being changed and if it already exists
+    if (username && username !== user.username) {
+      const existingUser = await User.findOne({ 
+        where: { username } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+    }
+
+    // Check if email is being changed and if it already exists
+    if (email && email !== user.email) {
+      const existingEmail = await User.findOne({ 
+        where: { email } 
+      });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+
     await user.update({
       name: name || user.name,
+      username: username || user.username,
       email: email || user.email,
       mobileNumber: mobileNumber || user.mobileNumber,
       designation: designation || user.designation,
-      organization: organization || user.organization
+      organization: organization || user.organization,
+      role: role || user.role,
+      status: status || user.status
     });
 
     res.json({
