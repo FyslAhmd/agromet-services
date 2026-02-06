@@ -50,96 +50,86 @@ const DistrictModal = ({ isOpen, onClose, stations, onConfirm }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-linear-to-r from-primary to-primary-focus text-white p-6 rounded-t-2xl">
+        <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-5 py-4 shrink-0">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Select Research Stations</h2>
-              <p className="text-primary-content/80 text-sm">
+              <h2 className="text-base font-semibold text-white">Select Research Stations</h2>
+              <p className="text-teal-200/70 text-xs mt-0.5">
                 Choose one or more stations to analyze climate data
               </p>
             </div>
             <button
               onClick={handleClose}
-              className="btn btn-sm btn-circle btn-ghost hover:bg-white/20"
+              className="p-1 rounded-lg text-teal-200/70 hover:text-white hover:bg-white/10 transition-colors"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Select All Checkbox */}
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-            <label className="flex items-center cursor-pointer gap-3">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary checkbox-lg"
-                checked={selectAll}
-                onChange={handleSelectAll}
-              />
-              <div>
-                <span className="text-lg font-semibold text-gray-800">
-                  Select All Stations
-                </span>
-                <p className="text-sm text-gray-600">
-                  {selectedStations.length} of {stations.length} selected
-                </p>
-              </div>
-            </label>
-          </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          {/* Select All */}
+          <label className="flex items-center gap-3 p-3 mb-3 bg-teal-50 rounded-xl border border-teal-200 cursor-pointer hover:bg-teal-100/60 transition-colors">
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30"
+              checked={selectAll}
+              onChange={handleSelectAll}
+            />
+            <div>
+              <span className="text-sm font-semibold text-gray-800">Select All Stations</span>
+              <p className="text-xs text-gray-500">{selectedStations.length} of {stations.length} selected</p>
+            </div>
+          </label>
 
           {/* Station List */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {stations.map((station) => (
-              <div
+              <label
                 key={station}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-150 ${
                   selectedStations.includes(station)
-                    ? "bg-primary/10 border-primary shadow-md"
-                    : "bg-white border-gray-200 hover:border-primary/50 hover:shadow-sm"
+                    ? "bg-teal-50/50 border-teal-300"
+                    : "bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50/50"
                 }`}
-                onClick={() => handleStationToggle(station)}
               >
-                <label className="flex items-center cursor-pointer gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={selectedStations.includes(station)}
-                    onChange={() => handleStationToggle(station)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <div className="flex-1">
-                    <span className="text-base font-medium text-gray-800">
-                      📍 {station}
-                    </span>
-                  </div>
-                  {selectedStations.includes(station) && (
-                    <div className="badge badge-primary badge-sm">Selected</div>
-                  )}
-                </label>
-              </div>
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30 accent-teal-600"
+                  checked={selectedStations.includes(station)}
+                  onChange={() => handleStationToggle(station)}
+                />
+                <span className="flex-1 text-sm font-medium text-gray-700">{station}</span>
+                {selectedStations.includes(station) && (
+                  <span className="text-[10px] font-semibold text-teal-600 bg-teal-100 px-2 py-0.5 rounded-full">Selected</span>
+                )}
+              </label>
             ))}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
-          <div className="flex gap-3 justify-end">
-            <button onClick={handleClose} className="btn btn-outline btn-md">
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="btn btn-primary btn-md"
-              disabled={selectedStations.length === 0}
-            >
-              Confirm {selectedStations.length > 0 && `(${selectedStations.length})`}
-            </button>
-          </div>
+        <div className="border-t border-gray-100 px-5 py-3 flex gap-2 justify-end shrink-0">
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="px-5 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={selectedStations.length === 0}
+          >
+            Confirm {selectedStations.length > 0 && `(${selectedStations.length})`}
+          </button>
         </div>
       </div>
     </div>

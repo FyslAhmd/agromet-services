@@ -266,387 +266,269 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open" onClick={closeDropdowns}>
-      <div className="modal-box max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-          📊 Request Historical Climate Data
-        </h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={closeDropdowns}>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-5 py-4 flex items-center justify-between shrink-0">
+          <div>
+            <h3 className="text-base font-semibold text-white">Request Historical Climate Data</h3>
+            <p className="text-teal-200/70 text-xs mt-0.5">Fill out the form to request data exports</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-teal-200/70 hover:text-white hover:bg-white/10 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Personal Information */}
-          <div className="divider text-sm text-gray-500">Personal Information</div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Name *</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Designation *</span>
-              </label>
-              <input
-                type="text"
-                name="designation"
-                value={formData.designation}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Organization *</span>
-              </label>
-              <input
-                type="text"
-                name="organization"
-                value={formData.organization}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Address *</span>
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Email *</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Mobile *</span>
-              </label>
-              <input
-                type="tel"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Date Range Selection */}
-          <div className="divider text-sm text-gray-500">Time Range Selection</div>
-
-          <div className="form-control">
-            <div className="flex gap-4">
-              <label className="flex items-center cursor-pointer gap-2">
-                <input
-                  type="radio"
-                  name="dateRangeType"
-                  className="radio radio-primary"
-                  checked={!formData.useCustomDateRange}
-                  onChange={() => setFormData(prev => ({ 
-                    ...prev, 
-                    useCustomDateRange: false,
-                    startDate: "",
-                    endDate: ""
-                  }))}
-                />
-                <span className="label-text">Preset Time Interval</span>
-              </label>
-              
-              <label className="flex items-center cursor-pointer gap-2">
-                <input
-                  type="radio"
-                  name="dateRangeType"
-                  className="radio radio-primary"
-                  checked={formData.useCustomDateRange}
-                  onChange={() => setFormData(prev => ({ 
-                    ...prev, 
-                    useCustomDateRange: true,
-                    timeInterval: ""
-                  }))}
-                />
-                <span className="label-text">Custom Date Range</span>
-              </label>
-            </div>
-          </div>
-
-          {formData.useCustomDateRange ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">From Date *</span>
-                </label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleInputChange}
-                  className="input input-bordered"
-                  max={getTodayDate()}
-                  required
-                />
-              </div>
-
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">To Date *</span>
-                </label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleInputChange}
-                  className="input input-bordered"
-                  min={formData.startDate}
-                  max={getTodayDate()}
-                  required
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Time Interval *</span>
-              </label>
-              <select
-                name="timeInterval"
-                value={formData.timeInterval}
-                onChange={handleInputChange}
-                className="select select-bordered"
-                required
-              >
-                {intervals.map(interval => (
-                  <option key={interval.value} value={interval.value}>
-                    {interval.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Data Average */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Data Averaging</span>
-            </label>
-            <select
-              name="dataAverage"
-              value={formData.dataAverage}
-              onChange={handleInputChange}
-              className="select select-bordered"
-            >
-              {getDataAverageOptions().map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <label className="label">
-              <span className="label-text-alt text-gray-500">
-                Aggregate data points for smoother trends
-              </span>
-            </label>
-          </div>
-
-          {/* Station and Parameter Selection */}
-          <div className="divider text-sm text-gray-500">Data Selection</div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Station Selection */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Research Stations *</span>
-              </label>
-              <div className="relative w-full">
-                <button
-                  type="button"
-                  className="btn btn-outline w-full justify-start"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setStationDropdownOpen(!stationDropdownOpen);
-                    setParameterDropdownOpen(false);
-                  }}
-                >
-                  {formData.selectedStations.length === 0 
-                    ? "Select stations..." 
-                    : `${formData.selectedStations.length} station(s) selected`}
-                  <svg className={`w-4 h-4 ml-auto transition-transform ${stationDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Personal Information */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-md bg-teal-50 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
-                </button>
-                {stationDropdownOpen && (
-                  <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
-                    {availableStations && availableStations.length > 0 ? (
-                      availableStations.map((station) => (
-                        <li key={station} className="w-full">
-                          <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-sm"
-                              checked={formData.selectedStations.includes(station)}
-                              onChange={() => handleStationChange(station)}
-                            />
-                            <span className="text-sm flex-1">{station}</span>
-                          </label>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="p-2 text-gray-500 text-sm">
-                        Select a parameter first to load available stations
-                      </li>
-                    )}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            {/* Parameter Selection */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Climate Parameters *</span>
-              </label>
-              <div className="relative w-full">
-                <button
-                  type="button"
-                  className="btn btn-outline w-full justify-start"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setParameterDropdownOpen(!parameterDropdownOpen);
-                    setStationDropdownOpen(false);
-                  }}
-                >
-                  {formData.selectedParameters.length === 0 
-                    ? "Select parameters..." 
-                    : `${formData.selectedParameters.length} parameter(s) selected`}
-                  <svg className={`w-4 h-4 ml-auto transition-transform ${parameterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {parameterDropdownOpen && (
-                  <ul className="absolute top-full left-0 right-0 z-100 p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto flex flex-col mt-1 border">
-                    {dataParameters.map((param) => (
-                      <li key={param.value} className="w-full">
-                        <label className="flex items-center cursor-pointer gap-3 p-2 w-full hover:bg-gray-100 rounded">
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-sm"
-                            checked={formData.selectedParameters.includes(param.value)}
-                            onChange={() => handleParameterChange(param.value)}
-                          />
-                          <span className="text-sm flex-1">{param.icon} {param.label}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Data Format Selection */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Required Data Formats *</span>
-            </label>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center cursor-pointer gap-2">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-primary"
-                  checked={formData.selectedDataFormats.includes('CSV')}
-                  onChange={() => handleDataFormatChange('CSV')}
-                />
-                <span className="label-text">📄 CSV Data</span>
-              </label>
-              
-              <label className="flex items-center cursor-pointer gap-2">
-                <input
-                  type="checkbox"
-                  className="checkbox checkbox-primary"
-                  checked={formData.selectedDataFormats.includes('Image')}
-                  onChange={() => handleDataFormatChange('Image')}
-                />
-                <span className="label-text">📈 Chart Image</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Selected Items Summary */}
-          {(formData.selectedStations.length > 0 || formData.selectedParameters.length > 0) && (
-            <div className="bg-base-200 rounded-lg p-4 mt-4">
-              <h4 className="font-semibold text-sm mb-2">Selection Summary:</h4>
-              {formData.selectedStations.length > 0 && (
-                <div className="mb-2">
-                  <span className="text-xs text-gray-500">Stations:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {formData.selectedStations.map(station => (
-                      <span key={station} className="badge badge-sm badge-primary">{station}</span>
-                    ))}
-                  </div>
                 </div>
-              )}
-              {formData.selectedParameters.length > 0 && (
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Personal Information</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <span className="text-xs text-gray-500">Parameters:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {formData.selectedParameters.map(param => {
-                      const paramInfo = dataParameters.find(p => p.value === param);
-                      return (
-                        <span key={param} className="badge badge-sm badge-secondary">
-                          {paramInfo?.icon} {paramInfo?.label.split('(')[0].trim() || param}
-                        </span>
-                      );
-                    })}
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+                  <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Designation *</label>
+                  <input type="text" name="designation" value={formData.designation} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Organization *</label>
+                  <input type="text" name="organization" value={formData.organization} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Address *</label>
+                  <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Email *</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Mobile *</label>
+                  <input type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                </div>
+              </div>
+            </div>
+
+            {/* Time Range Selection */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-md bg-teal-50 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Time Range</span>
+              </div>
+
+              <div className="flex gap-4 mb-3">
+                <label className="flex items-center cursor-pointer gap-2">
+                  <input
+                    type="radio"
+                    name="dateRangeType"
+                    className="w-4 h-4 text-teal-600 focus:ring-teal-500/30"
+                    checked={!formData.useCustomDateRange}
+                    onChange={() => setFormData(prev => ({ ...prev, useCustomDateRange: false, startDate: "", endDate: "" }))}
+                  />
+                  <span className="text-sm text-gray-700">Preset Interval</span>
+                </label>
+                <label className="flex items-center cursor-pointer gap-2">
+                  <input
+                    type="radio"
+                    name="dateRangeType"
+                    className="w-4 h-4 text-teal-600 focus:ring-teal-500/30"
+                    checked={formData.useCustomDateRange}
+                    onChange={() => setFormData(prev => ({ ...prev, useCustomDateRange: true, timeInterval: "" }))}
+                  />
+                  <span className="text-sm text-gray-700">Custom Date Range</span>
+                </label>
+              </div>
+
+              {formData.useCustomDateRange ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">From Date *</label>
+                    <input type="date" name="startDate" value={formData.startDate} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" max={getTodayDate()} required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">To Date *</label>
+                    <input type="date" name="endDate" value={formData.endDate} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" min={formData.startDate} max={getTodayDate()} required />
                   </div>
                 </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Time Interval *</label>
+                  <select name="timeInterval" value={formData.timeInterval} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all bg-white" required>
+                    {intervals.map(interval => (
+                      <option key={interval.value} value={interval.value}>{interval.label}</option>
+                    ))}
+                  </select>
+                </div>
               )}
-            </div>
-          )}
 
-          {/* Modal Actions */}
-          <div className="modal-action">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary">
-              Submit Request
-            </button>
-          </div>
-        </form>
+              {/* Data Average */}
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Averaging</label>
+                <select name="dataAverage" value={formData.dataAverage} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all bg-white">
+                  {getDataAverageOptions().map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-gray-400 mt-1">Aggregate data points for smoother trends</p>
+              </div>
+            </div>
+
+            {/* Data Selection */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-md bg-teal-50 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Data Selection</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Station Dropdown */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Research Stations *</label>
+                  <div className="relative w-full">
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white hover:border-gray-300 transition-colors text-left"
+                      onClick={(e) => { e.stopPropagation(); setStationDropdownOpen(!stationDropdownOpen); setParameterDropdownOpen(false); }}
+                    >
+                      <span className={formData.selectedStations.length === 0 ? "text-gray-400" : "text-gray-700"}>
+                        {formData.selectedStations.length === 0 ? "Select stations..." : `${formData.selectedStations.length} station(s) selected`}
+                      </span>
+                      <svg className={`w-4 h-4 text-gray-400 transition-transform ${stationDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {stationDropdownOpen && (
+                      <ul className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto p-1.5">
+                        {availableStations && availableStations.length > 0 ? (
+                          availableStations.map((station) => (
+                            <li key={station}>
+                              <label className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                                <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30" checked={formData.selectedStations.includes(station)} onChange={() => handleStationChange(station)} />
+                                <span className="text-sm text-gray-700">{station}</span>
+                              </label>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="px-3 py-2 text-xs text-gray-400">Select a parameter first</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                {/* Parameter Dropdown */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Climate Parameters *</label>
+                  <div className="relative w-full">
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white hover:border-gray-300 transition-colors text-left"
+                      onClick={(e) => { e.stopPropagation(); setParameterDropdownOpen(!parameterDropdownOpen); setStationDropdownOpen(false); }}
+                    >
+                      <span className={formData.selectedParameters.length === 0 ? "text-gray-400" : "text-gray-700"}>
+                        {formData.selectedParameters.length === 0 ? "Select parameters..." : `${formData.selectedParameters.length} parameter(s) selected`}
+                      </span>
+                      <svg className={`w-4 h-4 text-gray-400 transition-transform ${parameterDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {parameterDropdownOpen && (
+                      <ul className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto p-1.5">
+                        {dataParameters.map((param) => (
+                          <li key={param.value}>
+                            <label className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30" checked={formData.selectedParameters.includes(param.value)} onChange={() => handleParameterChange(param.value)} />
+                              <span className="text-sm text-gray-700">{param.icon} {param.label}</span>
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Formats */}
+              <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-2">Required Data Formats *</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30" checked={formData.selectedDataFormats.includes('CSV')} onChange={() => handleDataFormatChange('CSV')} />
+                    <span className="text-sm text-gray-700">📄 CSV Data</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500/30" checked={formData.selectedDataFormats.includes('Image')} onChange={() => handleDataFormatChange('Image')} />
+                    <span className="text-sm text-gray-700">📈 Chart Image</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Selection Summary */}
+            {(formData.selectedStations.length > 0 || formData.selectedParameters.length > 0) && (
+              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Selection Summary</p>
+                {formData.selectedStations.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-[11px] text-gray-400">Stations:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {formData.selectedStations.map(station => (
+                        <span key={station} className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-teal-50 text-teal-700 border border-teal-200 rounded-md">{station}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {formData.selectedParameters.length > 0 && (
+                  <div>
+                    <span className="text-[11px] text-gray-400">Parameters:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {formData.selectedParameters.map(param => {
+                        const paramInfo = dataParameters.find(p => p.value === param);
+                        return (
+                          <span key={param} className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-md">
+                            {paramInfo?.icon} {paramInfo?.label.split('(')[0].trim() || param}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end pt-2 border-t border-gray-100">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" className="px-5 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-xl transition-colors">
+                Submit Request
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
