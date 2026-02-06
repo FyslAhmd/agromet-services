@@ -522,59 +522,74 @@ const WeatherForecast = () => {
     return metricMap[metric] || { label: 'Unknown', unit: '' };
   };
 
-  return (
-    <div className="w-full px-4 py-6 min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-          Bangladesh Weather Forecast
-        </h1>
-        <p className="text-gray-600">Real-time weather data and 5-day forecast</p>
-      </div>
+  // Metric button config for DRY rendering
+  const metricButtons = [
+    { key: 'rf', label: 'Rainfall', shortLabel: 'RF', icon: Droplets, color: 'teal' },
+    { key: 'temp', label: 'Temperature', shortLabel: 'Temp', icon: Thermometer, color: 'orange' },
+    { key: 'rh', label: 'Humidity', shortLabel: 'RH', icon: CloudDrizzle, color: 'cyan' },
+    { key: 'windspd', label: 'Wind Speed', shortLabel: 'Speed', icon: Wind, color: 'emerald' },
+    { key: 'winddir', label: 'Direction', shortLabel: 'Dir', icon: Navigation, color: 'sky' },
+    { key: 'cldcvr', label: 'Cloud Cover', shortLabel: 'Cloud', icon: Cloud, color: 'violet' },
+    { key: 'windgust', label: 'Wind Gust', shortLabel: 'Gust', icon: CloudRain, color: 'rose' },
+  ];
 
-      {/* Filters Section */}
-      <div className="mb-8 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white/20">
-        <h5 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <span className="w-2 h-8 bg-linear-to-b from-blue-500 to-purple-500 rounded-full"></span>
-          Select Location Type
-        </h5>
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label htmlFor="locationType" className="block text-sm font-semibold text-gray-700 mb-3">
-              View Map By
-            </label>
-            <select
-              id="locationType"
-              value={locationType}
-              onChange={handleLocationTypeChange}
-              className="w-full px-5 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-blue-300 cursor-pointer text-gray-700 font-medium shadow-sm"
-            >
-              <option value="division">🏙️ Division</option>
-              <option value="district">🏘️ District</option>
-              <option value="upazila">🏡 Upazila</option>
-            </select>
-          </div>
+  return (
+    <div className="w-full min-h-full">
+      {/* Page Header */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            Weather Forecast
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Real-time weather data &amp; 5-day forecast across Bangladesh
+          </p>
+        </div>
+
+        {/* Location selector — inline on desktop */}
+        <div className="flex items-center gap-2 shrink-0">
+          <label htmlFor="locationType" className="text-sm font-medium text-gray-600 whitespace-nowrap">
+            View by
+          </label>
+          <select
+            id="locationType"
+            value={locationType}
+            onChange={handleLocationTypeChange}
+            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all cursor-pointer font-medium text-gray-700 shadow-sm"
+          >
+            <option value="division">Division</option>
+            <option value="district">District</option>
+            <option value="upazila">Upazila</option>
+          </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left Side - Map View */}
-        <div className="mb-4">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl h-full flex flex-col border border-white/20 overflow-hidden">
-            <div className="p-0 relative flex-1 bg-linear-to-br from-blue-50 to-indigo-50" style={{ minHeight: '600px' }}>
-             
+      {/* Main Grid — maps + forecast */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 lg:items-stretch">
 
-              {/* Leaflet Map */}
+        {/* ── Left: Primary Map ── */}
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700">
+                Bangladesh Map
+              </h2>
+              {selectedFeature && (
+                <span className="text-xs font-medium bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full border border-teal-100">
+                  {selectedFeature.properties.NAME_3 || selectedFeature.properties.NAME_2 || selectedFeature.properties.NAME_1}
+                </span>
+              )}
+            </div>
+            <div className="relative" style={{ height: '680px' }}>
               <MapContainer
                 center={mapCenter}
                 zoom={mapZoom}
-                className="w-full h-full"
-                style={{ minHeight: '600px', backgroundColor: '#ffffff' }}
+                className="absolute inset-0"
+                style={{ height: '100%', width: '100%', backgroundColor: '#f8fafc' }}
                 zoomControl={true}
+                attributionControl={false}
               >
                 <MapController center={mapCenter} zoom={mapZoom} />
-                
-                {/* Render GeoJSON data */}
                 {geoJSONData && (
                   <GeoJSON
                     key={`geojson-${locationType}`}
@@ -588,183 +603,129 @@ const WeatherForecast = () => {
           </div>
         </div>
 
-        {/* Right Side - District Alert & Forecast */}
-        <div className="mb-4">
-          <div className="flex flex-col h-full gap-4">
-            {/* District Rainfall Alert */}
-            <div>
-              <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="p-6">
-                  {/* Secondary Map for specific area */}
-                  <div className="relative bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl h-75 overflow-hidden border-2 border-gray-200 shadow-inner">
-                    <MapContainer
-                      center={secondaryMapCenter}
-                      zoom={secondaryMapZoom}
-                      className="w-full h-full rounded-2xl"
-                      style={{ height: '300px', backgroundColor: '#ffffff' }}
-                      zoomControl={false}
-                      scrollWheelZoom={false}
-                    >
-                      <MapController center={secondaryMapCenter} zoom={secondaryMapZoom} />
-                      {geoJSONData && (
-                        <GeoJSON
-                          key={`secondary-${locationType}-${selectedFeature ? selectedFeature.properties.NAME_1 + selectedFeature.properties.NAME_2 + selectedFeature.properties.NAME_3 : 'all'}`}
-                          data={getSecondaryMapData()}
-                          style={geoJSONStyle}
-                        />
-                      )}
-                    </MapContainer>
-                  </div>
+        {/* ── Right: Secondary map + Forecast ── */}
+        <div className="lg:col-span-2 flex flex-col gap-5">
+
+          {/* Secondary / zoomed map */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-700">
+                {selectedFeature
+                  ? (selectedFeature.properties.NAME_3 || selectedFeature.properties.NAME_2 || selectedFeature.properties.NAME_1)
+                  : 'Selected Area'}
+              </h2>
+            </div>
+            <div className="relative flex-1" style={{ minHeight: '260px' }}>
+              <MapContainer
+                center={secondaryMapCenter}
+                zoom={secondaryMapZoom}
+                className="absolute inset-0"
+                style={{ height: '100%', width: '100%', backgroundColor: '#f8fafc' }}
+                zoomControl={false}
+                scrollWheelZoom={false}
+                attributionControl={false}
+              >
+                <MapController center={secondaryMapCenter} zoom={secondaryMapZoom} />
+                {geoJSONData && (
+                  <GeoJSON
+                    key={`secondary-${locationType}-${selectedFeature ? selectedFeature.properties.NAME_1 + selectedFeature.properties.NAME_2 + selectedFeature.properties.NAME_3 : 'all'}`}
+                    data={getSecondaryMapData()}
+                    style={geoJSONStyle}
+                  />
+                )}
+              </MapContainer>
+            </div>
+          </div>
+
+          {/* Forecast Card */}
+          {(forecastData.length > 0 || isLoadingForecast) && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+              {/* Card header */}
+              <div className="px-4 py-3 bg-linear-to-r from-[#0a3d3d] to-[#0d5555] flex items-center gap-2">
+                <CloudRain className="w-4.5 h-4.5 text-teal-300" />
+                <div>
+                  <h3 className="text-sm font-semibold text-white leading-tight">
+                    5-Day Forecast
+                  </h3>
+                  <p className="text-[11px] text-teal-300/70">
+                    {locationType.charAt(0).toUpperCase() + locationType.slice(1)} level
+                  </p>
                 </div>
+              </div>
+
+              {/* Metric tabs */}
+              <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/60">
+                <div className="flex flex-wrap gap-1.5">
+                  {metricButtons.map(({ key, shortLabel, icon: Icon }) => (
+                    <button
+                      key={key}
+                      onClick={() => setActiveMetric(key)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                        activeMetric === key
+                          ? 'bg-[#0d4a4a] text-white shadow-md'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-800'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {shortLabel}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Forecast table */}
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                        Date
+                      </th>
+                      <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                        Avg ({getMetricInfo(activeMetric).unit})
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {isLoadingForecast ? (
+                      <tr>
+                        <td colSpan="2" className="px-4 py-8 text-center">
+                          <div className="flex flex-col items-center gap-2 text-gray-400">
+                            <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-medium">Loading…</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : forecastData.length > 0 ? (
+                      forecastData.slice(0, 5).map((item, index) => (
+                        <tr
+                          key={index}
+                          className="hover:bg-teal-50/40 transition-colors"
+                        >
+                          <td className="px-3 py-2.5 text-sm text-gray-700 font-medium whitespace-nowrap">
+                            {item.date}
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            <span className="text-base font-bold text-teal-700">
+                              {item[activeMetric]?.val_avg != null
+                                ? parseFloat(item[activeMetric].val_avg).toFixed(2)
+                                : '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="2" className="px-4 py-6 text-center text-sm text-gray-400">
+                          No forecast data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-
-            {/* Forecast Table */}
-            {(forecastData.length > 0 || isLoadingForecast) && (
-              <div>
-                <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                  <div className="bg-[#2d3748] px-6 py-5">
-                    <h5 className="text-lg font-bold text-white m-0 flex items-center gap-2">
-                      <CloudRain className="w-5 h-5" />
-                      5-Day Weather Forecast
-                    </h5>
-                    <p className="text-purple-100 text-sm mt-1">{locationType.charAt(0).toUpperCase() + locationType.slice(1)} Level Data</p>
-                  </div>
-                
-                {/* Metric Tabs */}
-                <div className="bg-linear-to-r from-gray-50 to-gray-100 px-6 border-b border-gray-200">
-                  <div className="flex flex-wrap gap-2 py-4">
-                    <button
-                      onClick={() => setActiveMetric('rf')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'rf'
-                          ? 'bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <Droplets className="w-4 h-4" />
-                      RF
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('temp')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'temp'
-                          ? 'bg-linear-to-r from-orange-600 to-red-600 text-white shadow-lg shadow-orange-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <Thermometer className="w-4 h-4" />
-                      Temp
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('rh')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'rh'
-                          ? 'bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <CloudDrizzle className="w-4 h-4" />
-                      RH
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('windspd')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'windspd'
-                          ? 'bg-linear-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <Wind className="w-4 h-4" />
-                      Speed
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('winddir')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'winddir'
-                          ? 'bg-linear-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <Navigation className="w-4 h-4" />
-                      Dir
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('cldcvr')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'cldcvr'
-                          ? 'bg-linear-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <Cloud className="w-4 h-4" />
-                      Cloud
-                    </button>
-                    <button
-                      onClick={() => setActiveMetric('windgust')}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all transform hover:scale-105 flex items-center gap-2 ${
-                        activeMetric === 'windgust'
-                          ? 'bg-linear-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-500/50'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
-                      }`}
-                    >
-                      <CloudRain className="w-4 h-4" />
-                      Gust
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead className="bg-linear-to-r from-gray-100 to-gray-50">
-                        <tr>
-                          <th className="border border-gray-200 px-4 py-4 text-center font-bold text-gray-800 bg-linear-to-br from-blue-50 to-purple-50">DATE</th>
-                          {forecastData.length > 0 ? (
-                            forecastData.slice(0, 5).map((item, index) => (
-                              <th key={index} className="border border-gray-200 px-4 py-4 text-center font-semibold text-gray-700 bg-white">{item.date}</th>
-                            ))
-                          ) : (
-                            <>
-                              <th className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">-</th>
-                              <th className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">-</th>
-                              <th className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">-</th>
-                              <th className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">-</th>
-                              <th className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">-</th>
-                            </>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="hover:bg-blue-50/50 transition-colors">
-                          <td className="border border-gray-200 px-4 py-4 text-center font-bold text-gray-800 bg-linear-to-br from-blue-50 to-purple-50">
-                            AVG ({getMetricInfo(activeMetric).unit})
-                          </td>
-                          {isLoadingForecast ? (
-                            <td colSpan="5" className="border border-gray-200 px-4 py-4 text-center text-gray-500 bg-white">
-                              <div className="flex items-center justify-center gap-2">
-                                <div className="w-5 h-5 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                <span className="font-medium">Loading forecast data...</span>
-                              </div>
-                            </td>
-                          ) : (
-                            forecastData.map((item, index) => (
-                              <td key={index} className="border border-gray-200 px-4 py-4 text-center bg-white">
-                                <span className="font-bold text-lg bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                  {item[activeMetric]?.val_avg != null ? parseFloat(item[activeMetric].val_avg).toFixed(2) : '-'}
-                                </span>
-                              </td>
-                            ))
-                          )}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

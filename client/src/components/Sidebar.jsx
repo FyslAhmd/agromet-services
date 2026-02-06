@@ -1,27 +1,72 @@
-import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   CloudIcon,
   ClockIcon,
   ShareIcon,
   ArrowRightOnRectangleIcon,
-  ArrowRightEndOnRectangleIcon,
   DocumentTextIcon,
   PlusCircleIcon,
   TableCellsIcon,
-  ChartBarIcon,
   CircleStackIcon,
   UserGroupIcon,
-  ClipboardDocumentListIcon,
   ChatBubbleLeftRightIcon,
   InformationCircleIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "./context/AuthProvider";
 import { toast } from "react-hot-toast";
 
+const SidebarLink = ({ to, icon: Icon, label, onClick, isButton }) => {
+  const baseClasses =
+    "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative";
+
+  if (isButton) {
+    return (
+      <button
+        onClick={onClick}
+        className={`${baseClasses} w-full text-teal-100/80 hover:text-white hover:bg-white/10`}
+      >
+        <Icon className="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+        <span>{label}</span>
+      </button>
+    );
+  }
+
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `${baseClasses} ${
+          isActive
+            ? "bg-white/15 text-white shadow-lg shadow-black/10 backdrop-blur-sm border border-white/10"
+            : "text-teal-100/80 hover:text-white hover:bg-white/8"
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald-400 rounded-r-full" />
+          )}
+          <Icon
+            className={`w-5 h-5 shrink-0 transition-all duration-200 ${
+              isActive ? "text-emerald-400" : "group-hover:scale-110"
+            }`}
+          />
+          <span>{label}</span>
+        </>
+      )}
+    </NavLink>
+  );
+};
+
 const Sidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authUser, logout } = useAuthContext();
+  const [adminOpen, setAdminOpen] = useState(true);
 
   const handleLogout = () => {
     logout();
@@ -29,131 +74,169 @@ const Sidebar = () => {
     navigate("/");
   };
 
+  const isAdmin = authUser && authUser.role === "admin";
+
+  const adminRoutes = [
+    "/cis",
+    "/add-data",
+    "/view-data",
+    "/dcrs-add-data",
+    "/dcrs-view-data",
+    "/user-management",
+    "/feedback-management",
+  ];
+  const isAdminRouteActive = adminRoutes.some((r) =>
+    location.pathname.startsWith(r),
+  );
+
   return (
-    <ul className="menu bg-[#026666] text-white rounded-r-3xl min-h-full w-72 space-y-3 overflow-y-auto scrollbar-hide z-60">
+    <aside className="flex flex-col bg-linear-to-b from-[#0a3d3d] via-[#0d4a4a] to-[#083535] text-white min-h-full w-72 select-none">
       {/* Logo Section */}
-      <div className="mx-auto">
-        <div className="flex flex-col items-center">
-          <img src="/logo.png" className="w-16" alt="Logo" />
-          <h1 className="font-bold text-lg">Agromet Services</h1>
+      <div className="px-5 pt-6 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
+            <img src="/logo.png" className="w-8 h-8" alt="Logo" />
+          </div>
+          <div>
+            <h1 className="font-bold text-base tracking-wide leading-tight">
+              Agromet Services
+            </h1>
+          </div>
         </div>
       </div>
-      <hr className="border-gray-400" />
 
-      {/* Menu Items */}
-      <li className="text-base font-medium">
-        <NavLink to="/weather-forecast">
-          <CloudIcon className="w-5 h-5 mr-2" />
-          Weather Forecast
-        </NavLink>
-      </li>
+      {/* Divider */}
+      <div className="mx-5 h-px bg-linear-to-r from-transparent via-teal-400/30 to-transparent" />
 
-      <li className="text-base font-medium">
-        <NavLink to="/aws">
-          <CloudIcon className="w-5 h-5 mr-2" />
-          Realtime Weather Data
-        </NavLink>
-      </li>
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-hide">
+        <p className="px-4 pb-1 pt-1 text-[10px] font-semibold text-teal-400/50 uppercase tracking-[0.15em]">
+          Main Menu
+        </p>
 
-      <li className="text-base font-medium">
-        <NavLink to="/historical-data">
-          <ClockIcon className="w-5 h-5 mr-2" />
-          Historical Weather Data
-        </NavLink>
-      </li>
+        <SidebarLink
+          to="/weather-forecast"
+          icon={CloudIcon}
+          label="Weather Forecast"
+        />
+        <SidebarLink to="/aws" icon={CloudIcon} label="Realtime Weather Data" />
+        <SidebarLink
+          to="/historical-data"
+          icon={ClockIcon}
+          label="Historical Weather Data"
+        />
+        <SidebarLink
+          to="/secondary-source"
+          icon={ShareIcon}
+          label="Rice Data"
+        />
+        <SidebarLink
+          to="/feedback"
+          icon={ChatBubbleLeftRightIcon}
+          label="Feedback"
+        />
+        <SidebarLink to="/about" icon={InformationCircleIcon} label="About" />
 
-      <li className="text-base font-medium">
-        <NavLink to="/secondary-source">
-          <ShareIcon className="w-5 h-5 mr-2" />
-          Rice Data
-        </NavLink>
-      </li>
+        {/* Admin Section */}
+        {isAdmin && (
+          <>
+            <div className="pt-3" />
+            <div className="mx-1 h-px bg-linear-to-r from-transparent via-teal-400/20 to-transparent" />
+            <div className="pt-2" />
 
-      <li className="text-base font-medium">
-        <NavLink to="/feedback">
-          <ChatBubbleLeftRightIcon className="w-5 h-5 mr-2" />
-          Feedback
-        </NavLink>
-      </li>
+            <button
+              onClick={() => setAdminOpen((prev) => !prev)}
+              className={`flex items-center justify-between w-full px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-[0.15em] transition-colors duration-200 ${
+                isAdminRouteActive
+                  ? "text-emerald-400/80"
+                  : "text-teal-400/50 hover:text-teal-300/70"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Cog6ToothIcon className="w-3.5 h-3.5" />
+                Administration
+              </span>
+              <ChevronDownIcon
+                className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                  adminOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
 
-      <li className="text-base font-medium">
-        <NavLink to="/about">
-          <InformationCircleIcon className="w-5 h-5 mr-2" />
-          About
-        </NavLink>
-      </li>
+            <div
+              className={`space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
+                adminOpen ? "max-h-125 opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
+              <SidebarLink
+                to="/cis"
+                icon={DocumentTextIcon}
+                label="CIS Requests"
+              />
+              <SidebarLink
+                to="/add-data"
+                icon={PlusCircleIcon}
+                label="Add Historical Data"
+              />
+              <SidebarLink
+                to="/view-data"
+                icon={TableCellsIcon}
+                label="View Historical Data"
+              />
+              <SidebarLink
+                to="/dcrs-add-data"
+                icon={PlusCircleIcon}
+                label="Add Rice Data"
+              />
+              <SidebarLink
+                to="/dcrs-view-data"
+                icon={CircleStackIcon}
+                label="View Rice Data"
+              />
+              <SidebarLink
+                to="/user-management"
+                icon={UserGroupIcon}
+                label="User Management"
+              />
+              <SidebarLink
+                to="/feedback-management"
+                icon={ChatBubbleLeftRightIcon}
+                label="Feedback Management"
+              />
+            </div>
+          </>
+        )}
+      </nav>
 
-      {/* Admin Only Routes */}
-      {authUser && authUser.role === "admin" && (
-        <>
-          <li className="text-base font-medium">
-            <NavLink to="/cis">
-              <DocumentTextIcon className="w-5 h-5 mr-2" />
-              CIS Requests
-            </NavLink>
-          </li>
+      {/* Bottom Section — User + Logout */}
+      <div className="mt-auto border-t border-white/8">
+        {authUser && (
+          <div className="px-4 py-4">
+            <div className="flex items-center gap-3 mb-3 px-2">
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-emerald-500/20 shrink-0">
+                {authUser.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white truncate">
+                  {authUser.name || "User"}
+                </p>
+                <p className="text-[11px] text-teal-300/50 truncate">
+                  {authUser.role === "admin" ? "Administrator" : "User"}
+                </p>
+              </div>
+            </div>
 
-          <li className="text-base font-medium">
-            <NavLink to="/add-data">
-              <PlusCircleIcon className="w-5 h-5 mr-2" />
-              Add Historical Data
-            </NavLink>
-          </li>
-
-          <li className="text-base font-medium">
-            <NavLink to="/view-data">
-              <TableCellsIcon className="w-5 h-5 mr-2" />
-              View Historical Data
-            </NavLink>
-          </li>
-
-          <li className="text-base font-medium">
-            <NavLink to="/dcrs-add-data">
-              <PlusCircleIcon className="w-5 h-5 mr-2" />
-              Add Rice Data
-            </NavLink>
-          </li>
-
-          <li className="text-base font-medium">
-            <NavLink to="/dcrs-view-data">
-              <CircleStackIcon className="w-5 h-5 mr-2" />
-              View Rice Data
-            </NavLink>
-          </li>
-
-          {/* <li className="text-base font-medium">
-            <NavLink to="/data-access-requests">
-              <ClipboardDocumentListIcon className="w-5 h-5 mr-2" />
-              Data Access Requests
-            </NavLink>
-          </li> */}
-
-          <li className="text-base font-medium">
-            <NavLink to="/user-management">
-              <UserGroupIcon className="w-5 h-5 mr-2" />
-              User Management
-            </NavLink>
-          </li>
-
-          <li className="text-base font-medium">
-            <NavLink to="/feedback-management">
-              <ChatBubbleLeftRightIcon className="w-5 h-5 mr-2" />
-              Feedback Management
-            </NavLink>
-          </li>
-        </>
-      )}
-
-      {/* Login/Logout */}
-      {authUser && (
-        <li>
-          <button onClick={handleLogout} className="text-base font-medium">
-            <ArrowRightOnRectangleIcon className="w-5 h-5 mr-2" />
-            Log out
-          </button>
-        </li>
-      )}
-    </ul>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-300/80 hover:text-red-200 hover:bg-red-500/10 transition-all duration-200 group"
+            >
+              <ArrowRightOnRectangleIcon className="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5" />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 };
 

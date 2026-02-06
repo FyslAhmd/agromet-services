@@ -7,9 +7,7 @@ body {
   background-color: #f5f5f5;
 }
 
-a.active {
-  @apply bg-[#338485] rounded-xl py-3;
-}
+/* Active sidebar links are handled in Sidebar component */
 
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
