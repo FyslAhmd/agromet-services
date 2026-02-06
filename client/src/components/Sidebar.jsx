@@ -35,22 +35,15 @@ const Sidebar = () => {
       <div className="mx-auto">
         <div className="flex flex-col items-center">
           <img src="/logo.png" className="w-16" alt="Logo" />
-          <h1 className="font-bold text-lg">BRRI</h1>
+          <h1 className="font-bold text-lg">Agromet Services</h1>
         </div>
       </div>
       <hr className="border-gray-400" />
 
       {/* Menu Items */}
       <li className="text-base font-medium">
-        <NavLink to="/forecast">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="size-5"
-          >
-            <path d="M1 12.5A4.5 4.5 0 0 0 5.5 17H15a4 4 0 0 0 1.866-7.539 3.504 3.504 0 0 0-4.504-4.272A4.5 4.5 0 0 0 4.06 8.235 4.502 4.502 0 0 0 1 12.5Z" />
-          </svg>
+        <NavLink to="/weather-forecast">
+          <CloudIcon className="w-5 h-5 mr-2" />
           Weather Forecast
         </NavLink>
       </li>
@@ -58,21 +51,21 @@ const Sidebar = () => {
       <li className="text-base font-medium">
         <NavLink to="/aws">
           <CloudIcon className="w-5 h-5 mr-2" />
-          AgWS
+          Realtime Weather Data
         </NavLink>
       </li>
 
       <li className="text-base font-medium">
         <NavLink to="/historical-data">
           <ClockIcon className="w-5 h-5 mr-2" />
-          Historical Data
+          Historical Weather Data
         </NavLink>
       </li>
 
       <li className="text-base font-medium">
         <NavLink to="/secondary-source">
           <ShareIcon className="w-5 h-5 mr-2" />
-          Secondary Source
+          Rice Data
         </NavLink>
       </li>
 

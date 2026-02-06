@@ -17,6 +17,7 @@ import DataAccessRequests from "../pages/DataAccessRequests/DataAccessRequests";
 import Feedback from "../pages/Feedback/Feedback";
 import FeedbackManagement from "../pages/FeedbackManagement/FeedbackManagement";
 import About from "../pages/About/About";
+import WeatherForecast from "../pages/WeatherForecast/WeatherForecast";
 
 const router = createBrowserRouter([
   {
@@ -102,6 +103,10 @@ const router = createBrowserRouter([
       {
         path: "about",
         element: <About />,
+      },
+      {
+        path: "weather-forecast",
+        element: <WeatherForecast />,
       },
     ],
   },

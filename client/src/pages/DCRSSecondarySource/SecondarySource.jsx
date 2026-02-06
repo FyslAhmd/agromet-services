@@ -311,10 +311,10 @@ const SecondarySource = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="text-center py-6 sm:py-8 md:py-12">
+        <div className="text-center py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -326,7 +326,7 @@ const SecondarySource = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Secondary Source Data
+              Rice Data
             </motion.h1>
             <motion.p
               className="text-sm sm:text-base md:text-lg text-gray-600 max-w-3xl mx-auto px-4"
