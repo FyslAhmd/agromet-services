@@ -16,6 +16,7 @@ import UserManagement from "../pages/UserManagement/UserManagement";
 import DataAccessRequests from "../pages/DataAccessRequests/DataAccessRequests";
 import Feedback from "../pages/Feedback/Feedback";
 import FeedbackManagement from "../pages/FeedbackManagement/FeedbackManagement";
+import About from "../pages/About/About";
 
 const router = createBrowserRouter([
   {
@@ -97,6 +98,10 @@ const router = createBrowserRouter([
             <FeedbackManagement />
           </AdminRoute>
         ),
+      },
+      {
+        path: "about",
+        element: <About />,
       },
     ],
   },

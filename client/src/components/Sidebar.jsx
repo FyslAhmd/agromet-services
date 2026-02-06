@@ -14,6 +14,7 @@ import {
   UserGroupIcon,
   ClipboardDocumentListIcon,
   ChatBubbleLeftRightIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "./context/AuthProvider";
 import { toast } from "react-hot-toast";
@@ -79,6 +80,13 @@ const Sidebar = () => {
         <NavLink to="/feedback">
           <ChatBubbleLeftRightIcon className="w-5 h-5 mr-2" />
           Feedback
+        </NavLink>
+      </li>
+
+      <li className="text-base font-medium">
+        <NavLink to="/about">
+          <InformationCircleIcon className="w-5 h-5 mr-2" />
+          About
         </NavLink>
       </li>
 
