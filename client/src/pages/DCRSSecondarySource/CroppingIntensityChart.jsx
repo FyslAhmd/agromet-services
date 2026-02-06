@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
 import RiceChart from "./RiceChart";
 import MultiLineRiceChart from "./MultiLineRiceChart";
 import { DCRS_API_URL } from "../../config/api";
@@ -35,7 +34,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="flex flex-col items-center gap-3 sm:gap-4 px-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
           <p className="text-gray-600 font-medium text-sm sm:text-base text-center">Loading cropping intensity data...</p>
@@ -46,7 +45,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center px-4">
           <svg
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-red-500 mx-auto mb-3 sm:mb-4"
@@ -70,7 +69,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
 
   if (!croppingData || croppingData.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center px-4">
           <svg
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-400 mx-auto mb-3 sm:mb-4"
@@ -148,11 +147,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
     console.log("Cropped Area Series Data:", seriesData);
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div>
         <MultiLineRiceChart
           title="Cropped Area Over Time"
           unit="Hectares"
@@ -168,7 +163,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
             </svg>
           }
         />
-      </motion.div>
+      </div>
     );
   } else if (selectedDataType === "Cropping Intensity %") {
     // Show RiceChart with single series: cropping intensity percentage
@@ -183,11 +178,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
     console.log("Cropping Intensity Data:", intensityData);
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div>
         <RiceChart
           title="Cropping Intensity (%)"
           unit="%"
@@ -204,7 +195,7 @@ const CroppingIntensityChart = ({ selectedDataType }) => {
             </svg>
           }
         />
-      </motion.div>
+      </div>
     );
   }
 

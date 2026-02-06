@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useRef, useEffect } from "react";
 import SeasonalRiceChart from "./SeasonalRiceChart";
 import ExportImportChart from "./ExportImportChart";
 import CroppingIntensityChart from "./CroppingIntensityChart";
@@ -23,6 +22,19 @@ const SecondarySource = () => {
   const [isAdoptionModalOpen, setIsAdoptionModalOpen] = useState(false);
   const [isCroppingModalOpen, setIsCroppingModalOpen] = useState(false);
   const [showGraphs, setShowGraphs] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   const [districtFilter, setDistrictFilter] = useState({
     selectedDistricts: [],
@@ -223,9 +235,7 @@ const SecondarySource = () => {
   };
 
   // Handle data source change
-  const handleDataSourceChange = (e) => {
-    const value = e.target.value;
-    
+  const handleDataSourceChange = (value) => {
     // If empty value selected, just reset
     if (value === "") {
       setSelectedDataSource("");
@@ -311,279 +321,172 @@ const SecondarySource = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        {/* Header Section */}
-        <div className="text-center py-6 sm:py-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.h1
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 sm:mb-4 px-2"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
+    <div className="w-full min-h-full lg:p-6">
+      <div className="space-y-4 sm:space-y-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
               Rice Data
-            </motion.h1>
-            <motion.p
-              className="text-sm sm:text-base md:text-lg text-gray-600 max-w-3xl mx-auto px-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              Access comprehensive rice statistics and agricultural data from
-              official sources
-            </motion.p>
-            <motion.div
-              className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 px-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <motion.span
-                className="inline-flex items-center px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-blue-100 text-blue-700 rounded-full text-[10px] sm:text-xs md:text-sm font-medium"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <svg
-                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                BBS Data
-              </motion.span>
-              <motion.span
-                className="inline-flex items-center px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-green-100 text-green-700 rounded-full text-[10px] sm:text-xs md:text-sm font-medium"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ delay: 0.1 }}
-              >
-                <svg
-                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                DAE Reports
-              </motion.span>
-              <motion.span
-                className="inline-flex items-center px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-purple-100 text-purple-700 rounded-full text-[10px] sm:text-xs md:text-sm font-medium"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ delay: 0.2 }}
-              >
-                <svg
-                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                </svg>
-                BRRI Research
-              </motion.span>
-            </motion.div>
-          </motion.div>
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Comprehensive rice statistics and agricultural data from official sources
+            </p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-xl transition-colors shadow-sm shrink-0 self-start sm:self-auto"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Request Data
+          </button>
         </div>
 
-        {/* Data Source Selection */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-5 md:p-6">
-          <div className="space-y-3 sm:space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 text-sm sm:text-base md:text-lg">
-                    Select Data Source
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Choose a data category to view and analyze
-                  </p>
-                </div>
-              </div>
-              <motion.button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-linear-to-r from-blue-600 to-blue-700 text-white px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg text-xs sm:text-sm md:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center gap-1.5 sm:gap-2 whitespace-nowrap w-full sm:w-auto justify-center"
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow:
-                    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
+        {/* Data Source Selection Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Label */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-9 h-9 bg-linear-to-br from-[#0a3d3d] to-[#0d5555] rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Request Data
-              </motion.button>
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-gray-800 text-sm">Data Source</h3>
+                <p className="text-xs text-gray-400 hidden sm:block">Select category to analyze</p>
+              </div>
             </div>
 
-            {/* Dropdown */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
+            {/* Custom Dropdown */}
+            <div className="relative flex-1" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  dropdownOpen
+                    ? 'border-teal-400 ring-2 ring-teal-500/20 bg-white'
+                    : 'border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-white'
+                }`}
+              >
+                {selectedDataSource ? (() => {
+                  const opt = dataSourceOptions.find(o => o.id === selectedDataSource);
+                  return opt ? (
+                    <>
+                      <span className="shrink-0 text-teal-600">{opt.icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{opt.title}</p>
+                        <p className="text-[10px] text-gray-400">{opt.description}</p>
+                      </div>
+                    </>
+                  ) : null;
+                })() : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-sm text-gray-400 flex-1">Select a data source...</p>
+                  </>
+                )}
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              {/* Dropdown Panel */}
+              {dropdownOpen && (
+                <div className="absolute z-50 mt-1.5 w-full bg-white rounded-xl border border-gray-200 shadow-xl shadow-gray-200/50 overflow-hidden">
+                  <div className="max-h-80 overflow-y-auto py-1">
+                    {dataSourceOptions.map((option) => {
+                      const isActive = selectedDataSource === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            handleDataSourceChange(option.id);
+                            setDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3.5 py-3 text-left transition-colors cursor-pointer ${
+                            isActive ? 'bg-teal-50' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className={`shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-500'}`}>{option.icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-medium truncate ${isActive ? 'text-teal-700' : 'text-gray-700'}`}>
+                              {option.title}
+                            </p>
+                            <p className={`text-[10px] ${isActive ? 'text-teal-500' : 'text-gray-400'}`}>
+                              {option.description}
+                            </p>
+                          </div>
+                          {isActive && (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-teal-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <select
-                  value={selectedDataSource}
-                  onChange={handleDataSourceChange}
-                  onFocus={(e) => {
-                    // Reset to empty on focus to allow reselection of same option
-                    if (e.target.value !== "") {
-                      setSelectedDataSource("");
-                      setShowGraphs(false);
-                    }
-                  }}
-                  className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-3 sm:py-3.5 md:py-4 border-2 border-gray-200 rounded-xl bg-linear-to-r from-gray-50 to-white hover:from-white hover:to-gray-50 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-gray-700 text-sm sm:text-base font-medium cursor-pointer appearance-none shadow-sm hover:shadow-md focus:shadow-lg"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233B82F6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 1rem center",
-                    backgroundSize: "1.25em 1.25em",
-                  }}
-                >
-                  <option value="">Select a data source...</option>
-                  {dataSourceOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </motion.div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Content Area - Rice Statistics Graphs */}
         {showGraphs && selectedDataSource && (
-          <div className="space-y-4 sm:space-y-6">
-            {/* Seasonal Rice Data */}
+          <div className="space-y-4 sm:space-y-5">
             {selectedDataSource === "seasonal-rice" && (
               <SeasonalRiceChart selectedSeason={seasonalFilter.selectedSeason} />
             )}
-
-            {/* Export-Import Data */}
-            {selectedDataSource === "export-import" && (
-              <ExportImportChart />
-            )}
-
-            {/* Cropping Intensity Data */}
+            {selectedDataSource === "export-import" && <ExportImportChart />}
             {selectedDataSource === "cropping-intensity" && (
               <CroppingIntensityChart selectedDataType={croppingFilter.selectedDataType} />
             )}
-
-            {/* District Wise Data */}
             {selectedDataSource === "district-wise" && (
               <DistrictWiseChart 
                 selectedDistricts={districtFilter.selectedDistricts} 
                 selectedSeason={districtFilter.selectedSeason}
               />
             )}
-
-            {/* Varietal Rice Data */}
             {selectedDataSource === "varietal-rice" && (
               <VarietalRiceChart 
                 selectedSeason={varietalFilter.selectedSeason}
                 selectedVarieties={varietalFilter.selectedVarieties}
               />
             )}
-
-            {/* Rice Adoption Rate Data */}
             {selectedDataSource === "adoption-rate" && (
               <RiceAdoptionRateChart 
                 selectedSeason={adoptionFilter.selectedSeason}
                 selectedVarieties={adoptionFilter.selectedVarieties}
               />
             )}
-
-            {/* FAOStat Data */}
-            {selectedDataSource === "faostat" && (
-              <FaostatChart />
-            )}
+            {selectedDataSource === "faostat" && <FaostatChart />}
           </div>
         )}
 
-        {/* Empty State - No data source selected */}
+        {/* Empty State */}
         {!selectedDataSource && (
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-            <div className="text-center py-8 sm:py-10 md:py-12">
-              <div className="text-gray-300 mb-3 sm:mb-4 flex justify-center">
-                <svg
-                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sm:p-12">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-700 mb-2 px-4">
-                Select a Data Source
-              </h3>
-              <p className="text-xs sm:text-sm md:text-base text-gray-500 max-w-md mx-auto px-4">
-                Choose a data category from the dropdown above to view
-                comprehensive statistics and analysis
-              </p>
+              <div className="text-center max-w-sm">
+                <h3 className="text-lg font-semibold text-gray-700 mb-1">Select a Data Source</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  Choose a data category from the dropdown above to view comprehensive statistics and analysis.
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-teal-50 text-teal-700 rounded-full border border-teal-200">BBS Data</span>
+                <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-teal-50 text-teal-700 rounded-full border border-teal-200">DAE Reports</span>
+                <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium bg-teal-50 text-teal-700 rounded-full border border-teal-200">BRRI Research</span>
+              </div>
             </div>
           </div>
         )}
@@ -599,7 +502,6 @@ const SecondarySource = () => {
           setSeasonalFilter={setSeasonalFilter}
           onSubmit={handleSeasonalSubmit}
         />
-
         <DistrictWiseModal
           isOpen={isDistrictModalOpen}
           onClose={() => {
@@ -612,7 +514,6 @@ const SecondarySource = () => {
           bangladeshDistricts={bangladeshDistricts}
           riceSeasons={riceSeasons}
         />
-
         <VarietalRiceModal
           isOpen={isVarietalModalOpen}
           onClose={() => {
@@ -623,7 +524,6 @@ const SecondarySource = () => {
           setVarietalFilter={setVarietalFilter}
           onSubmit={handleVarietalSubmit}
         />
-
         <RiceAdoptionRateModal
           isOpen={isAdoptionModalOpen}
           onClose={() => {
@@ -634,7 +534,6 @@ const SecondarySource = () => {
           setAdoptionFilter={setAdoptionFilter}
           onSubmit={handleAdoptionSubmit}
         />
-
         <CroppingIntensityModal
           isOpen={isCroppingModalOpen}
           onClose={() => {
@@ -645,7 +544,6 @@ const SecondarySource = () => {
           setCroppingFilter={setCroppingFilter}
           onSubmit={handleCroppingSubmit}
         />
-
         <RequestDataModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -655,6 +553,11 @@ const SecondarySource = () => {
           bangladeshDistricts={bangladeshDistricts}
           riceSeasons={riceSeasons}
         />
+
+        {/* Timestamp */}
+        <p className="text-center text-xs text-gray-400 pt-2">
+          Last updated: {new Date().toLocaleString("en-BD", { timeZone: "Asia/Dhaka", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} BD
+        </p>
       </div>
     </div>
   );

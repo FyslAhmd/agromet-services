@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { DCRS_API_URL } from "../../../config/api";
@@ -99,29 +98,25 @@ const RiceAdoptionRateModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={handleCancel} />
+      <div className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-4 sm:px-5 md:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl flex justify-between items-start gap-3 shadow-lg sticky top-0 z-10">
+        <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] text-white px-4 sm:px-5 md:px-6 py-4 sm:py-5 rounded-t-xl sm:rounded-t-2xl flex justify-between items-start gap-3 sticky top-0 z-10">
           <div className="flex-1 min-w-0">
             <h3 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               <span className="truncate">Rice Adoption Rate</span>
             </h3>
-            <p className="text-orange-100 text-xs sm:text-sm mt-1">
+            <p className="text-teal-200/70 text-xs sm:text-sm mt-1">
               Select season and varieties to view adoption trends
             </p>
           </div>
           <button
             onClick={handleCancel}
-            className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1.5 sm:p-2 transition-all flex-shrink-0"
+            className="text-teal-200/70 hover:text-white hover:bg-white/10 rounded-lg p-1.5 sm:p-2 transition-all shrink-0"
           >
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -139,7 +134,7 @@ const RiceAdoptionRateModal = ({
             <select
               value={adoptionFilter.selectedSeason}
               onChange={handleSeasonChange}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base"
             >
               <option value="">-- Choose a season --</option>
               <option value="Aus">Aus (March - July)</option>
@@ -148,11 +143,11 @@ const RiceAdoptionRateModal = ({
             </select>
             
             {adoptionFilter.selectedSeason && (
-              <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-orange-50 border-l-4 border-orange-500 rounded-r-lg">
-                <p className="text-xs sm:text-sm text-orange-800">
+              <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-teal-50 border-l-4 border-teal-500 rounded-r-lg">
+                <p className="text-xs sm:text-sm text-teal-800">
                   <span className="font-bold">Selected Season:</span> {adoptionFilter.selectedSeason}
                 </p>
-                <p className="text-xs text-orange-600 mt-1">
+                <p className="text-xs text-teal-600 mt-1">
                   {loading ? "Loading varieties..." : `${availableVarieties.length} varieties available`}
                 </p>
               </div>
@@ -168,7 +163,7 @@ const RiceAdoptionRateModal = ({
               
               {loading ? (
                 <div className="flex items-center justify-center py-6 sm:py-8">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
                 </div>
               ) : availableVarieties.length === 0 ? (
                 <div className="text-center py-6 sm:py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -181,7 +176,7 @@ const RiceAdoptionRateModal = ({
               ) : (
                 <>
                   <div className="mb-2 sm:mb-3 text-xs sm:text-sm text-gray-600">
-                    <span className="font-semibold text-orange-600">
+                    <span className="font-semibold text-teal-600">
                       {(adoptionFilter.selectedVarieties || []).length}
                     </span> of {availableVarieties.length} varieties selected
                   </div>
@@ -193,13 +188,13 @@ const RiceAdoptionRateModal = ({
                         onClick={() => handleVarietyToggle(variety)}
                         className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all ${
                           (adoptionFilter.selectedVarieties || []).includes(variety)
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-300 hover:border-orange-300 hover:bg-gray-50"
+                            ? "border-teal-500 bg-teal-50"
+                            : "border-gray-300 hover:border-teal-300 hover:bg-gray-50"
                         }`}
                       >
-                        <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                        <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center shrink-0 ${
                           (adoptionFilter.selectedVarieties || []).includes(variety)
-                            ? "bg-orange-500 border-orange-500"
+                            ? "bg-teal-500 border-teal-500"
                             : "border-gray-400"
                         }`}>
                           {(adoptionFilter.selectedVarieties || []).includes(variety) && (
@@ -254,12 +249,12 @@ const RiceAdoptionRateModal = ({
           </button>
           <button
             onClick={handleSubmit}
-            className="order-1 sm:order-2 w-full sm:w-auto px-4 sm:px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 font-medium transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
+            className="order-1 sm:order-2 w-full sm:w-auto px-4 sm:px-6 py-2.5 bg-linear-to-r from-[#0a3d3d] to-[#0d5555] text-white rounded-lg hover:from-[#083535] hover:to-[#0a3d3d] font-medium transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
           >
             Show Data
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

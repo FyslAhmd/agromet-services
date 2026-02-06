@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import RiceChart from "../RiceChart";
 import axios from "axios";
 import { DCRS_API_URL } from "../../../config/api";
@@ -72,9 +71,9 @@ const FaostatChart = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="bg-white rounded-2xl shadow-sm p-8">
         <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-teal-600 mb-4"></div>
           <p className="text-gray-600 font-medium">Loading FAOStat data...</p>
         </div>
       </div>
@@ -83,12 +82,7 @@ const FaostatChart = () => {
 
   if (error) {
     return (
-      <motion.div
-        className="bg-white rounded-lg shadow-md p-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="bg-white rounded-2xl shadow-sm p-8">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-red-500 mb-4">
             <svg
@@ -111,23 +105,18 @@ const FaostatChart = () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={fetchFaostatData}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-[#0d4a4a] text-white rounded-lg hover:bg-[#0a3d3d] transition-colors"
           >
             Try Again
           </button>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   if (emissionsData.length === 0 && areaData.length === 0) {
     return (
-      <motion.div
-        className="bg-white rounded-lg shadow-md p-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="bg-white rounded-2xl shadow-sm p-8">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-gray-300 mb-4">
             <svg
@@ -152,21 +141,16 @@ const FaostatChart = () => {
             visualizations here.
           </p>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <motion.div
-        className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-md p-6 text-white"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] rounded-2xl shadow-sm p-6 text-white">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+          <div className="w-12 h-12 bg-white/15 rounded-lg flex items-center justify-center backdrop-blur-sm">
             <svg
               className="w-7 h-7"
               fill="none"
@@ -183,20 +167,16 @@ const FaostatChart = () => {
           </div>
           <div>
             <h2 className="text-2xl font-bold">FAOStat Global Rice Data</h2>
-            <p className="text-blue-100 text-sm mt-1">
+            <p className="text-teal-200/70 text-sm mt-1">
               Global rice statistics from Food and Agriculture Organization
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Emissions Chart */}
       {emissionsData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
+        <div>
           <RiceChart
             data={emissionsData}
             title="Emissions CH4 (kt) from Rice Cultivation"
@@ -214,16 +194,12 @@ const FaostatChart = () => {
               </svg>
             }
           />
-        </motion.div>
+        </div>
       )}
 
       {/* Harvested Area Chart */}
       {areaData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
+        <div>
           <RiceChart
             data={areaData}
             title="Harvested Rice Area (ha)"
@@ -241,7 +217,7 @@ const FaostatChart = () => {
               </svg>
             }
           />
-        </motion.div>
+        </div>
       )}
     </div>
   );

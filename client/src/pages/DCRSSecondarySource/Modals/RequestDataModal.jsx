@@ -353,28 +353,22 @@ const RequestDataModal = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-3 sm:p-4">
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-4 sm:px-5 md:px-6 py-3 sm:py-4 rounded-t-xl sm:rounded-t-2xl flex justify-between items-center gap-3 z-10">
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 truncate">
-            📋 Request Data Access
-          </h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={handleCancel} />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-4 sm:px-5 md:px-6 py-4 sm:py-5 rounded-t-2xl flex justify-between items-center gap-3 z-10">
+          <div>
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-white truncate">
+              📋 Request Data Access
+            </h3>
+            <p className="text-teal-200/70 text-xs mt-0.5">Fill in your details to request data</p>
+          </div>
           <button
             onClick={handleCancel}
-            className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+            className="p-1 rounded-lg text-teal-200/70 hover:text-white hover:bg-white/10 transition-colors shrink-0"
           >
-            <svg
-              className="w-5 h-5 sm:w-6 sm:h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -392,7 +386,7 @@ const RequestDataModal = ({
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -407,7 +401,7 @@ const RequestDataModal = ({
                 name="designation"
                 value={formData.designation}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -422,7 +416,7 @@ const RequestDataModal = ({
                 name="organization"
                 value={formData.organization}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -437,7 +431,7 @@ const RequestDataModal = ({
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -452,7 +446,7 @@ const RequestDataModal = ({
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -467,7 +461,7 @@ const RequestDataModal = ({
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
@@ -482,7 +476,7 @@ const RequestDataModal = ({
               <button
                 type="button"
                 onClick={() => setDataSourcesOpen(!dataSourcesOpen)}
-                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between hover:border-gray-400 transition-colors"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white text-left flex items-center justify-between hover:border-gray-400 transition-colors"
               >
                 <span className={selectedDataSources.length === 0 ? "text-gray-400" : "text-gray-900"}>
                   {selectedDataSources.length === 0 
@@ -504,13 +498,13 @@ const RequestDataModal = ({
                   {dataSourceOptions.map((option) => (
                     <label
                       key={option.id}
-                      className="flex items-start gap-3 px-3 py-2.5 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                      className="flex items-start gap-3 px-3 py-2.5 hover:bg-teal-50 cursor-pointer border-b last:border-b-0 transition-colors"
                     >
                       <input
                         type="checkbox"
                         checked={selectedDataSources.includes(option.id)}
                         onChange={() => toggleDataSource(option.id)}
-                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mt-1 h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-900">{option.title}</div>
@@ -527,7 +521,7 @@ const RequestDataModal = ({
           {selectedDataSources.length > 0 && (
             <div className="space-y-4 border-t pt-4">
               <h4 className="text-sm sm:text-base font-semibold text-gray-800 flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
                 Data Source Filters
@@ -553,8 +547,8 @@ const RequestDataModal = ({
                             onClick={() => updateDataSourceFilter(sourceId, 'selectedSeason', season)}
                             className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                               dataSourceFilters[sourceId]?.selectedSeason === season
-                                ? "bg-green-600 text-white shadow-md"
-                                : "bg-white text-gray-700 border border-gray-300 hover:bg-green-50"
+                                ? "bg-[#0d4a4a] text-white shadow-sm"
+                                : "bg-white text-gray-700 border border-gray-300 hover:bg-teal-50"
                             }`}
                           >
                             {season}
@@ -579,8 +573,8 @@ const RequestDataModal = ({
                               onClick={() => updateDataSourceFilter(sourceId, 'selectedSeason', season)}
                               className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                                 dataSourceFilters[sourceId]?.selectedSeason === season
-                                  ? "bg-purple-600 text-white shadow-md"
-                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-purple-50"
+                                  ? "bg-[#0d4a4a] text-white shadow-sm"
+                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-teal-50"
                               }`}
                             >
                               {season}
@@ -599,15 +593,15 @@ const RequestDataModal = ({
                                 key={variety}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all border-2 ${
                                   dataSourceFilters[sourceId]?.selectedVarieties?.includes(variety)
-                                    ? "bg-purple-100 border-purple-500"
-                                    : "bg-white border-gray-300 hover:border-purple-300"
+                                    ? "bg-teal-100 border-teal-500"
+                                    : "bg-white border-gray-300 hover:border-teal-300"
                                 }`}
                               >
                                 <input
                                   type="checkbox"
                                   checked={dataSourceFilters[sourceId]?.selectedVarieties?.includes(variety)}
                                   onChange={() => toggleArrayFilter(sourceId, 'selectedVarieties', variety)}
-                                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                                 />
                                 <span className="text-sm font-medium">{variety}</span>
                               </label>
@@ -632,7 +626,7 @@ const RequestDataModal = ({
                           <button
                             type="button"
                             onClick={() => updateDataSourceFilter(sourceId, 'selectedDistricts', bangladeshDistricts)}
-                            className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium"
+                            className="text-xs px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium"
                           >
                             Select All
                           </button>
@@ -650,15 +644,15 @@ const RequestDataModal = ({
                               key={district}
                               className={`flex items-center gap-1.5 p-2 rounded cursor-pointer transition-all ${
                                 dataSourceFilters[sourceId]?.selectedDistricts?.includes(district)
-                                  ? "bg-blue-100 border border-blue-500"
-                                  : "bg-gray-50 border border-transparent hover:bg-blue-50"
+                                  ? "bg-teal-100 border border-teal-500"
+                                  : "bg-gray-50 border border-transparent hover:bg-teal-50"
                               }`}
                             >
                               <input
                                 type="checkbox"
                                 checked={dataSourceFilters[sourceId]?.selectedDistricts?.includes(district)}
                                 onChange={() => toggleArrayFilter(sourceId, 'selectedDistricts', district)}
-                                className="h-3.5 w-3.5 text-blue-600 rounded"
+                                className="h-3.5 w-3.5 text-teal-600 rounded"
                               />
                               <span className="text-xs font-medium">{district}</span>
                             </label>
@@ -677,8 +671,8 @@ const RequestDataModal = ({
                               onClick={() => updateDataSourceFilter(sourceId, 'selectedSeason', season)}
                               className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                                 dataSourceFilters[sourceId]?.selectedSeason === season
-                                  ? "bg-blue-600 text-white shadow-md"
-                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-blue-50"
+                                  ? "bg-[#0d4a4a] text-white shadow-sm"
+                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-teal-50"
                               }`}
                             >
                               {season}
@@ -704,8 +698,8 @@ const RequestDataModal = ({
                               onClick={() => updateDataSourceFilter(sourceId, 'selectedSeason', season)}
                               className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                                 dataSourceFilters[sourceId]?.selectedSeason === season
-                                  ? "bg-orange-600 text-white shadow-md"
-                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-orange-50"
+                                  ? "bg-[#0d4a4a] text-white shadow-sm"
+                                  : "bg-white text-gray-700 border border-gray-300 hover:bg-teal-50"
                               }`}
                             >
                               {season}
@@ -724,7 +718,7 @@ const RequestDataModal = ({
                           <button
                             type="button"
                             onClick={() => updateDataSourceFilter(sourceId, 'selectedVarieties', adoptionRateVarieties)}
-                            className="text-xs px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 font-medium"
+                            className="text-xs px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium"
                           >
                             Select All
                           </button>
@@ -742,15 +736,15 @@ const RequestDataModal = ({
                               key={variety}
                               className={`flex items-center gap-1.5 p-2 rounded cursor-pointer transition-all ${
                                 dataSourceFilters[sourceId]?.selectedVarieties?.includes(variety)
-                                  ? "bg-orange-100 border border-orange-500"
-                                  : "bg-gray-50 border border-transparent hover:bg-orange-50"
+                                  ? "bg-teal-100 border border-teal-500"
+                                  : "bg-gray-50 border border-transparent hover:bg-teal-50"
                               }`}
                             >
                               <input
                                 type="checkbox"
                                 checked={dataSourceFilters[sourceId]?.selectedVarieties?.includes(variety)}
                                 onChange={() => toggleArrayFilter(sourceId, 'selectedVarieties', variety)}
-                                className="h-3.5 w-3.5 text-orange-600 rounded"
+                                className="h-3.5 w-3.5 text-teal-600 rounded"
                               />
                               <span className="text-xs font-medium">{variety}</span>
                             </label>
@@ -777,8 +771,8 @@ const RequestDataModal = ({
                             onClick={() => updateDataSourceFilter(sourceId, 'selectedDataType', type)}
                             className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                               dataSourceFilters[sourceId]?.selectedDataType === type
-                                ? "bg-orange-600 text-white shadow-md"
-                                : "bg-white text-gray-700 border border-gray-300 hover:bg-orange-50"
+                                ? "bg-[#0d4a4a] text-white shadow-sm"
+                                : "bg-white text-gray-700 border border-gray-300 hover:bg-teal-50"
                             }`}
                           >
                             {type}
@@ -795,7 +789,7 @@ const RequestDataModal = ({
           {/* Year Selection Section */}
           <div className="space-y-4 border-t pt-4">
             <h4 className="text-sm sm:text-base font-semibold text-gray-800 flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Data Requirements (Year)
@@ -809,7 +803,7 @@ const RequestDataModal = ({
                   name="yearRangeType"
                   checked={!useCustomRange}
                   onChange={() => setUseCustomRange(false)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
                 />
                 <span className="text-sm font-medium text-gray-700">Predefined Range</span>
               </label>
@@ -819,7 +813,7 @@ const RequestDataModal = ({
                   name="yearRangeType"
                   checked={useCustomRange}
                   onChange={() => setUseCustomRange(true)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
                 />
                 <span className="text-sm font-medium text-gray-700">Custom Year Range</span>
               </label>
@@ -844,7 +838,7 @@ const RequestDataModal = ({
                           }}
                           className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-all ${
                             timeInterval === interval && !useCustomRange
-                              ? "bg-blue-600 text-white shadow-md"
+                              ? "bg-[#0d4a4a] text-white shadow-sm"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                         >
@@ -868,7 +862,7 @@ const RequestDataModal = ({
                             setFromYear(year);
                             if (toYear < year) setToYear(year);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50"
+                          className="w-full px-3 py-2 text-sm border border-teal-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-teal-50"
                         >
                           {availableYears.map((year) => (
                             <option key={year} value={year}>{year}</option>
@@ -885,7 +879,7 @@ const RequestDataModal = ({
                             setToYear(year);
                             if (fromYear > year) setFromYear(year);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50"
+                          className="w-full px-3 py-2 text-sm border border-teal-400 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-teal-50"
                         >
                           {availableYears.filter(y => y >= fromYear).map((year) => (
                             <option key={year} value={year}>{year}</option>
@@ -893,7 +887,7 @@ const RequestDataModal = ({
                         </select>
                       </div>
                     </div>
-                    <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                    <p className="text-xs text-teal-600 mt-2 flex items-center gap-1">
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
@@ -938,13 +932,13 @@ const RequestDataModal = ({
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* CSV Data */}
-              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-blue-50 hover:border-blue-300"
+              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-teal-50 hover:border-teal-300"
                 style={{ borderColor: downloadFormats.csv ? '#3b82f6' : '#d1d5db' }}>
                 <input
                   type="checkbox"
                   checked={downloadFormats.csv}
                   onChange={() => toggleDownloadFormat('csv')}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-900">📊 CSV Data</div>
@@ -953,13 +947,13 @@ const RequestDataModal = ({
               </label>
 
               {/* Chart Image */}
-              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-green-50 hover:border-green-300"
+              <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all hover:bg-teal-50 hover:border-teal-300"
                 style={{ borderColor: downloadFormats.image ? '#10b981' : '#d1d5db' }}>
                 <input
                   type="checkbox"
                   checked={downloadFormats.image}
                   onChange={() => toggleDownloadFormat('image')}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-900">🖼️ Chart Image</div>
@@ -979,7 +973,7 @@ const RequestDataModal = ({
               value={formData.purpose}
               onChange={handleInputChange}
               rows="3"
-              className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               placeholder="Please describe how you plan to use this data..."
               required
             ></textarea>
@@ -996,7 +990,7 @@ const RequestDataModal = ({
             </button>
             <button
               type="submit"
-              className="order-1 sm:order-2 flex-1 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg"
+              className="order-1 sm:order-2 flex-1 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-[#0d4a4a] text-white rounded-lg hover:bg-[#0a3d3d] transition-colors font-medium shadow-sm"
             >
               Submit Request
             </button>

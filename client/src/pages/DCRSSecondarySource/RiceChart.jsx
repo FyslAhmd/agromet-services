@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { motion } from "framer-motion";
 
 // Try to load Highcharts export modules
 if (typeof window !== "undefined") {
@@ -537,225 +536,161 @@ const RiceChart = ({ title, unit, data, color, icon }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-    >
-      <div className="p-3 sm:p-4 md:p-6">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-4 sm:p-5">
         {/* Chart Header */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <span className="text-xl sm:text-2xl md:text-3xl flex-shrink-0">{icon}</span>
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 bg-linear-to-br from-[#0a3d3d] to-[#0d5555] rounded-xl flex items-center justify-center shadow-sm shrink-0">
+              <span className="text-white text-sm">{icon}</span>
+            </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-gray-800 text-sm sm:text-base md:text-lg truncate">
-                {title}
-              </h3>
-              <p className="text-[10px] sm:text-xs md:text-sm text-gray-500 truncate">{unit}</p>
+              <h3 className="font-bold text-gray-800 text-sm sm:text-base truncate">{title}</h3>
+              <p className="text-[10px] sm:text-xs text-gray-400">{unit}</p>
             </div>
           </div>
-
-          {/* Download Button */}
           <button
             onClick={() => setShowDownloadModal(true)}
-            className="btn btn-xs sm:btn-sm bg-green-600 hover:bg-green-700 text-white border-none shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg font-medium flex-shrink-0"
-            title="Download options"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-lg transition-colors shrink-0"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-3 w-3 sm:h-4 sm:w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            <span className="text-[10px] sm:text-xs md:text-sm font-semibold hidden sm:inline">
-              Download
-            </span>
+            <span className="hidden sm:inline">Download</span>
           </button>
         </div>
 
-        {/* Time Interval and Data Average Selection */}
-        <div className="mb-3 sm:mb-4 space-y-2 sm:space-y-3">
-          {/* Time Interval Buttons */}
-          <div className="flex flex-col gap-1.5 sm:gap-2">
-            <label className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-600">
-              Data Requirements(Year):
-            </label>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
-              {[
-                { key: "1Y", label: "1Y" },
-                { key: "5Y", label: "5Y" },
-                { key: "10Y", label: "10Y" },
-                { key: "20Y", label: "20Y" },
-                { key: "30Y", label: "30Y" },
-                { key: "50Y", label: "50Y" },
-                { key: "All", label: "All" },
-              ].map((range) => (
-                <button
-                  key={range.key}
-                  onClick={() => handleTimeRangeChange(range.key)}
-                  className={`btn btn-xs sm:btn-sm transition-all duration-200 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 ${
-                    timeRange === range.key && !useCustomRange
-                      ? "btn-primary"
-                      : "btn-outline btn-primary"
-                  }`}
-                >
-                  {range.label}
-                </button>
-              ))}
+        {/* Filter Controls */}
+        <div className="bg-gray-50/60 rounded-xl p-3 sm:p-4 mb-4">
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
+            {/* Left: Range + Average */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 flex-1">
+              {/* Time Range */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Range</span>
+                </div>
+                <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                  {["1Y","5Y","10Y","20Y","30Y","50Y","All"].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => handleTimeRangeChange(r)}
+                      className={`px-2 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all cursor-pointer ${
+                        timeRange === r && !useCustomRange
+                          ? 'bg-[#0d4a4a] text-white shadow-sm'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Data Average */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-3L16.5 18m0 0L12 13.5m4.5 4.5V4.5" />
+                  </svg>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Average</span>
+                </div>
+                <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                  {["1Y","5Y","10Y","20Y","30Y","50Y"].map((avg) => {
+                    const disabled = isAverageDisabled(avg);
+                    return (
+                      <button
+                        key={avg}
+                        onClick={() => !disabled && handleAverageRangeChange(avg)}
+                        disabled={disabled}
+                        className={`px-2 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all ${
+                          averageRange === avg
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : disabled
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-500 hover:text-gray-700 cursor-pointer'
+                        }`}
+                      >
+                        {avg}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-          
-          {/* Custom Year Range Selection */}
-          <div className="flex flex-col gap-1.5 sm:gap-2">
-            <label className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-600">
-              Custom Year Range:
-            </label>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[10px] sm:text-xs text-gray-500">From:</span>
-                <select
-                  value={fromYear || ''}
-                  onChange={(e) => handleFromYearChange(e.target.value)}
-                  className={`select select-xs sm:select-sm border-2 rounded-lg text-[10px] sm:text-xs md:text-sm min-w-[70px] sm:min-w-[80px] ${
-                    useCustomRange ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                  }`}
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
+
+            {/* Right: Custom Range */}
+            <div className="flex items-center gap-2 lg:ml-auto">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Custom</span>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-[10px] sm:text-xs text-gray-500">To:</span>
-                <select
-                  value={toYear || ''}
-                  onChange={(e) => handleToYearChange(e.target.value)}
-                  className={`select select-xs sm:select-sm border-2 rounded-lg text-[10px] sm:text-xs md:text-sm min-w-[70px] sm:min-w-[80px] ${
-                    useCustomRange ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                  }`}
-                >
-                  {availableYears.filter(year => year >= (fromYear || 0)).map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={fromYear || ''}
+                onChange={(e) => handleFromYearChange(e.target.value)}
+                className={`px-2 py-1 text-xs border rounded-lg outline-none transition-all ${
+                  useCustomRange ? 'border-teal-400 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600'
+                }`}
+              >
+                {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <span className="text-xs text-gray-400">—</span>
+              <select
+                value={toYear || ''}
+                onChange={(e) => handleToYearChange(e.target.value)}
+                className={`px-2 py-1 text-xs border rounded-lg outline-none transition-all ${
+                  useCustomRange ? 'border-teal-400 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600'
+                }`}
+              >
+                {availableYears.filter(y => y >= (fromYear || 0)).map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
               {useCustomRange && (
-                <span className="text-[10px] sm:text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">
-                  {toYear - fromYear + 1} years selected
+                <span className="text-[10px] font-medium text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                  {toYear - fromYear + 1}yr
                 </span>
               )}
-            </div>
-          </div>
-
-          {/* Data Average Selection */}
-          <div className="flex flex-col gap-1.5 sm:gap-2">
-            <label className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-600">
-              Data Average:
-            </label>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
-              {[
-                { key: "1Y", label: "1Y" },
-                { key: "5Y", label: "5Y" },
-                { key: "10Y", label: "10Y" },
-                { key: "20Y", label: "20Y" },
-                { key: "30Y", label: "30Y" },
-                { key: "50Y", label: "50Y" },
-              ].map((avg) => {
-                const disabled = isAverageDisabled(avg.key);
-                return (
-                  <button
-                    key={avg.key}
-                    onClick={() =>
-                      !disabled && handleAverageRangeChange(avg.key)
-                    }
-                    disabled={disabled}
-                    className={`btn btn-xs sm:btn-sm transition-all duration-200 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 ${
-                      averageRange === avg.key
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
-                        : disabled
-                        ? "btn-disabled opacity-30 cursor-not-allowed"
-                        : "btn-outline border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-                    }`}
-                    title={
-                      disabled
-                        ? `Cannot average ${avg.key} with ${timeRange} time interval`
-                        : ""
-                    }
-                  >
-                    {avg.label}
-                  </button>
-                );
-              })}
             </div>
           </div>
         </div>
 
         {/* Chart and Table Grid */}
-        <div className="space-y-3 sm:space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-4 xl:gap-6">
-          {/* Chart Section - 70% width on desktop */}
+        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-5">
+          {/* Chart */}
           <div className="lg:col-span-8">
-            <div className="w-full bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <div className="w-full rounded-xl border border-gray-100 overflow-hidden">
               <div id={chartId} className="w-full">
-                <HighchartsReact
-                  highcharts={Highcharts}
-                  options={getHighchartsOptions()}
-                  ref={chartRef}
-                />
+                <HighchartsReact highcharts={Highcharts} options={getHighchartsOptions()} ref={chartRef} />
               </div>
             </div>
           </div>
 
-          {/* Table Section - 30% width on desktop */}
+          {/* Stats Table */}
           <div className="lg:col-span-4">
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-lg border border-gray-200 p-3 sm:p-4 md:p-5 h-full flex flex-col shadow-sm">
-              <h4 className="text-xs sm:text-sm md:text-base font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center gap-1.5 sm:gap-2 pb-2 sm:pb-3 border-b border-gray-200">
-                <span className="text-sm sm:text-base">📋</span> <span>Recent 5 Years</span>
+            <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-3 sm:p-4 h-full flex flex-col">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5 pb-2 border-b border-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                </svg>
+                Recent 5 Years
               </h4>
               <div className="overflow-x-auto flex-1">
-                <table className="w-full border-collapse">
+                <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-gray-100 to-gray-50">
-                      <th className="text-left text-[10px] sm:text-xs md:text-sm font-semibold text-gray-700 py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 rounded-tl-lg">
-                        Year
-                      </th>
-                      <th className="text-right text-[10px] sm:text-xs md:text-sm font-semibold text-gray-700 py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 rounded-tr-lg">
-                        {getColumnHeader()}
-                      </th>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-2 px-2">Year</th>
+                      <th className="text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-2 px-2">{getColumnHeader()}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {getYearlyStats().map((item, index) => (
-                      <tr
-                        key={item.year}
-                        className={`
-                          transition-all duration-200 ease-in-out
-                          ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                          ${
-                            index === 0
-                              ? "bg-blue-50 hover:bg-blue-100"
-                              : "hover:bg-gray-100"
-                          }
-                          border-b border-gray-100 last:border-b-0
-                        `}
-                      >
-                        <td className="py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-[10px] sm:text-xs md:text-sm text-gray-700 font-medium">
-                          {item.year}
-                        </td>
-                        <td
-                          className="py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-[10px] sm:text-xs md:text-sm text-right font-bold"
-                          style={{ color }}
-                        >
-                          {item.value}
-                        </td>
+                      <tr key={item.year} className={`border-b border-gray-100 last:border-b-0 ${index === 0 ? 'bg-teal-50/50' : ''}`}>
+                        <td className="py-2 px-2 text-xs font-medium text-gray-700">{item.year}</td>
+                        <td className="py-2 px-2 text-xs text-right font-bold" style={{ color }}>{item.value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -768,138 +703,59 @@ const RiceChart = ({ title, unit, data, color, icon }) => {
 
       {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-5 md:p-6 max-w-md w-full shadow-2xl border border-gray-200 pointer-events-auto">
-            <div className="flex justify-between items-center mb-3 sm:mb-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800">
-                Download Options
-              </h3>
-              <button
-                onClick={() => setShowDownloadModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 sm:h-6 sm:w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDownloadModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+            <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-5 py-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-base font-semibold text-white">Download Options</h3>
+                <button onClick={() => setShowDownloadModal(false)} className="p-1 rounded-lg text-teal-200/70 hover:text-white hover:bg-white/10 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-teal-200/70 text-xs mt-0.5">Export "{title}" data</p>
             </div>
-
-            <p className="text-gray-600 mb-4 sm:mb-6 text-xs sm:text-sm">
-              Choose what you'd like to download for "{title}":
-            </p>
-
-            <div className="space-y-2 sm:space-y-3">
-              {/* CSV Button */}
-              <button
-                onClick={handleCSVDownload}
-                className="w-full flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors group"
-              >
-                <div className="bg-blue-600 p-1.5 sm:p-2 rounded-lg group-hover:bg-blue-700 transition-colors flex-shrink-0">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
+            <div className="p-4 space-y-2">
+              <button onClick={handleCSVDownload} className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-teal-50 hover:border-teal-200 transition-colors group">
+                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-teal-700" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <div className="text-left min-w-0">
-                  <div className="font-medium text-gray-800 text-xs sm:text-sm">CSV Data</div>
-                  <div className="text-[10px] sm:text-xs text-gray-500 truncate">
-                    Chart data with year and values
-                  </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-800">CSV Data</p>
+                  <p className="text-[10px] text-gray-400">Spreadsheet with year and values</p>
                 </div>
               </button>
-
-              {/* Image Button */}
-              <button
-                onClick={handleImageDownload}
-                className="w-full flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors group"
-              >
-                <div className="bg-green-600 p-1.5 sm:p-2 rounded-lg group-hover:bg-green-700 transition-colors flex-shrink-0">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+              <button onClick={handleImageDownload} className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-teal-50 hover:border-teal-200 transition-colors group">
+                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-teal-700" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M2.25 18.75h19.5" />
                   </svg>
                 </div>
-                <div className="text-left min-w-0">
-                  <div className="font-medium text-gray-800 text-xs sm:text-sm">Image</div>
-                  <div className="text-[10px] sm:text-xs text-gray-500 truncate">
-                    High-quality PNG of the chart
-                  </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-800">PNG Image</p>
+                  <p className="text-[10px] text-gray-400">High-quality chart image</p>
                 </div>
               </button>
-
-              {/* Table Button */}
-              <button
-                onClick={handleTableDownload}
-                className="w-full flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors group"
-              >
-                <div className="bg-purple-600 p-1.5 sm:p-2 rounded-lg group-hover:bg-purple-700 transition-colors flex-shrink-0">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 sm:h-5 sm:w-5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
+              <button onClick={handleTableDownload} className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-teal-50 hover:border-teal-200 transition-colors group">
+                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-teal-700" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
                   </svg>
                 </div>
-                <div className="text-left min-w-0">
-                  <div className="font-medium text-gray-800 text-xs sm:text-sm">Yearly Table</div>
-                  <div className="text-[10px] sm:text-xs text-gray-500 truncate">
-                    Recent 5 years summary
-                  </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-800">Yearly Table</p>
+                  <p className="text-[10px] text-gray-400">Recent 5 years summary</p>
                 </div>
-              </button>
-            </div>
-
-            <div className="mt-4 sm:mt-6 flex justify-end">
-              <button
-                onClick={() => setShowDownloadModal(false)}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 

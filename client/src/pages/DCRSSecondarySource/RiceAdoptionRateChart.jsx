@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
 import MultiLineRiceChart from "./MultiLineRiceChart";
 import { DCRS_API_URL } from "../../config/api";
 
@@ -45,9 +44,9 @@ const RiceAdoptionRateChart = ({ selectedSeason, selectedVarieties = [] }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="flex flex-col items-center gap-3 sm:gap-4 px-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
           <p className="text-gray-600 font-medium text-sm sm:text-base text-center">Loading rice adoption rate data...</p>
         </div>
       </div>
@@ -56,7 +55,7 @@ const RiceAdoptionRateChart = ({ selectedSeason, selectedVarieties = [] }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center px-4">
           <svg
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-red-500 mx-auto mb-3 sm:mb-4"
@@ -134,7 +133,7 @@ const RiceAdoptionRateChart = ({ selectedSeason, selectedVarieties = [] }) => {
 
   if (seriesData.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center">
           <svg
             className="w-16 h-16 text-gray-400 mx-auto mb-4"
@@ -159,27 +158,22 @@ const RiceAdoptionRateChart = ({ selectedSeason, selectedVarieties = [] }) => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4 sm:space-y-5 md:space-y-6"
-    >
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
       {/* Info Banner */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500 p-3 sm:p-4 rounded-lg shadow-sm">
+      <div className="bg-teal-50 border-l-4 border-teal-500 p-3 sm:p-4 rounded-r-lg">
         <div className="flex items-start gap-2 sm:gap-3">
-          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div className="min-w-0 flex-1">
-            <h4 className="text-orange-900 font-bold text-xs sm:text-sm mb-1">
+            <h4 className="text-teal-900 font-bold text-xs sm:text-sm mb-1">
               Rice Adoption Rate - {selectedSeason} Season
             </h4>
-            <p className="text-orange-800 text-xs sm:text-sm break-words">
+            <p className="text-teal-800 text-xs sm:text-sm wrap-break-word">
               Showing adoption rate trends for <span className="font-semibold">{selectedVarieties.length}</span> selected {selectedVarieties.length === 1 ? 'variety' : 'varieties'}: 
               <span className="font-semibold"> {selectedVarieties.join(', ')}</span>
             </p>
-            <p className="text-orange-700 text-[10px] sm:text-xs mt-1">
+            <p className="text-teal-700 text-[10px] sm:text-xs mt-1">
               Adoption rates are shown as percentages (%) over the years
             </p>
           </div>
@@ -193,7 +187,7 @@ const RiceAdoptionRateChart = ({ selectedSeason, selectedVarieties = [] }) => {
         seriesData={seriesData}
         icon="📊"
       />
-    </motion.div>
+    </div>
   );
 };
 

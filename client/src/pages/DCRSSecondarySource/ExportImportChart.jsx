@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import { DCRS_API_URL } from "../../config/api";
 import MultiLineRiceChart from "./MultiLineRiceChart";
@@ -80,7 +79,7 @@ const ExportImportChart = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 sm:py-16 md:py-20">
-        <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-b-4 border-blue-600 mb-3 sm:mb-4"></div>
+        <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-4 border-teal-200 border-t-teal-600 mb-3 sm:mb-4"></div>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg px-4 text-center">Loading export-import data...</p>
       </div>
     );
@@ -138,19 +137,14 @@ const ExportImportChart = () => {
 
   // Display chart
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-6 rounded-lg shadow-lg">
+      <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] text-white p-6 rounded-2xl shadow-sm">
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <span className="text-3xl">🌍</span>
           Rice Export and Import Statistics
         </h2>
-        <p className="text-indigo-100 mt-2">
+        <p className="text-teal-200/70 mt-2">
           Historical data showing rice export and import trends
         </p>
       </div>
@@ -162,7 +156,7 @@ const ExportImportChart = () => {
         seriesData={multiLineData}
         icon="🌍"
       />
-    </motion.div>
+    </div>
   );
 };
 

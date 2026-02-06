@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import { DCRS_API_URL } from "../../config/api";
 import RiceChart from "./RiceChart";
@@ -111,7 +110,7 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 sm:py-16 md:py-20">
-        <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-b-4 border-green-600 mb-3 sm:mb-4"></div>
+        <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 border-4 border-teal-200 border-t-teal-600 mb-3 sm:mb-4"></div>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg px-4 text-center">Loading {selectedSeason} season data...</p>
       </div>
     );
@@ -155,19 +154,14 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
 
   // Display charts
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4 sm:space-y-5 md:space-y-6"
-    >
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
       {/* Season Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 sm:p-5 md:p-6 rounded-lg shadow-lg">
+      <div className="bg-linear-to-r from-[#0a3d3d] to-[#0d5555] text-white p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold flex items-center gap-2 sm:gap-3">
           <span className="text-2xl sm:text-3xl flex-shrink-0">🌾</span>
           <span className="min-w-0 truncate">{selectedSeason} Season Rice Statistics</span>
         </h2>
-        <p className="text-green-100 mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">
+        <p className="text-teal-200/70 mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">
           Historical data showing area, production, and yield trends
         </p>
       </div>
@@ -204,7 +198,7 @@ const SeasonalRiceChart = ({ selectedSeason }) => {
           icon="📊"
         />
       )}
-    </motion.div>
+    </div>
   );
 };
 

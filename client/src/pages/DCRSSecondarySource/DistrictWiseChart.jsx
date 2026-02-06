@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
 import MultiLineRiceChart from "./MultiLineRiceChart";
 import { DCRS_API_URL } from "../../config/api";
 
@@ -50,9 +49,9 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="flex flex-col items-center gap-3 sm:gap-4 px-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
           <p className="text-gray-600 font-medium text-sm sm:text-base text-center">Loading district-wise data...</p>
         </div>
       </div>
@@ -61,7 +60,7 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center px-4">
           <svg
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-red-500 mx-auto mb-3 sm:mb-4"
@@ -85,7 +84,7 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
 
   if (!districtData || districtData.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[350px]">
+      <div className="flex items-center justify-center min-h-62.5 sm:min-h-75 md:min-h-87.5">
         <div className="text-center px-4">
           <svg
             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-400 mx-auto mb-3 sm:mb-4"
@@ -216,17 +215,12 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
 
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4 sm:space-y-5 md:space-y-6"
-    >
+    <div className="space-y-4 sm:space-y-5 md:space-y-6">
       {/* Info Banner */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-r-lg">
+      <div className="bg-teal-50 border-l-4 border-teal-500 p-3 sm:p-4 rounded-r-lg">
         <div className="flex items-start gap-2 sm:gap-3">
           <svg
-            className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-0.5 flex-shrink-0"
+            className="w-4 h-4 sm:w-5 sm:h-5 text-teal-500 mt-0.5 shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -237,10 +231,10 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
             />
           </svg>
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs sm:text-sm font-semibold text-blue-800 mb-1">
+            <h4 className="text-xs sm:text-sm font-semibold text-teal-800 mb-1">
               Selected Filters
             </h4>
-            <p className="text-xs sm:text-sm text-blue-700 break-words">
+            <p className="text-xs sm:text-sm text-teal-700 wrap-break-word">
               <span className="font-medium">Season:</span> {selectedSeason} | 
               <span className="font-medium ml-2">Districts:</span> {selectedDistricts.join(", ")}
             </p>
@@ -298,7 +292,7 @@ const DistrictWiseChart = ({ selectedDistricts, selectedSeason, dataType = "area
           </svg>
         }
       />
-    </motion.div>
+    </div>
   );
 };
 
