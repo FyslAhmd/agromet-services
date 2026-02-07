@@ -6,7 +6,7 @@ const isDevelopment = false;
 // API Base URLs
 const API_URLS = {
   development: "http://localhost:5000/api",
-  production: "https://agromet.brri.gov.bd/api/api", // Update with actual production URL
+  production: "https://agromet.brri.gov.bd/api", // Update with actual production URL
 };
 
 // External API URLs (SAADS for weather data, CCMS for historical climate data, DCRS for rice data)
@@ -18,6 +18,9 @@ const EXTERNAL_API_URLS = {
 
 // Get the appropriate API URL
 export const API_BASE_URL = isDevelopment ? API_URLS.development : API_URLS.production;
+
+// Base URL for uploaded files (strip /api from API_BASE_URL)
+export const UPLOADS_BASE_URL = API_BASE_URL.replace('/api', '');
 
 // External APIs
 export const SAADS_API_URL = EXTERNAL_API_URLS.saads;
@@ -35,6 +38,8 @@ export const API_ENDPOINTS = {
   users: `${API_BASE_URL}/users`,
   userById: (id) => `${API_BASE_URL}/users/${id}`,
   changePassword: (id) => `${API_BASE_URL}/users/${id}/password`,
+  uploadProfilePicture: (id) => `${API_BASE_URL}/users/${id}/profile-picture`,
+  removeProfilePicture: (id) => `${API_BASE_URL}/users/${id}/profile-picture`,
   approveUser: (id) => `${API_BASE_URL}/users/${id}/approve`,
   rejectUser: (id) => `${API_BASE_URL}/users/${id}/reject`,
   

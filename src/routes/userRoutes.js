@@ -9,9 +9,12 @@ import {
   updateUser, 
   deleteUser,
   getCurrentUser,
-  changePassword
+  changePassword,
+  uploadProfilePicture,
+  removeProfilePicture
 } from "../controllers/userController.js";
 import { authMiddleware, adminMiddleware } from "../middleware/authMiddleware.js";
+import { profilePictureUpload } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
 
@@ -24,6 +27,8 @@ router.get("/current", authMiddleware, getCurrentUser);
 router.get("/:userId", authMiddleware, getUserById);
 router.put("/:userId", authMiddleware, updateUser);
 router.put("/:userId/password", authMiddleware, changePassword);
+router.post("/:userId/profile-picture", authMiddleware, profilePictureUpload.single("profilePicture"), uploadProfilePicture);
+router.delete("/:userId/profile-picture", authMiddleware, removeProfilePicture);
 
 // Admin only routes
 router.get("/", authMiddleware, adminMiddleware, getUsers);

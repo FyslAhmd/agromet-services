@@ -1,6 +1,14 @@
+import { Op } from "sequelize";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // User Registration
 export const registerUser = async (req, res) => {
@@ -53,7 +61,8 @@ export const registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profilePicture: user.profilePicture
       }
     });
   } catch (error) {
@@ -112,7 +121,8 @@ export const loginUser = async (req, res) => {
           designation: userByEmail.designation,
           organization: userByEmail.organization,
           role: userByEmail.role,
-          status: userByEmail.status
+          status: userByEmail.status,
+          profilePicture: userByEmail.profilePicture
         }
       });
     }
@@ -147,7 +157,8 @@ export const loginUser = async (req, res) => {
         designation: user.designation,
         organization: user.organization,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profilePicture: user.profilePicture
       }
     });
   } catch (error) {
@@ -231,7 +242,7 @@ export const getUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { name, username, email, mobileNumber, designation, organization, role, status } = req.body;
+    const { name, username, email, mobileNumber, designation, organization, address, role, status } = req.body;
 
     const user = await User.findByPk(userId);
 
@@ -242,7 +253,7 @@ export const updateUser = async (req, res) => {
     // Check if username is being changed and if it already exists
     if (username && username !== user.username) {
       const existingUser = await User.findOne({ 
-        where: { username } 
+        where: { username, id: { [Op.ne]: userId } } 
       });
       if (existingUser) {
         return res.status(400).json({ message: 'Username already exists' });
@@ -252,7 +263,7 @@ export const updateUser = async (req, res) => {
     // Check if email is being changed and if it already exists
     if (email && email !== user.email) {
       const existingEmail = await User.findOne({ 
-        where: { email } 
+        where: { email, id: { [Op.ne]: userId } } 
       });
       if (existingEmail) {
         return res.status(400).json({ message: 'Email already exists' });
@@ -266,6 +277,7 @@ export const updateUser = async (req, res) => {
       mobileNumber: mobileNumber || user.mobileNumber,
       designation: designation || user.designation,
       organization: organization || user.organization,
+      address: address !== undefined ? address : user.address,
       role: role || user.role,
       status: status || user.status
     });
@@ -280,8 +292,10 @@ export const updateUser = async (req, res) => {
         mobileNumber: user.mobileNumber,
         designation: user.designation,
         organization: user.organization,
+        address: user.address,
         role: user.role,
-        status: user.status
+        status: user.status,
+        profilePicture: user.profilePicture
       }
     });
   } catch (error) {
@@ -369,6 +383,67 @@ export const deleteUser = async (req, res) => {
     await user.destroy();
 
     res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Upload profile picture
+export const uploadProfilePicture = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete old profile picture if exists
+    if (user.profilePicture) {
+      const oldPath = join(__dirname, '..', '..', user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Store relative path: uploads/profiles/filename.ext
+    const relativePath = `uploads/profiles/${req.file.filename}`;
+    await user.update({ profilePicture: relativePath });
+
+    res.json({
+      message: 'Profile picture uploaded successfully',
+      profilePicture: relativePath,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Remove profile picture
+export const removeProfilePicture = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete file from disk
+    if (user.profilePicture) {
+      const filePath = join(__dirname, '..', '..', user.profilePicture);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await user.update({ profilePicture: null });
+
+    res.json({ message: 'Profile picture removed successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

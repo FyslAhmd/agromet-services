@@ -61,6 +61,11 @@ const User = sequelize.define("User", {
     defaultValue: 'pending',
     allowNull: false,
   },
+  profilePicture: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
+  },
 }, {
   tableName: 'users',
   timestamps: true,
