@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import WelcomeModal from "../components/WelcomeModal";
 
 const DashboardLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const sidebarRef = useRef(null);
 
   const whatsappNumber = "8801912700606";
@@ -13,6 +15,11 @@ const DashboardLayout = () => {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
     defaultMessage
   )}`;
+
+  // Show welcome modal every time user logs in
+  useEffect(() => {
+    setShowWelcomeModal(true);
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -36,6 +43,12 @@ const DashboardLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+      />
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

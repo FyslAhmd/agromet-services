@@ -103,14 +103,6 @@ const AWS = () => {
         throw new Error("Failed to fetch stations");
       }
       const stationsData = await response.json();
-      
-      console.log("=== All Weather Stations ===");
-      console.log("Total stations:", stationsData.length);
-      stationsData.forEach((station, index) => {
-        console.log(`${index + 1}. ID: ${station.station_id}, Name: ${station.station_name}`);
-      });
-      console.log("===========================");
-      
       setStations(stationsData);
 
       if (stationsData.length > 0 && !location) {
