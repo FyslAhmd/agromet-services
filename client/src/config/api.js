@@ -6,7 +6,7 @@ const isDevelopment = false;
 // API Base URLs
 const API_URLS = {
   development: "http://localhost:5000/api",
-  production: "https://agromet.brri.gov.bd/api", // Update with actual production URL
+  production: "https://agromet.brri.gov.bd/api/api",
 };
 
 // External API URLs (SAADS for weather data, CCMS for historical climate data, DCRS for rice data)
