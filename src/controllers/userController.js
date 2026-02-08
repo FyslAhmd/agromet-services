@@ -120,6 +120,7 @@ export const loginUser = async (req, res) => {
           mobileNumber: userByEmail.mobileNumber,
           designation: userByEmail.designation,
           organization: userByEmail.organization,
+          address: userByEmail.address,
           role: userByEmail.role,
           status: userByEmail.status,
           profilePicture: userByEmail.profilePicture
@@ -156,6 +157,7 @@ export const loginUser = async (req, res) => {
         mobileNumber: user.mobileNumber,
         designation: user.designation,
         organization: user.organization,
+        address: user.address,
         role: user.role,
         status: user.status,
         profilePicture: user.profilePicture

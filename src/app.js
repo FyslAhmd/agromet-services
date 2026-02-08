@@ -119,31 +119,31 @@ async function createDatabaseIfNotExists() {
 }
 
 // Create default admin user if not exists
-async function createDefaultAdmin() {
-  try {
-    const existingAdmin = await User.findOne({ where: { username: 'admin' } });
+// async function createDefaultAdmin() {
+//   try {
+//     const existingAdmin = await User.findOne({ where: { username: 'admin' } });
     
-    if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+//     if (!existingAdmin) {
+//       const hashedPassword = await bcrypt.hash('admin123', 10);
       
-      await User.create({
-        username: 'admin',
-        name: 'System Administrator',
-        email: 'admin@brri.gov.bd',
-        mobileNumber: '01700000000',
-        designation: 'System Administrator',
-        organization: 'BRRI',
-        password: hashedPassword,
-        role: 'admin',
-        status: 'approved'
-      });
+//       await User.create({
+//         username: 'admin',
+//         name: 'System Administrator',
+//         email: 'admin@brri.gov.bd',
+//         mobileNumber: '01700000000',
+//         designation: 'System Administrator',
+//         organization: 'BRRI',
+//         password: hashedPassword,
+//         role: 'admin',
+//         status: 'approved'
+//       });
       
-      console.log('✅ Default admin user created (username: admin, password: admin123)');
-    }
-  } catch (error) {
-    console.error("⚠️  Could not create default admin:", error.message);
-  }
-}
+//       console.log('✅ Default admin user created (username: admin, password: admin123)');
+//     }
+//   } catch (error) {
+//     console.error("⚠️  Could not create default admin:", error.message);
+//   }
+// }
 
 // Initialize database and start server
 async function initializeDatabase() {
@@ -160,7 +160,7 @@ async function initializeDatabase() {
     console.log('✅ Database tables synchronized successfully');
 
     // Create default admin user
-    await createDefaultAdmin();
+    // await createDefaultAdmin();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server listening on http://localhost:${PORT}`);

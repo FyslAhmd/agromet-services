@@ -92,7 +92,7 @@ const Sidebar = () => {
   );
 
   return (
-    <aside className="flex flex-col bg-linear-to-b from-[#0a3d3d] via-[#0d4a4a] to-[#083535] text-white min-h-full w-72 select-none">
+    <aside className="flex flex-col bg-linear-to-b from-[#0a3d3d] via-[#0d4a4a] to-[#083535] text-white h-full min-h-screen lg:min-h-full w-72 select-none">
       {/* Logo Section */}
       <div className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
@@ -121,6 +121,11 @@ const Sidebar = () => {
           icon={CloudIcon}
           label="Weather Forecast"
         />
+        <SidebarLink
+          to="/weather-alert"
+          icon={CloudIcon}
+          label="Weather Alert"
+        />
         <SidebarLink to="/aws" icon={CloudIcon} label="Realtime Weather Data" />
         <SidebarLink
           to="/historical-data"
@@ -130,7 +135,7 @@ const Sidebar = () => {
         <SidebarLink
           to="/secondary-source"
           icon={ShareIcon}
-          label="Rice Data"
+          label="Rice & Rice Related Data"
         />
         <SidebarLink
           to="/feedback"

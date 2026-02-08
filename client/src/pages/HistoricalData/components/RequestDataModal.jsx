@@ -27,24 +27,25 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
     useCustomDateRange: false
   });
 
-  // Pre-fill user data if logged in
+  // Pre-fill user data from profile
   useEffect(() => {
     if (authUser && isOpen) {
-      const registeredUser = authUser.RegistedUser || {};
       setFormData(prev => ({
         ...prev,
-        name: authUser.name || registeredUser.name || "",
-        designation: registeredUser.designation || "",
-        organization: "",
-        address: registeredUser.address || 
-                 [registeredUser.village, registeredUser.union, registeredUser.upazila, registeredUser.district, registeredUser.division]
-                   .filter(Boolean)
-                   .join(", ") || "",
-        email: registeredUser.email || registeredUser.emailOfficial || "",
-        mobile: authUser.mobileNumber || registeredUser.mobileNumber || "",
+        name: authUser.name || "",
+        designation: authUser.designation || "",
+        organization: authUser.organization || "",
+        address: authUser.address || "",
+        email: authUser.email || "",
+        mobile: authUser.mobileNumber || "",
       }));
     }
   }, [authUser, isOpen]);
+
+  const isFieldAutoFilled = (fieldName) => {
+    const mapping = { name: 'name', designation: 'designation', organization: 'organization', address: 'address', email: 'email', mobile: 'mobileNumber' };
+    return authUser && !!authUser[mapping[fieldName]];
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -229,14 +230,9 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
         });
 
         onClose();
-        // Reset form
-        setFormData({
-          name: "",
-          designation: "",
-          organization: "",
-          address: "",
-          email: "",
-          mobile: "",
+        // Reset form but keep user info
+        setFormData(prev => ({
+          ...prev,
           selectedStations: [],
           selectedParameters: [],
           selectedDataFormats: [],
@@ -245,7 +241,7 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
           timeInterval: "1Y",
           dataAverage: "none",
           useCustomDateRange: false
-        });
+        }));
       } else {
         throw new Error(response.data.message || "Failed to submit request");
       }
@@ -287,38 +283,46 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Personal Information */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-5 rounded-md bg-teal-50 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  </svg>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-teal-50 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-teal-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Personal Information</span>
                 </div>
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Personal Information</span>
+                {authUser && (
+                  <span className="inline-flex items-center gap-1 text-[10px] text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Auto-filled from profile
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-                  <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="text" name="name" value={formData.name} onChange={handleInputChange} readOnly={isFieldAutoFilled('name')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('name') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Designation *</label>
-                  <input type="text" name="designation" value={formData.designation} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="text" name="designation" value={formData.designation} onChange={handleInputChange} readOnly={isFieldAutoFilled('designation')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('designation') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Organization *</label>
-                  <input type="text" name="organization" value={formData.organization} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="text" name="organization" value={formData.organization} onChange={handleInputChange} readOnly={isFieldAutoFilled('organization')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('organization') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Address *</label>
-                  <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="text" name="address" value={formData.address} onChange={handleInputChange} readOnly={isFieldAutoFilled('address')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('address') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Email *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} readOnly={isFieldAutoFilled('email')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('email') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Mobile *</label>
-                  <input type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all" required />
+                  <input type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} readOnly={isFieldAutoFilled('mobile')} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${isFieldAutoFilled('mobile') ? 'bg-gray-50 border-gray-100 text-gray-600 cursor-default' : 'border-gray-200 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500'}`} required />
                 </div>
               </div>
             </div>

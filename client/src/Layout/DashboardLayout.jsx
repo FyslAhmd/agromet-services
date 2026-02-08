@@ -60,7 +60,7 @@ const DashboardLayout = () => {
       {/* Sidebar — fixed on desktop, slide-over on mobile */}
       <div
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:z-auto lg:overflow-visible ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -95,7 +95,7 @@ const DashboardLayout = () => {
             </button>
 
             {/* Center — Welcome text */}
-            <h1 className="text-sm sm:text-lg font-semibold text-white tracking-wide flex-1 text-center">
+            <h1 className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide flex-1 text-center">
               Welcome to Agromet Services Portal
             </h1>
 
