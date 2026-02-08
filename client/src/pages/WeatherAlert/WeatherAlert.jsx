@@ -342,7 +342,7 @@ const WeatherAlert = () => {
         {/* Map section */}
         <div className="lg:col-span-8 xl:col-span-9">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden weather-alert-map">
-            <div className="relative" style={{ height: "calc(100vh - 280px)", minHeight: "450px" }}>
+            <div className="relative" style={{ height: "calc(100vh - 220px)", minHeight: "620px" }}>
               {!bangladeshGeoJSON ? (
                 <div className="h-full flex items-center justify-center bg-gray-50/50">
                   <div className="text-center">
@@ -363,6 +363,7 @@ const WeatherAlert = () => {
                     style={{ height: "100%", width: "100%" }}
                     zoomControl={true}
                     scrollWheelZoom={true}
+                    attributionControl={false}
                   >
                     <TileLayer
                       url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"

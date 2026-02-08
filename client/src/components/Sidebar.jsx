@@ -222,17 +222,12 @@ const Sidebar = () => {
 
       {/* Farmer Service Image Section - Only for non-admin users */}
       {authUser && authUser.role !== "admin" && (
-        <div className="">
-          <div className="relative">
-            <div className="relative overflow-hidden">
-              <img
-                src="/farmerService2.png"
-                alt="Farmer Services"
-                className="w-full h-auto object-contain"
-                style={{ maxHeight: "400px" }}
-              />
-            </div>
-          </div>
+        <div className="px-6 py-4 flex justify-center">
+          <img
+            src="/farmerService2.png"
+            alt="Farmer Services"
+            className="h-40 w-auto object-contain"
+          />
         </div>
       )}
 
