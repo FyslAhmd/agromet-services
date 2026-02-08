@@ -136,7 +136,7 @@ const DashboardLayout = () => {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full p-3.5 shadow-2xl hover:shadow-[0_10px_40px_rgba(37,211,102,0.4)] transition-all duration-300 hover:scale-110 group"
+        className="fixed bottom-4 right-4 z-50 bg-[#25D366] hover:bg-[#20BA5A] text-white rounded-full p-3.5 shadow-2xl hover:shadow-[0_10px_40px_rgba(37,211,102,0.4)] transition-all duration-300 hover:scale-110 group"
         title="Chat with BRRI on WhatsApp"
       >
         <svg

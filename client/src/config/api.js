@@ -1,4 +1,4 @@
-const isDevelopment = true;
+const isDevelopment = false;
 
 const API_URLS = {
   development: "http://localhost:5000/api",

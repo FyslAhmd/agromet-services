@@ -1,0 +1,7 @@
+/* Move Leaflet zoom control to bottom-left on mobile */
+@media (max-width: 639px) {
+  .weather-map .leaflet-top.leaflet-left {
+    top: auto !important;
+    bottom: 10px;
+  }
+}
