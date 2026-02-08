@@ -1,0 +1,16 @@
+/* Keep Leaflet controls below sidebar z-index */
+.weather-alert-map .leaflet-control-container .leaflet-top,
+.weather-alert-map .leaflet-control-container .leaflet-bottom {
+  z-index: 500 !important;
+}
+
+/* Weather Alert Map - zoom control repositioning on mobile */
+@media (max-width: 639px) {
+  .weather-alert-map .leaflet-control-zoom {
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    top: auto !important;
+    right: auto !important;
+  }
+}

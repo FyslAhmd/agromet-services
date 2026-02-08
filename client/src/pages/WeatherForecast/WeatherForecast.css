@@ -1,3 +1,9 @@
+/* Keep Leaflet controls below sidebar z-index */
+.weather-map .leaflet-control-container .leaflet-top,
+.weather-map .leaflet-control-container .leaflet-bottom {
+  z-index: 500 !important;
+}
+
 /* Move Leaflet zoom control to bottom-left on mobile */
 @media (max-width: 639px) {
   .weather-map .leaflet-top.leaflet-left {

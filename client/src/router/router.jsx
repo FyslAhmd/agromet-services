@@ -18,6 +18,7 @@ import Feedback from "../pages/Feedback/Feedback";
 import FeedbackManagement from "../pages/FeedbackManagement/FeedbackManagement";
 import About from "../pages/About/About";
 import WeatherForecast from "../pages/WeatherForecast/WeatherForecast";
+import WeatherAlert from "../pages/WeatherAlert/WeatherAlert";
 import Profile from "../pages/Profile/Profile";
 
 const router = createBrowserRouter([
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         path: "weather-forecast",
         element: <WeatherForecast />,
+      },
+      {
+        path: "weather-alert",
+        element: <WeatherAlert />,
       },
     ],
   },

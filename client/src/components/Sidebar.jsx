@@ -16,6 +16,7 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { AlertTriangle } from "lucide-react";
 import { useAuthContext } from "./context/AuthProvider";
 import { UPLOADS_BASE_URL } from "../config/api";
 import { toast } from "react-hot-toast";
@@ -123,13 +124,17 @@ const Sidebar = () => {
         />
         <SidebarLink
           to="/weather-alert"
-          icon={CloudIcon}
+          icon={AlertTriangle}
           label="Weather Alert"
         />
-        <SidebarLink to="/aws" icon={CloudIcon} label="Realtime Weather Data" />
+        <SidebarLink
+          to="/aws"
+          icon={ClockIcon}
+          label="Real time Weather Data"
+        />
         <SidebarLink
           to="/historical-data"
-          icon={ClockIcon}
+          icon={TableCellsIcon}
           label="Historical Weather Data"
         />
         <SidebarLink
@@ -224,7 +229,7 @@ const Sidebar = () => {
                 src="/farmerService2.png"
                 alt="Farmer Services"
                 className="w-full h-auto object-contain"
-                style={{ maxHeight: '400px' }}
+                style={{ maxHeight: "400px" }}
               />
             </div>
           </div>

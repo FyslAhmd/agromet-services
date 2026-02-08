@@ -52,7 +52,7 @@ const DashboardLayout = () => {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-999 lg:hidden transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -60,7 +60,7 @@ const DashboardLayout = () => {
       {/* Sidebar — fixed on desktop, slide-over on mobile */}
       <div
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:z-auto lg:overflow-visible ${
+        className={`fixed inset-y-0 left-0 z-1000 w-72 overflow-y-auto transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto lg:z-auto lg:overflow-visible ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -70,7 +70,7 @@ const DashboardLayout = () => {
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-linear-to-r from-[#0a3d3d] via-[#0d5555] to-[#0a3d3d] shadow-md">
+        <header className="sticky top-0 z-900 bg-linear-to-r from-[#0a3d3d] via-[#0d5555] to-[#0a3d3d] shadow-md">
           <div className="flex items-center justify-between h-14 px-4 sm:px-6">
             {/* Left — Hamburger */}
             <button
