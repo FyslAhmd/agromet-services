@@ -22,6 +22,7 @@ import evapoTranspirationRoutes from "./routes/evapoTranspirationRoutes.js";
 import dcrsProxyRoutes from "./routes/dcrsProxyRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import historicalDataRequestRoutes from "./routes/historicalDataRequestRoutes.js";
+import weatherProxyRoutes from "./routes/weatherProxyRoutes.js";
 
 // Import models
 import User from "./models/User.js";
@@ -87,6 +88,7 @@ app.use("/api/evapo-transpiration", evapoTranspirationRoutes);
 app.use("/api/dcrs-proxy", dcrsProxyRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
 app.use("/api/historical-data-requests", historicalDataRequestRoutes);
+app.use("/api/weather", weatherProxyRoutes);
 
 // Health check route
 app.get("/api", (req, res) => {

@@ -17,9 +17,10 @@ import {
   BarChart3,
 } from "lucide-react";
 
+import { API_BASE_URL } from "../../config/api";
 import L from "leaflet";
 
-const IRAS_API_URL = "https://iras.brri.gov.bd";
+const WEATHER_API_URL = `${API_BASE_URL}/weather`;
 
 // Component to handle map zoom and center changes
 const MapController = ({ center, zoom }) => {
@@ -128,7 +129,7 @@ const WeatherForecast = () => {
 
   // Load locations data from API
   useEffect(() => {
-    fetch(`${IRAS_API_URL}/api/weather/locations`)
+    fetch(`${WEATHER_API_URL}/locations`)
       .then((r) => r.json())
       .then((data) => {
         if (data?.success && data.data?.result)
@@ -152,11 +153,11 @@ const WeatherForecast = () => {
       try {
         let url = "";
         if (locationType === "division") {
-          url = `${IRAS_API_URL}/api/weather/forecast?type=division&id=${getDivisionId(selectedFeature.properties.NAME_1)}`;
+          url = `${WEATHER_API_URL}/forecast?type=division&id=${getDivisionId(selectedFeature.properties.NAME_1)}`;
         } else if (locationType === "district") {
-          url = `${IRAS_API_URL}/api/weather/forecast?type=district&id=${getDistrictId(selectedFeature.properties.NAME_2)}`;
+          url = `${WEATHER_API_URL}/forecast?type=district&id=${getDistrictId(selectedFeature.properties.NAME_2)}`;
         } else {
-          url = `${IRAS_API_URL}/api/weather/forecast?type=upazila&id=${getUpazilaId(selectedFeature.properties.NAME_3)}`;
+          url = `${WEATHER_API_URL}/forecast?type=upazila&id=${getUpazilaId(selectedFeature.properties.NAME_3)}`;
         }
 
         const response = await fetch(url);
