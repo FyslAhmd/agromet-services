@@ -206,7 +206,7 @@ const WeatherForecast = () => {
     setLocationType(type);
     setMapCenter([23.8103, 90.4125]);
     setSelectedFeature(null);
-    setMapZoom(type === "upazila" ? 8 : 7);
+    // setMapZoom(type === "upazila" ? 8 : 7);
   };
 
   // GeoJSON filtering / merging
