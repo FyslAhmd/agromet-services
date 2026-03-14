@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { API_BASE_URL } from "../../config/api";
+import WhatsAppButton from "../../components/WhatsAppButton";
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -419,6 +420,8 @@ const Registration = () => {
           </p>
         </form>
       </div>
+
+      <WhatsAppButton />
     </div>
   );
 };

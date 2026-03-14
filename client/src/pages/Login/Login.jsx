@@ -3,6 +3,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthContext } from "../../components/context/AuthProvider";
 import { API_ENDPOINTS } from "../../config/api";
+import WhatsAppButton from "../../components/WhatsAppButton";
 
 function Login() {
   const navigate = useNavigate();
@@ -294,6 +295,8 @@ function Login() {
             </div>
           </div>
         </div>
+
+        <WhatsAppButton />
       </div>
     </>
   );
