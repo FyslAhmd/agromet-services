@@ -17,6 +17,17 @@ import {
 import { API_BASE_URL } from "../../config/api";
 
 const WEATHER_API_URL = `${API_BASE_URL}/weather`;
+const getResponsiveAlertMapZoom = () => {
+  if (typeof window === "undefined") return 7.2;
+  return window.innerWidth >= 768 ? 7.2 : 6;
+};
+
+const getResponsiveAlertMapHeight = () => {
+  if (typeof window === "undefined") return "620px";
+  if (window.innerWidth >= 1024) return "calc(100vh - 220px)";
+  if (window.innerWidth >= 768) return "520px";
+  return "400px";
+};
 
 const WeatherAlert = () => {
   const [selectedDate, setSelectedDate] = useState(
@@ -28,7 +39,8 @@ const WeatherAlert = () => {
   const [alertData, setAlertData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [mapCenter] = useState([23.8, 90.3]);
-  const [mapZoom] = useState(7.2);
+  const [mapZoom, setMapZoom] = useState(getResponsiveAlertMapZoom);
+  const [mapHeight, setMapHeight] = useState(getResponsiveAlertMapHeight);
   const [locationsData, setLocationsData] = useState([]);
   const [selectedSummaryLevel, setSelectedSummaryLevel] = useState(null);
 
@@ -92,6 +104,18 @@ const WeatherAlert = () => {
         }
       })
       .catch((error) => console.error("Error loading locations:", error));
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setMapZoom(getResponsiveAlertMapZoom());
+      setMapHeight(getResponsiveAlertMapHeight());
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Fetch alert data from API
@@ -346,7 +370,7 @@ const WeatherAlert = () => {
         {/* Map section */}
         <div className="lg:col-span-8 xl:col-span-9">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden weather-alert-map">
-            <div className="relative" style={{ height: "calc(100vh - 220px)", minHeight: "620px" }}>
+            <div className="relative" style={{ height: mapHeight, minHeight: mapHeight }}>
               {!bangladeshGeoJSON ? (
                 <div className="h-full flex items-center justify-center bg-gray-50/50">
                   <div className="text-center">
