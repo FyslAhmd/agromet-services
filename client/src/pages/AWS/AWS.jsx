@@ -5,6 +5,7 @@ import { useAuthContext } from "../../components/context/AuthProvider";
 
 const AWS = () => {
   const { authUser } = useAuthContext();
+  const [citationAccepted, setCitationAccepted] = useState(false);
   const [location, setLocation] = useState("");
   const [stations, setStations] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,6 +128,12 @@ const AWS = () => {
     fetchStations();
   }, []);
 
+  useEffect(() => {
+    if (isModalOpen) {
+      setCitationAccepted(false);
+    }
+  }, [isModalOpen]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -225,6 +232,16 @@ const AWS = () => {
       return;
     }
 
+    if (!citationAccepted) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Acknowledgement Required',
+        text: 'Please confirm the citation acknowledgement before submitting your request.',
+        confirmButtonColor: '#f59e0b'
+      });
+      return;
+    }
+
     try {
       Swal.fire({
         title: 'Submitting Request...',
@@ -293,6 +310,7 @@ const AWS = () => {
         dataInterval: 8,
         useCustomDateRange: false
       }));
+      setCitationAccepted(false);
 
     } catch (error) {
       console.error("Error submitting request:", error);
@@ -641,12 +659,30 @@ const AWS = () => {
                 </div>
               </div>
 
+              <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5" onClick={closeDropdowns}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    checked={citationAccepted}
+                    onChange={(e) => setCitationAccepted(e.target.checked)}
+                  />
+                  <span className="text-sm text-gray-700 leading-relaxed">
+                    I acknowledge that any publication, report, presentation, or other use of data provided through this request must appropriately cite <span className="font-semibold text-gray-900">Agromet Lab, BRRI</span> as the data source.
+                  </span>
+                </label>
+              </div>
+
               {/* Modal Actions */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100" onClick={closeDropdowns}>
                 <button type="button" onClick={() => { closeDropdowns(); setIsModalOpen(false); }} className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-lg transition-colors shadow-sm">
+                <button
+                  type="submit"
+                  disabled={!citationAccepted}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] disabled:bg-gray-300 disabled:hover:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                >
                   Submit Request
                 </button>
               </div>

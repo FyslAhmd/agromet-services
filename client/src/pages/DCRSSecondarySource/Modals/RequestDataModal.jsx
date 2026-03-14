@@ -14,6 +14,7 @@ const RequestDataModal = ({
   riceSeasons
 }) => {
   const { authUser } = useAuthContext();
+  const [citationAccepted, setCitationAccepted] = useState(false);
 
   // Local state for new features
   const [selectedDataSources, setSelectedDataSources] = useState([]);
@@ -89,6 +90,12 @@ const RequestDataModal = ({
       }));
     }
   }, [authUser, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCitationAccepted(false);
+    }
+  }, [isOpen]);
 
   const isFieldAutoFilled = (fieldName) => {
     const mapping = { name: 'name', designation: 'designation', organization: 'organization', address: 'address', email: 'email', mobile: 'mobileNumber' };
@@ -269,6 +276,16 @@ const RequestDataModal = ({
       return;
     }
 
+    if (!citationAccepted) {
+      Swal.fire({
+        icon: "warning",
+        title: "Acknowledgement Required",
+        text: "Please confirm the citation acknowledgement before submitting your request.",
+        confirmButtonColor: "#f59e0b",
+      });
+      return;
+    }
+
     try {
       Swal.fire({
         title: "Submitting Request...",
@@ -327,6 +344,7 @@ const RequestDataModal = ({
         setToYear(currentYear);
         setDataAverage(null);
         setDownloadFormats({ csv: false, image: false });
+        setCitationAccepted(false);
 
         onClose();
       } else {
@@ -362,6 +380,7 @@ const RequestDataModal = ({
     setToYear(currentYear);
     setDataAverage(null);
     setDownloadFormats({ csv: false, image: false, table: false });
+    setCitationAccepted(false);
     onClose();
   };
 
@@ -1016,6 +1035,20 @@ const RequestDataModal = ({
             ></textarea>
           </div>
 
+          <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 sm:p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={citationAccepted}
+                onChange={(e) => setCitationAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+              />
+              <span className="text-sm text-gray-700 leading-relaxed">
+                I acknowledge that any publication, report, presentation, or other use of data provided through this request must appropriately cite <span className="font-semibold text-gray-900">Agromet Lab, BRRI</span> as the data source.
+              </span>
+            </label>
+          </div>
+
           {/* Modal Actions */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <button
@@ -1027,7 +1060,8 @@ const RequestDataModal = ({
             </button>
             <button
               type="submit"
-              className="order-1 sm:order-2 flex-1 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-[#0d4a4a] text-white rounded-lg hover:bg-[#0a3d3d] transition-colors font-medium shadow-sm"
+              disabled={!citationAccepted}
+              className="order-1 sm:order-2 flex-1 px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-[#0d4a4a] text-white rounded-lg hover:bg-[#0a3d3d] disabled:bg-gray-300 disabled:hover:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
             >
               Submit Request
             </button>
