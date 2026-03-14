@@ -1,4 +1,4 @@
-const isDevelopment = false;
+const isDevelopment = true;
 
 const API_URLS = {
   development: "http://localhost:5000/api",
@@ -28,9 +28,9 @@ export const API_ENDPOINTS = {
   removeProfilePicture: (id) => `${API_BASE_URL}/users/${id}/profile-picture`,
   approveUser: (id) => `${API_BASE_URL}/users/${id}/approve`,
   rejectUser: (id) => `${API_BASE_URL}/users/${id}/reject`,
-  
+
   weatherStations: `${SAADS_API_URL}/research-measures/stations`,
-  weatherData: (stationId, parameter) => 
+  weatherData: (stationId, parameter) =>
     `${SAADS_API_URL}/research-measures/time-series?station_id=${stationId}&parameter=${parameter}`,
   cisRequest: `${SAADS_API_URL}/cis`,
 };
@@ -49,12 +49,12 @@ export const apiFetch = async (url, options = {}) => {
   };
 
   const response = await fetch(url, { ...defaultOptions, ...options });
-  
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "Request failed" }));
     throw new Error(error.message || "Request failed");
   }
-  
+
   return response.json();
 };
 

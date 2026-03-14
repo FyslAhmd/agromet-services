@@ -40,7 +40,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/aws" replace />,
+        element: <Navigate to="/weather-forecast" replace />,
       },
       {
         path: "aws",
