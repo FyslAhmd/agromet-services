@@ -120,20 +120,10 @@ const WeatherAlert = () => {
           result.data.result.forEach((item) => {
             const locationName = item[nameKey];
             if (locationName) {
-              let value = 0;
-
-              if (selectedAlert === "rainfall") {
-                value = parseFloat(item.val_max) || 0;
-              } else if (selectedAlert === "heat") {
-                value = parseFloat(item.val_max) || 0;
-              } else if (selectedAlert === "cold") {
-                value = parseFloat(item.val_min) || 0;
-              } else if (selectedAlert === "wind") {
-                value = parseFloat(item.val_max) || 0;
-              }
+              const alertLevel = parseInt(item.alert, 10) || 1;
 
               newAlertData[locationName] = {
-                value: value,
+                alertLevel,
                 color: item.color || "#84cc16",
                 alert: item.alert,
                 val_min: parseFloat(item.val_min),
@@ -155,15 +145,14 @@ const WeatherAlert = () => {
     fetchAlertData();
   }, [selectedDate, selectedAlert, selectedLevel, bangladeshGeoJSON]);
 
-  // Get alert level for a value
-  const getAlertLevel = (value) => {
+  // Map API alert numbers to configured alert levels
+  const getAlertLevel = (alertLevel) => {
     const thresholds = alertThresholds[selectedAlert];
-    for (let i = thresholds.length - 1; i >= 0; i--) {
-      if (value >= thresholds[i].min && value <= thresholds[i].max) {
-        return thresholds[i];
-      }
-    }
-    return thresholds[0];
+    const index = Math.max(
+      0,
+      Math.min((alertLevel || 1) - 1, thresholds.length - 1)
+    );
+    return thresholds[index];
   };
 
   // Calculate summary statistics
@@ -184,12 +173,9 @@ const WeatherAlert = () => {
     });
 
     Object.values(alertData).forEach((districtData) => {
-      const value = districtData.value;
-      for (let i = thresholds.length - 1; i >= 0; i--) {
-        if (value >= thresholds[i].min && value <= thresholds[i].max) {
-          summary[thresholds[i].level].count++;
-          break;
-        }
+      const level = getAlertLevel(districtData.alertLevel);
+      if (summary[level.level]) {
+        summary[level.level].count++;
       }
     });
 
@@ -220,7 +206,7 @@ const WeatherAlert = () => {
       };
     }
 
-    const level = getAlertLevel(locationData.value);
+    const level = getAlertLevel(locationData.alertLevel);
 
     return {
       fillColor: level.color,
@@ -241,7 +227,7 @@ const WeatherAlert = () => {
     if (locationData) {
       const unit =
         alertTypes.find((t) => t.id === selectedAlert)?.unit || "";
-      const level = getAlertLevel(locationData.value);
+      const level = getAlertLevel(locationData.alertLevel);
 
       layer.bindPopup(`
         <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 180px;">
@@ -525,7 +511,7 @@ const WeatherAlert = () => {
                 <span className="text-sm font-bold text-amber-600">
                   {
                     Object.values(alertData).filter((d) => {
-                      const level = getAlertLevel(d.value);
+                      const level = getAlertLevel(d.alertLevel);
                       return level.level !== "no-alert";
                     }).length
                   }
