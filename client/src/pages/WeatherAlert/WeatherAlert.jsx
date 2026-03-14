@@ -30,6 +30,7 @@ const WeatherAlert = () => {
   const [mapCenter] = useState([23.8, 90.3]);
   const [mapZoom] = useState(7.2);
   const [locationsData, setLocationsData] = useState([]);
+  const [selectedSummaryLevel, setSelectedSummaryLevel] = useState(null);
 
   // Alert thresholds and colors
   const alertThresholds = {
@@ -162,6 +163,7 @@ const WeatherAlert = () => {
 
     thresholds.forEach((threshold) => {
       summary[threshold.level] = {
+        level: threshold.level,
         count: 0,
         label: threshold.label,
         range: `${threshold.min} – ${threshold.max}`,
@@ -180,6 +182,16 @@ const WeatherAlert = () => {
     });
 
     return Object.values(summary);
+  };
+
+  const getLocationsForSummaryLevel = (levelKey) => {
+    return Object.entries(alertData)
+      .filter(([, locationData]) => {
+        const level = getAlertLevel(locationData.alertLevel);
+        return level.level === levelKey;
+      })
+      .map(([locationName]) => locationName)
+      .sort((a, b) => a.localeCompare(b));
   };
 
   // Get filtered GeoJSON
@@ -249,6 +261,12 @@ const WeatherAlert = () => {
 
   const summary = getSummary();
   const currentAlertType = alertTypes.find((t) => t.id === selectedAlert);
+  const selectedSummaryDetails = selectedSummaryLevel
+    ? summary.find((item) => item.level === selectedSummaryLevel)
+    : null;
+  const summaryLocations = selectedSummaryLevel
+    ? getLocationsForSummaryLevel(selectedSummaryLevel)
+    : [];
 
   return (
     <div className="w-full min-h-full space-y-5">
@@ -435,9 +453,11 @@ const WeatherAlert = () => {
               {summary.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <div
+                  <button
                     key={index}
-                    className="rounded-xl p-3.5 transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
+                    type="button"
+                    onClick={() => setSelectedSummaryLevel(item.level)}
+                    className="rounded-xl p-3.5 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${item.color}18, ${item.color}08)`,
                       border: `1px solid ${item.color}30`,
@@ -466,7 +486,7 @@ const WeatherAlert = () => {
                     <p className="text-[9px] text-gray-400 mt-0.5">
                       {item.range} {currentAlertType?.unit}
                     </p>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -528,6 +548,77 @@ const WeatherAlert = () => {
           Data source: Bangladesh Meteorological Department (BMD) · Updated daily
         </p>
       </div>
+
+      {selectedSummaryDetails && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+            onClick={() => setSelectedSummaryLevel(null)}
+          />
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-100">
+            <div
+              className="px-5 py-4 text-white"
+              style={{
+                background: `linear-gradient(135deg, ${selectedSummaryDetails.color}, ${selectedSummaryDetails.color}dd)`,
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                    {selectedLevel === "upazila" ? "Upazila" : "District"} List
+                  </p>
+                  <h3 className="mt-1 text-lg sm:text-xl font-bold">
+                    {selectedSummaryDetails.label}
+                  </h3>
+                  <p className="mt-1 text-sm text-white/85">
+                    {summaryLocations.length} {selectedLevel === "upazila" ? "upazila" : "district"}
+                    {summaryLocations.length === 1 ? "" : "s"} under {currentAlertType?.label?.toLowerCase()} alert
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSummaryLevel(null)}
+                  className="rounded-xl bg-white/12 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-4 sm:p-5">
+              {summaryLocations.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {summaryLocations.map((locationName, index) => (
+                    <div
+                      key={`${selectedSummaryLevel}-${locationName}-${index}`}
+                      className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3"
+                    >
+                      <div
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: selectedSummaryDetails.color }}
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        {locationName}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 px-6 text-center">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600">
+                      No {selectedLevel === "upazila" ? "upazilas" : "districts"} in this alert group
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      There are currently no locations classified as {selectedSummaryDetails.label.toLowerCase()} for the selected date and parameter.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
