@@ -21,6 +21,19 @@ import { API_BASE_URL } from "../../config/api";
 import L from "leaflet";
 
 const WEATHER_API_URL = `${API_BASE_URL}/weather`;
+const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
+
+const getResponsiveMapZoom = () => {
+  if (typeof window === "undefined") return 7;
+  return window.innerWidth >= 768 ? 7 : 6;
+};
+
+const getResponsiveMapHeight = () => {
+  if (typeof window === "undefined") return "620px";
+  if (window.innerWidth >= 1024) return "620px";
+  if (window.innerWidth >= 768) return "520px";
+  return "400px";
+};
 
 // Component to handle map zoom and center changes
 const MapController = ({ center, zoom }) => {
@@ -51,8 +64,8 @@ const FitBoundsController = ({ feature }) => {
 
 const WeatherForecast = () => {
   const [locationType, setLocationType] = useState("division");
-  const [mapCenter, setMapCenter] = useState([23.8103, 90.4125]);
-  const [mapZoom, setMapZoom] = useState(7);
+  const [mapCenter, setMapCenter] = useState(DEFAULT_MAP_CENTER);
+  const [mapZoom, setMapZoom] = useState(getResponsiveMapZoom);
   const [geoJSONData, setGeoJSONData] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [forecastData, setForecastData] = useState([]);
@@ -60,6 +73,7 @@ const WeatherForecast = () => {
   const [forecastError, setForecastError] = useState(null);
   const [locationsData, setLocationsData] = useState([]);
   const [activeMetric, setActiveMetric] = useState("temp");
+  const [mapHeight, setMapHeight] = useState(getResponsiveMapHeight);
 
   // Load GeoJSON data
   useEffect(() => {
@@ -67,6 +81,18 @@ const WeatherForecast = () => {
       .then((response) => response.json())
       .then((data) => setGeoJSONData(data))
       .catch((error) => console.error("Error loading GeoJSON:", error));
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setMapHeight(getResponsiveMapHeight());
+      setMapZoom(getResponsiveMapZoom());
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Auto-select on initial load
@@ -204,7 +230,7 @@ const WeatherForecast = () => {
 
   const handleLocationTypeChange = (type) => {
     setLocationType(type);
-    setMapCenter([23.8103, 90.4125]);
+    setMapCenter(DEFAULT_MAP_CENTER);
     setSelectedFeature(null);
     // setMapZoom(type === "upazila" ? 8 : 7);
   };
@@ -502,7 +528,7 @@ const WeatherForecast = () => {
               )}
             </div>
 
-            <div className="relative weather-map" style={{ height: "620px" }}>
+            <div className="relative weather-map" style={{ height: mapHeight }}>
               <MapContainer
                 center={mapCenter}
                 zoom={mapZoom}
@@ -568,7 +594,7 @@ const WeatherForecast = () => {
         {/* RIGHT: Info + Forecast */}
         <div className="lg:col-span-5 flex flex-col gap-5">
           {/* Selected Area mini map */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-teal-600" />
