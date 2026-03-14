@@ -68,6 +68,8 @@ const WeatherForecast = () => {
   const [mapZoom, setMapZoom] = useState(getResponsiveMapZoom);
   const [geoJSONData, setGeoJSONData] = useState(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [forecastData, setForecastData] = useState([]);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [forecastError, setForecastError] = useState(null);
@@ -101,7 +103,7 @@ const WeatherForecast = () => {
 
     let feature = null;
 
-    if (locationType === "division") {
+    if (locationType === "division" || locationType === "region") {
       const dhakaFeatures = geoJSONData.features.filter(
         (f) => f.properties.NAME_1 === "Dhaka",
       );
@@ -178,7 +180,7 @@ const WeatherForecast = () => {
       setForecastError(null);
       try {
         let url = "";
-        if (locationType === "division") {
+        if (locationType === "division" || locationType === "region") {
           url = `${WEATHER_API_URL}/forecast?type=division&id=${getDivisionId(selectedFeature.properties.NAME_1)}`;
         } else if (locationType === "district") {
           url = `${WEATHER_API_URL}/forecast?type=district&id=${getDistrictId(selectedFeature.properties.NAME_2)}`;
@@ -232,6 +234,8 @@ const WeatherForecast = () => {
     setLocationType(type);
     setMapCenter(DEFAULT_MAP_CENTER);
     setSelectedFeature(null);
+    setLocationSearch("");
+    setLocationDropdownOpen(false);
     // setMapZoom(type === "upazila" ? 8 : 7);
   };
 
@@ -297,7 +301,8 @@ const WeatherForecast = () => {
 
   const getColorForLocation = (feature) => {
     let name = "";
-    if (locationType === "division") name = feature.properties.NAME_1 || "";
+    if (locationType === "division" || locationType === "region")
+      name = feature.properties.NAME_1 || "";
     else if (locationType === "district")
       name = feature.properties.NAME_2 || "";
     else name = feature.properties.NAME_3 || "";
@@ -309,7 +314,7 @@ const WeatherForecast = () => {
 
   const isSelected = (feature) => {
     if (!selectedFeature) return false;
-    if (locationType === "division")
+    if (locationType === "division" || locationType === "region")
       return feature.properties.NAME_1 === selectedFeature.properties.NAME_1;
     if (locationType === "district")
       return feature.properties.NAME_2 === selectedFeature.properties.NAME_2;
@@ -326,6 +331,15 @@ const WeatherForecast = () => {
 
   const getFeatureName = (feature) => {
     if (!feature) return "";
+    if (locationType === "region") {
+      return feature.properties.NAME_1 || "";
+    }
+    if (locationType === "division") {
+      return feature.properties.NAME_1 || "";
+    }
+    if (locationType === "district") {
+      return feature.properties.NAME_2 || "";
+    }
     return (
       feature.properties.NAME_3 ||
       feature.properties.NAME_2 ||
@@ -369,6 +383,45 @@ const WeatherForecast = () => {
   const getSecondaryMapData = () => {
     if (!selectedFeature) return getFilteredGeoJSON();
     return { type: "FeatureCollection", features: [selectedFeature] };
+  };
+
+  const getLocationOptions = () => {
+    const data = getFilteredGeoJSON();
+    if (!data?.features?.length) return [];
+
+    const optionMap = new Map();
+
+    data.features.forEach((feature) => {
+      const name = getFeatureName(feature);
+      if (!name) return;
+
+      // Keep the first occurrence for dropdown selection so duplicate
+      // upazila names from the GeoJSON do not render multiple times.
+      if (!optionMap.has(name)) {
+        optionMap.set(name, {
+          key: `${locationType}-${name}`,
+          name,
+          feature,
+        });
+      }
+    });
+
+    return Array.from(optionMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  };
+
+  const locationOptions = getLocationOptions();
+  const filteredLocationOptions = locationOptions.filter((item) =>
+    item.name.toLowerCase().includes(locationSearch.toLowerCase())
+  );
+
+  const handleLocationSelect = (name) => {
+    const match = locationOptions.find((item) => item.name === name);
+    if (!match) return;
+    setSelectedFeature(match.feature);
+    setLocationSearch("");
+    setLocationDropdownOpen(false);
   };
 
   const getMetricInfo = (metric) => {
@@ -492,7 +545,7 @@ const WeatherForecast = () => {
           {locationTypeOptions.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => opt.value !== "region" && handleLocationTypeChange(opt.value)}
+              onClick={() => handleLocationTypeChange(opt.value)}
               className={`flex-1 sm:flex-none px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-150 text-center ${
                 locationType === opt.value
                   ? "bg-[#0d4a4a] text-white shadow-sm"
@@ -580,8 +633,84 @@ const WeatherForecast = () => {
                 })}
               </div>
 
+              <div className="absolute bottom-4 left-4 right-4 z-400">
+                <div className="mx-auto max-w-[16rem] sm:max-w-md rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white/95 p-2 sm:p-3 shadow-xl backdrop-blur-sm">
+                  <div className="mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
+                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-teal-600" />
+                    <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Select {locationType}
+                    </p>
+                  </div>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLocationDropdownOpen((current) => !current)
+                      }
+                      className="flex w-full items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                    >
+                      <span className="truncate pr-2 sm:pr-3 text-xs sm:text-sm">
+                        {selectedName || `Choose ${locationType}...`}
+                      </span>
+                      <svg
+                        className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-gray-400 transition-transform ${
+                          locationDropdownOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {locationDropdownOpen && (
+                      <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-1.5 sm:p-2 shadow-2xl">
+                        <input
+                          type="text"
+                          value={locationSearch}
+                          onChange={(e) => setLocationSearch(e.target.value)}
+                          placeholder={`Search ${locationType} name...`}
+                          className="mb-1.5 sm:mb-2 w-full rounded-lg sm:rounded-xl border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                        />
+                        <div className="max-h-32 sm:max-h-40 overflow-y-auto rounded-lg sm:rounded-xl border border-gray-100 bg-gray-50/50 p-1">
+                          {filteredLocationOptions.length > 0 ? (
+                            filteredLocationOptions.map((item) => (
+                              <button
+                                key={item.key}
+                                type="button"
+                                onClick={() => handleLocationSelect(item.name)}
+                                className={`flex w-full items-center rounded-md sm:rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm transition-colors ${
+                                  item.name === selectedName
+                                    ? "bg-teal-50 text-teal-700"
+                                    : "text-gray-700 hover:bg-white"
+                                }`}
+                              >
+                                <span className="truncate">{item.name}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-400">
+                              No matching {locationType} found.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {!selectedFeature && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-400 pointer-events-none">
+                <div
+                  className="absolute left-1/2 z-400 -translate-x-1/2 pointer-events-none"
+                  style={{ bottom: "8.75rem" }}
+                >
                   <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-gray-200/60 text-xs font-medium text-gray-600">
                     Click a {locationType} on the map to see its forecast
                   </div>
