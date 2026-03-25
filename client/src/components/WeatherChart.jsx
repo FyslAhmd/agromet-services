@@ -36,25 +36,47 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
     ?.replace(/\s+/g, "-")
     .toLowerCase()}-${stationId || "default"}`;
 
+  const formatLocalDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const parseDate = (dateString) => {
     if (!dateString) return null;
     try {
-      let date;
       if (typeof dateString === "string") {
-        date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          date = new Date(dateString.replace(" ", "T"));
+        const match = dateString.match(
+          /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/
+        );
+
+        if (match) {
+          const [, year, month, day, hour, minute, second = "00"] = match;
+          const date = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+          );
+
+          if (!isNaN(date.getTime())) {
+            return date.getTime();
+          }
         }
-      } else if (dateString instanceof Date) {
-        date = dateString;
-      } else {
-        return null;
+
+        const fallbackDate = new Date(dateString);
+        if (!isNaN(fallbackDate.getTime())) {
+          return fallbackDate.getTime();
+        }
+      } else if (dateString instanceof Date && !isNaN(dateString.getTime())) {
+        return dateString.getTime();
       }
-      if (isNaN(date.getTime())) {
-        console.warn("Invalid date:", dateString);
-        return null;
-      }
-      return date.getTime();
+
+      console.warn("Invalid date:", dateString);
+      return null;
     } catch (error) {
       console.warn("Error parsing date:", dateString, error);
       return null;
@@ -511,7 +533,7 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
 
     Object.values(hourlyDeduped).forEach(({ timestamp, value }) => {
       const date = new Date(timestamp);
-      const dateKey = date.toISOString().split("T")[0];
+      const dateKey = formatLocalDateKey(date);
 
       if (!dailyGroups[dateKey]) {
         dailyGroups[dateKey] = [];
@@ -622,6 +644,9 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
     const padding = Math.max(range * 0.05, 1);
 
     return {
+      time: {
+        useUTC: false,
+      },
       chart: {
         type: chartType,
         zooming: { type: "x" },
