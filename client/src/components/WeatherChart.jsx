@@ -91,7 +91,12 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
     return isNaN(num) ? null : num;
   };
 
-  const filterDataByTimeRange = (fullData, range, customRange = null) => {
+  const filterDataByTimeRange = (
+    fullData,
+    range,
+    customRange = null,
+    intervalHours = 1
+  ) => {
     if (fullData.length === 0) {
       return fullData;
     }
@@ -115,32 +120,31 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
     }
 
     const now = new Date();
-    let startDate;
+    const windowEnd = new Date(now);
+    windowEnd.setMinutes(0, 0, 0);
 
-    switch (range) {
-      case "day":
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case "week":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "month":
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "3month":
-        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case "6month":
-        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case "1year":
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        return fullData;
+    const rangeHoursMap = {
+      day: 24,
+      week: 24 * 7,
+      month: 24 * 30,
+      "3month": 24 * 90,
+      "6month": 24 * 180,
+      "1year": 24 * 365,
+    };
+
+    const totalRangeHours = rangeHoursMap[range];
+    if (!totalRangeHours) {
+      return fullData;
     }
 
-    return fullData.filter((point) => point[0] >= startDate.getTime());
+    const windowStartExclusive =
+      windowEnd.getTime() - totalRangeHours * 60 * 60 * 1000;
+
+    return fullData.filter(
+      (point) =>
+        point[0] > windowStartExclusive &&
+        point[0] <= windowEnd.getTime()
+    );
   };
 
   const filterByInterval = (data, intervalHours) => {
@@ -486,11 +490,17 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
         .filter((item) => item !== null)
         .sort((a, b) => a[0] - b[0]);
 
-      setData(chartData);
-      // Data is already filtered by interval from backend, use directly
-      setFilteredData(chartData);
+      const visibleData = filterDataByTimeRange(
+        chartData,
+        range,
+        customRange,
+        dataInterval
+      );
 
-      if (chartData.length === 0) {
+      setData(chartData);
+      setFilteredData(visibleData);
+
+      if (visibleData.length === 0) {
         setError("No valid data available for this parameter");
       }
     } catch (error) {
