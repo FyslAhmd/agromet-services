@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
@@ -81,63 +81,28 @@ const ForecastSummary = () => {
     fetchSummary(selectedDays, selectedUpazilaCode);
   }, [selectedDays, selectedUpazilaCode]);
 
-  const metaCards = useMemo(() => {
-    if (!summaryData?.meta) return [];
-
-    const latestForecastText = summaryData.meta.latestForecastTime
-      ? new Date(summaryData.meta.latestForecastTime).toLocaleString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "Not available";
-
-    return [
-      {
-        label: "Selected Upazila",
-        value: summaryData.meta.selectedUpazila?.label || "All Bangladesh",
-      },
-      {
-        label: "Forecast Days",
-        value: summaryData.meta.availableDays || 0,
-      },
-      {
-        label: "Matched Grid Points",
-        value: summaryData.meta.matchedGridPoints || 0,
-      },
-      {
-        label: "Latest Forecast Time",
-        value: latestForecastText,
-      },
-    ];
-  }, [summaryData]);
-
   const hasRows = Boolean(summaryData?.rows?.length && summaryData?.dates?.length);
 
   return (
     <div className="min-h-full lg:p-6">
       <div className="space-y-5">
-        <section className="overflow-hidden rounded-3xl bg-linear-to-br from-[#0a3d3d] via-[#0d4a4a] to-[#083535] text-white shadow-sm">
-          <div className="px-5 py-6 sm:px-6 sm:py-7 lg:px-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-teal-100">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  WRF Bangladesh Forecast Summary
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <section className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          <div className="bg-linear-to-r from-[#0a3d3d] via-[#0d4a4a] to-[#083535] px-5 py-6 text-white sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                  WRF Bangladesh
+                </p>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
                   Forecast Summary
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-100/80 sm:text-base">
-                  Select an upazila and review a 10-day forecast snapshot built from only the
-                  grid points that fall inside that upazila boundary.
+                <p className="mt-2 text-sm leading-6 text-teal-100/80 sm:text-base">
+                  Select an upazila and choose how many upcoming forecast days you want to see.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 lg:min-w-[420px]">
-                <div className="rounded-2xl border border-white/10 bg-white/8 p-1.5 backdrop-blur-sm">
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:min-w-[520px]">
+                <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                     Upazila
                   </label>
@@ -145,90 +110,47 @@ const ForecastSummary = () => {
                     value={selectedUpazilaCode}
                     onChange={(event) => setSelectedUpazilaCode(event.target.value)}
                     disabled={loadingUpazilas || !upazilas.length}
-                    className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm font-medium text-white outline-none transition-colors focus:border-white/25"
+                    className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
                   >
                     {upazilas.map((upazila) => (
-                      <option key={upazila.code} value={upazila.code} className="text-gray-900">
+                      <option key={upazila.code} value={upazila.code}>
                         {upazila.label}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="inline-flex rounded-2xl border border-white/10 bg-white/8 p-1 backdrop-blur-sm">
-                  {DAY_OPTIONS.map((dayOption) => (
-                    <button
-                      key={dayOption}
-                      type="button"
-                      onClick={() => setSelectedDays(dayOption)}
-                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
-                        selectedDays === dayOption
-                          ? "bg-white text-[#0a3d3d]"
-                          : "text-teal-100 hover:bg-white/10"
-                      }`}
-                    >
-                      {dayOption} Days
-                    </button>
-                  ))}
+                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm">
+                  <div className="inline-flex flex-wrap gap-1">
+                    {DAY_OPTIONS.map((dayOption) => (
+                      <button
+                        key={dayOption}
+                        type="button"
+                        onClick={() => setSelectedDays(dayOption)}
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
+                          selectedDays === dayOption
+                            ? "bg-white text-[#0a3d3d]"
+                            : "text-teal-100 hover:bg-white/10"
+                        }`}
+                      >
+                        {dayOption} Days
+                      </button>
+                    ))}
+                  </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => fetchSummary(selectedDays, selectedUpazilaCode)}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-.001h4.992m0 0a8.25 8.25 0 0013.803-3.7M4.977 19.644a8.25 8.25 0 013.7-13.803m0 0V.849m0 4.992h4.992"
-                    />
-                  </svg>
-                  Refresh
-                </button>
               </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {metaCards.map((card) => (
-                <div
-                  key={card.label}
-                  className="rounded-2xl border border-white/10 bg-white/8 p-4 backdrop-blur-sm"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/60">
-                    {card.label}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-white sm:text-base">
-                    {card.value}
-                  </p>
-                </div>
-              ))}
             </div>
           </div>
         </section>
 
         <section className="rounded-3xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-gray-100 px-5 py-5 sm:px-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="border-b border-gray-100 px-5 py-5 sm:px-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Daily Forecast Matrix</h2>
               <p className="mt-1 text-sm text-gray-500">
                 The first column stays fixed while forecast dates scroll horizontally.
               </p>
             </div>
-            {summaryData?.meta?.notes?.length ? (
-              <div className="max-w-xl rounded-2xl bg-teal-50 px-4 py-3 text-xs leading-5 text-teal-800">
-                {summaryData.meta.notes.map((note) => (
-                  <p key={note}>{note}</p>
-                ))}
-              </div>
-            ) : null}
           </div>
 
           {loading ? (

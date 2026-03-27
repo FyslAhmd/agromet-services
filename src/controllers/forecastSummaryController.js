@@ -226,7 +226,7 @@ export const getForecastSummary = async (req, res) => {
           WHERE forecast_time IS NOT NULL
           ${batchInfo.whereClause}
           GROUP BY DATE(forecast_time)
-          ORDER BY forecast_date DESC
+          ORDER BY forecast_date ASC
           LIMIT :days
         ) AS latest_dates
         ORDER BY forecast_date ASC
@@ -261,9 +261,6 @@ export const getForecastSummary = async (req, res) => {
             daysRequested: days,
             batchLabel: formatBatchLabel(batchInfo),
             todayFilterDate: todayDhaka,
-            notes: [
-              `No WRF forecast records were found for rows imported on ${todayDhaka}.`,
-            ],
           },
         },
       });
@@ -609,15 +606,6 @@ export const getForecastSummary = async (req, res) => {
             : null,
           matchedGridPoints,
           matchedPointRows: filteredForecastRows.length,
-          notes: [
-            `Only rows whose created_at date matches ${todayDhaka} are included.`,
-            selectedUpazila
-              ? `Only forecast grid points that fall inside ${selectedUpazila.label} are used.`
-              : "No upazila filter is applied, so all today's imported rows are used.",
-            "For an upazila, rainfall is summed across matched grid rows while the other parameters are averaged.",
-            "Cloud cover is derived from the mean of low, mid, and high cloud layers.",
-            "The summary spans up to 10 forecast dates from today's imported rows, and the day buttons filter within those dates.",
-          ],
         },
       },
     });
