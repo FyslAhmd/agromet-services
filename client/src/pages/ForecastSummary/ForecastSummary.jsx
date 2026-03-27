@@ -65,8 +65,8 @@ const ForecastSummary = () => {
         value: latestForecastText,
       },
       {
-        label: "Derived Sunshine Step",
-        value: `${summaryData.meta.inferredTimeStepHours || 1} hr`,
+        label: "Today Filter",
+        value: summaryData.meta.todayFilterDate || "Today",
       },
     ];
   }, [summaryData]);
@@ -192,7 +192,7 @@ const ForecastSummary = () => {
                   No forecast summary data is available right now.
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Once the latest WRF forecast batch is present, the summary table will appear here.
+                  Once rows are imported today, the summary table will appear here.
                 </p>
               </div>
             </div>

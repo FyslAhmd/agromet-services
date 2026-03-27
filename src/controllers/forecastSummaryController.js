@@ -2,7 +2,6 @@ import sequelize from "../config/database.js";
 
 const DEFAULT_DAYS = 7;
 const MAX_DAYS = 14;
-const SUNSHINE_RADIATION_THRESHOLD = 120;
 
 const SUMMARY_ROW_CONFIG = [
   {
@@ -55,13 +54,6 @@ const SUMMARY_ROW_CONFIG = [
     decimals: 0,
   },
   {
-    key: "sunshine",
-    label: "Sunshine",
-    unit: "hrs",
-    description: "Derived from time steps where mean solar radiation is above threshold",
-    decimals: 1,
-  },
-  {
     key: "cloud_cover",
     label: "Cloud Cover",
     unit: "%",
@@ -110,19 +102,6 @@ const formatDisplayValue = (row, value) => {
   return formatNumber(numericValue, row.decimals);
 };
 
-const getMedian = (values) => {
-  if (!values.length) return 1;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  const middleIndex = Math.floor(sorted.length / 2);
-
-  if (sorted.length % 2 === 0) {
-    return (sorted[middleIndex - 1] + sorted[middleIndex]) / 2;
-  }
-
-  return sorted[middleIndex];
-};
-
 const formatBatchLabel = (batchInfo) => {
   if (!batchInfo) return "Latest available forecast data";
 
@@ -139,6 +118,11 @@ const formatBatchLabel = (batchInfo) => {
   return "Latest available forecast data";
 };
 
+const getDhakaToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+  }).format(new Date());
+
 const getForecastTableColumns = async () => {
   const columns = await sequelize.query("SHOW COLUMNS FROM wrf_bangladesh_forecast", {
     type: sequelize.QueryTypes.SELECT,
@@ -147,148 +131,24 @@ const getForecastTableColumns = async () => {
   return new Set(columns.map((column) => column.Field));
 };
 
-const getLatestImportMetadata = async () => {
-  try {
-    const tables = await sequelize.query("SHOW TABLES LIKE 'wrf_imported_files'", {
-      type: sequelize.QueryTypes.SELECT,
-    });
-
-    if (!tables.length) {
-      return null;
-    }
-
-    const importColumns = await sequelize.query("SHOW COLUMNS FROM wrf_imported_files", {
-      type: sequelize.QueryTypes.SELECT,
-    });
-
-    const columnSet = new Set(importColumns.map((column) => column.Field));
-    const orderColumn = columnSet.has("imported_at")
-      ? "imported_at"
-      : columnSet.has("created_at")
-        ? "created_at"
-        : null;
-
-    if (!orderColumn) {
-      return null;
-    }
-
-    const latestImportRows = await sequelize.query(
-      `SELECT * FROM wrf_imported_files ORDER BY ${orderColumn} DESC LIMIT 1`,
-      { type: sequelize.QueryTypes.SELECT }
-    );
-
-    return latestImportRows[0] || null;
-  } catch (error) {
-    console.warn("Unable to inspect wrf_imported_files metadata:", error.message);
-    return null;
-  }
-};
-
-const resolveLatestBatchFilter = async (columnSet) => {
+const resolveTodayFilter = async (columnSet, todayDhaka) => {
   const batchInfo = {
-    whereClause: "",
-    replacements: {},
-    label: "Latest available forecast data",
-    type: "unfiltered",
-    value: null,
+    whereClause: " AND DATE(created_at) = :todayDhaka",
+    replacements: { todayDhaka },
+    label: `Imported on ${todayDhaka}`,
+    type: "today_created_at",
+    value: todayDhaka,
   };
 
-  if (columnSet.has("model_run")) {
-    const latestModelRunRows = await sequelize.query(
-      `
-        SELECT model_run
-        FROM wrf_bangladesh_forecast
-        WHERE model_run IS NOT NULL
-        ORDER BY model_run DESC
-        LIMIT 1
-      `,
-      { type: sequelize.QueryTypes.SELECT }
-    );
-
-    const latestModelRun = latestModelRunRows[0]?.model_run;
-
-    if (latestModelRun !== undefined && latestModelRun !== null) {
-      batchInfo.whereClause = " AND model_run = :latestModelRun";
-      batchInfo.replacements.latestModelRun = latestModelRun;
-      batchInfo.label = `Model run ${latestModelRun}`;
-      batchInfo.type = "model_run";
-      batchInfo.value = latestModelRun;
-      return batchInfo;
-    }
-  }
-
-  if (columnSet.has("created_at")) {
-    const latestCreatedAtRows = await sequelize.query(
-      `
-        SELECT
-          DATE_FORMAT(MAX(created_at), '%Y-%m-%d %H:%i:00') AS batch_start,
-          MAX(created_at) AS latest_created_at
-        FROM wrf_bangladesh_forecast
-      `,
-      { type: sequelize.QueryTypes.SELECT }
-    );
-
-    const batchStart = latestCreatedAtRows[0]?.batch_start;
-
-    if (batchStart) {
-      batchInfo.whereClause = `
-        AND created_at >= :batchStart
-        AND created_at < DATE_ADD(:batchStart, INTERVAL 1 MINUTE)
-      `;
-      batchInfo.replacements.batchStart = batchStart;
-      batchInfo.label = `Imported ${new Date(batchStart).toLocaleString("en-GB")}`;
-      batchInfo.type = "created_at_minute";
-      batchInfo.value = batchStart;
-    }
+  if (!columnSet.has("created_at")) {
+    batchInfo.whereClause = "";
+    batchInfo.replacements = {};
+    batchInfo.label = "created_at column not available";
+    batchInfo.type = "unfiltered";
+    batchInfo.value = null;
   }
 
   return batchInfo;
-};
-
-const buildSunshineByDate = (sunshineRows) => {
-  if (!sunshineRows.length) {
-    return {
-      sunshineByDate: {},
-      stepHours: 1,
-    };
-  }
-
-  const distinctTimes = Array.from(
-    new Set(sunshineRows.map((row) => new Date(row.forecast_time).getTime()))
-  ).sort((a, b) => a - b);
-
-  const timeDiffHours = [];
-  for (let index = 1; index < distinctTimes.length; index += 1) {
-    const hours = (distinctTimes[index] - distinctTimes[index - 1]) / (1000 * 60 * 60);
-    if (hours > 0 && hours <= 24) {
-      timeDiffHours.push(hours);
-    }
-  }
-
-  const stepHours = getMedian(timeDiffHours);
-  const sunshineByDate = {};
-
-  sunshineRows.forEach((row) => {
-    const dateKey = row.forecast_date;
-    const meanSolarRadiation = Number(row.mean_solar_radiation || 0);
-
-    if (!sunshineByDate[dateKey]) {
-      sunshineByDate[dateKey] = 0;
-    }
-
-    if (meanSolarRadiation > SUNSHINE_RADIATION_THRESHOLD) {
-      sunshineByDate[dateKey] += stepHours;
-    }
-  });
-
-  Object.keys(sunshineByDate).forEach((dateKey) => {
-    sunshineByDate[dateKey] = Math.min(24, Number(sunshineByDate[dateKey].toFixed(2)));
-  });
-
-  return {
-    sunshineByDate,
-    stepHours,
-  };
 };
 
 export const getForecastSummary = async (req, res) => {
@@ -298,9 +158,9 @@ export const getForecastSummary = async (req, res) => {
       ? DEFAULT_DAYS
       : Math.min(Math.max(requestedDays, 3), MAX_DAYS);
 
+    const todayDhaka = getDhakaToday();
     const forecastColumns = await getForecastTableColumns();
-    const batchInfo = await resolveLatestBatchFilter(forecastColumns);
-    const latestImport = await getLatestImportMetadata();
+    const batchInfo = await resolveTodayFilter(forecastColumns, todayDhaka);
 
     const forecastDates = await sequelize.query(
       `
@@ -334,9 +194,9 @@ export const getForecastSummary = async (req, res) => {
           meta: {
             daysRequested: days,
             batchLabel: formatBatchLabel(batchInfo),
-            importMetadata: latestImport,
+            todayFilterDate: todayDhaka,
             notes: [
-              "No WRF forecast records were found for the latest available batch.",
+              `No WRF forecast records were found for rows imported on ${todayDhaka}.`,
             ],
           },
         },
@@ -403,30 +263,6 @@ export const getForecastSummary = async (req, res) => {
       }
     );
 
-    const sunshineRows = await sequelize.query(
-      `
-        SELECT
-          DATE(forecast_time) AS forecast_date,
-          forecast_time,
-          AVG(solar_radiation) AS mean_solar_radiation
-        FROM wrf_bangladesh_forecast
-        WHERE forecast_time >= :startDate
-          AND forecast_time < DATE_ADD(:endDate, INTERVAL 1 DAY)
-          ${batchInfo.whereClause}
-        GROUP BY DATE(forecast_time), forecast_time
-        ORDER BY forecast_time ASC
-      `,
-      {
-        replacements: {
-          ...batchInfo.replacements,
-          startDate,
-          endDate,
-        },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-
-    const { sunshineByDate, stepHours } = buildSunshineByDate(sunshineRows);
     const dailySummaryMap = new Map(
       dailySummaryRows.map((row) => [row.forecast_date, row])
     );
@@ -451,9 +287,7 @@ export const getForecastSummary = async (req, res) => {
       description: rowConfig.description,
       values: dates.map((dateInfo) => {
         const dailySummary = dailySummaryMap.get(dateInfo.key);
-        const rawValue = rowConfig.key === "sunshine"
-          ? sunshineByDate[dateInfo.key] ?? null
-          : dailySummary?.[rowConfig.key] ?? null;
+        const rawValue = dailySummary?.[rowConfig.key] ?? null;
 
         return {
           date: dateInfo.key,
@@ -479,12 +313,11 @@ export const getForecastSummary = async (req, res) => {
           batchValue: batchInfo.value,
           latestForecastTime,
           firstForecastTime,
-          importMetadata: latestImport,
-          inferredTimeStepHours: Number(stepHours.toFixed(2)),
+          todayFilterDate: todayDhaka,
           notes: [
-            "Sunshine is derived from forecast time steps where mean solar radiation exceeds 120 W/m².",
+            `Only rows whose created_at date matches ${todayDhaka} are included.`,
             "Cloud cover is derived from the mean of low, mid, and high cloud layers.",
-            "Rainfall represents the daily mean value across forecast grid records for the selected forecast batch.",
+            "Rainfall represents the daily mean value across today's imported forecast grid rows.",
           ],
         },
       },
