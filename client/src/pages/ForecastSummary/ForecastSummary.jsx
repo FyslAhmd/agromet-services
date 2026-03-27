@@ -147,9 +147,6 @@ const ForecastSummary = () => {
           <div className="border-b border-gray-100 px-5 py-5 sm:px-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Daily Forecast Matrix</h2>
-              <p className="mt-1 text-sm text-gray-500">
-                The first column stays fixed while forecast dates scroll horizontally.
-              </p>
             </div>
           </div>
 
@@ -180,8 +177,8 @@ const ForecastSummary = () => {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto px-4 py-4 sm:px-6">
-              <div className="min-w-max overflow-hidden rounded-2xl border border-gray-200">
+            <div className="overflow-x-auto">
+              <div className="min-w-max overflow-hidden border border-gray-200">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gray-50">
