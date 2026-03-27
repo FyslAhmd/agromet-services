@@ -128,6 +128,18 @@ const getDhakaToday = () =>
     timeZone: "Asia/Dhaka",
   }).format(new Date());
 
+const getDhakaDayRangeUtc = (dateString) => {
+  const startUtc = new Date(`${dateString}T00:00:00+06:00`);
+  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+
+  const toMysqlDateTime = (date) => date.toISOString().slice(0, 19).replace("T", " ");
+
+  return {
+    startUtc: toMysqlDateTime(startUtc),
+    endUtc: toMysqlDateTime(endUtc),
+  };
+};
+
 const normalizeNumber = (value) => {
   const numericValue = Number(value);
   return Number.isNaN(numericValue) ? null : numericValue;
@@ -142,9 +154,16 @@ const getForecastTableColumns = async () => {
 };
 
 const resolveTodayFilter = async (columnSet, todayDhaka) => {
+  const dayRange = getDhakaDayRangeUtc(todayDhaka);
   const batchInfo = {
-    whereClause: " AND DATE(created_at) = :todayDhaka",
-    replacements: { todayDhaka },
+    whereClause: `
+      AND created_at >= :createdAtStartUtc
+      AND created_at < :createdAtEndUtc
+    `,
+    replacements: {
+      createdAtStartUtc: dayRange.startUtc,
+      createdAtEndUtc: dayRange.endUtc,
+    },
     label: `Imported on ${todayDhaka}`,
     type: "today_created_at",
     value: todayDhaka,
@@ -174,6 +193,10 @@ export const getForecastSummary = async (req, res) => {
       : null;
 
     if (selectedUpazilaCode && !selectedUpazila) {
+      console.log("[forecast-summary] invalid upazila code", {
+        selectedUpazilaCode,
+        days,
+      });
       return res.status(404).json({
         success: false,
         message: "Selected upazila was not found",
@@ -183,6 +206,16 @@ export const getForecastSummary = async (req, res) => {
     const todayDhaka = getDhakaToday();
     const forecastColumns = await getForecastTableColumns();
     const batchInfo = await resolveTodayFilter(forecastColumns, todayDhaka);
+
+    console.log("[forecast-summary] request received", {
+      days,
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectedUpazilaLabel: selectedUpazila?.label || null,
+      todayDhaka,
+      batchType: batchInfo.type,
+      batchLabel: batchInfo.label,
+      batchReplacements: batchInfo.replacements,
+    });
 
     const forecastDates = await sequelize.query(
       `
@@ -207,7 +240,18 @@ export const getForecastSummary = async (req, res) => {
       }
     );
 
+    console.log("[forecast-summary] forecast dates query result", {
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      count: forecastDates.length,
+      dates: forecastDates.map((row) => row.forecast_date),
+    });
+
     if (!forecastDates.length) {
+      console.log("[forecast-summary] no forecast dates found after created_at filter", {
+        todayDhaka,
+        selectedUpazilaCode: selectedUpazilaCode || null,
+        batchReplacements: batchInfo.replacements,
+      });
       return res.status(200).json({
         success: true,
         data: {
@@ -227,6 +271,12 @@ export const getForecastSummary = async (req, res) => {
 
     const startDate = forecastDates[0].forecast_date;
     const endDate = forecastDates[forecastDates.length - 1].forecast_date;
+
+    console.log("[forecast-summary] querying raw forecast rows", {
+      startDate,
+      endDate,
+      selectedUpazilaCode: selectedUpazilaCode || null,
+    });
 
     const rawForecastRows = await sequelize.query(
       `
@@ -261,11 +311,53 @@ export const getForecastSummary = async (req, res) => {
       }
     );
 
+    console.log("[forecast-summary] raw forecast rows fetched", {
+      count: rawForecastRows.length,
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      sample: rawForecastRows.slice(0, 3).map((row) => ({
+        forecast_time: row.forecast_time,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        rainfall: row.rainfall,
+      })),
+    });
+
     const filteredForecastRows = selectedUpazila
       ? rawForecastRows.filter((row) =>
           isPointInsideUpazila(row.latitude, row.longitude, selectedUpazila)
         )
       : rawForecastRows;
+
+    console.log("[forecast-summary] spatial filter result", {
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectedUpazilaLabel: selectedUpazila?.label || null,
+      rawCount: rawForecastRows.length,
+      filteredCount: filteredForecastRows.length,
+      sampleMatchedPoints: filteredForecastRows.slice(0, 5).map((row) => ({
+        latitude: row.latitude,
+        longitude: row.longitude,
+        forecast_time: row.forecast_time,
+      })),
+    });
+
+    if (selectedUpazila) {
+      const uniqueRawPoints = new Set(
+        rawForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
+      ).size;
+      const uniqueMatchedPoints = new Set(
+        filteredForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
+      ).size;
+
+      console.log("[forecast-summary] upazila boundary stats", {
+        code: selectedUpazila.code,
+        label: selectedUpazila.label,
+        district: selectedUpazila.district,
+        division: selectedUpazila.division,
+        bbox: selectedUpazila.bbox,
+        uniqueRawPoints,
+        uniqueMatchedPoints,
+      });
+    }
 
     const dailyAccumulator = new Map();
 
@@ -481,6 +573,16 @@ export const getForecastSummary = async (req, res) => {
             !first || item.firstForecastTime < first ? item.firstForecastTime : first,
           null)
         : null;
+
+    console.log("[forecast-summary] aggregation complete", {
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      matchedGridPoints,
+      matchedPointRows: filteredForecastRows.length,
+      aggregatedDays: dailySummaries.length,
+      availableDates: dates.map((date) => date.key),
+      latestForecastTime,
+      firstForecastTime,
+    });
 
     res.status(200).json({
       success: true,
