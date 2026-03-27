@@ -101,7 +101,7 @@ const ForecastSummary = () => {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:min-w-[520px]">
+              <div className="grid gap-3 md:min-w-[520px] md:items-end">
                 <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                     Upazila
@@ -120,14 +120,14 @@ const ForecastSummary = () => {
                   </select>
                 </div>
 
-                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm">
-                  <div className="inline-flex flex-wrap gap-1">
+                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:self-center">
+                  <div className="grid grid-cols-4 gap-1 md:flex md:flex-wrap md:justify-center">
                     {DAY_OPTIONS.map((dayOption) => (
                       <button
                         key={dayOption}
                         type="button"
                         onClick={() => setSelectedDays(dayOption)}
-                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:px-4 ${
+                        className={`w-full rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:px-4 md:w-auto ${
                           selectedDays === dayOption
                             ? "bg-white text-[#0a3d3d]"
                             : "text-teal-100 hover:bg-white/10"

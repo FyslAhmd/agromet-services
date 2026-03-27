@@ -224,6 +224,7 @@ export const getForecastSummary = async (req, res) => {
           SELECT DATE(forecast_time) AS forecast_date
           FROM wrf_bangladesh_forecast
           WHERE forecast_time IS NOT NULL
+            AND DATE(forecast_time) >= :todayDhaka
           ${batchInfo.whereClause}
           GROUP BY DATE(forecast_time)
           ORDER BY forecast_date ASC
@@ -233,6 +234,7 @@ export const getForecastSummary = async (req, res) => {
       `,
       {
         replacements: {
+          todayDhaka,
           ...batchInfo.replacements,
           days,
         },
