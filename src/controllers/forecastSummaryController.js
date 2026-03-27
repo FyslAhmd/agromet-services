@@ -1,7 +1,12 @@
 import sequelize from "../config/database.js";
+import {
+  getUpazilaByCode,
+  getUpazilaOptions,
+  isPointInsideUpazila,
+} from "../services/upazilaGeometryService.js";
 
-const DEFAULT_DAYS = 7;
-const MAX_DAYS = 14;
+const DEFAULT_DAYS = 10;
+const MAX_DAYS = 10;
 
 const SUMMARY_ROW_CONFIG = [
   {
@@ -22,7 +27,7 @@ const SUMMARY_ROW_CONFIG = [
     key: "rainfall",
     label: "Rainfall",
     unit: "mm",
-    description: "Daily average rainfall across the forecast grid",
+    description: "Daily rainfall sum across matched forecast rows",
     decimals: 1,
   },
   {
@@ -123,6 +128,11 @@ const getDhakaToday = () =>
     timeZone: "Asia/Dhaka",
   }).format(new Date());
 
+const normalizeNumber = (value) => {
+  const numericValue = Number(value);
+  return Number.isNaN(numericValue) ? null : numericValue;
+};
+
 const getForecastTableColumns = async () => {
   const columns = await sequelize.query("SHOW COLUMNS FROM wrf_bangladesh_forecast", {
     type: sequelize.QueryTypes.SELECT,
@@ -157,6 +167,18 @@ export const getForecastSummary = async (req, res) => {
     const days = Number.isNaN(requestedDays)
       ? DEFAULT_DAYS
       : Math.min(Math.max(requestedDays, 3), MAX_DAYS);
+
+    const selectedUpazilaCode = req.query.upazilaCode?.trim() || "";
+    const selectedUpazila = selectedUpazilaCode
+      ? getUpazilaByCode(selectedUpazilaCode)
+      : null;
+
+    if (selectedUpazilaCode && !selectedUpazila) {
+      return res.status(404).json({
+        success: false,
+        message: "Selected upazila was not found",
+      });
+    }
 
     const todayDhaka = getDhakaToday();
     const forecastColumns = await getForecastTableColumns();
@@ -206,52 +228,28 @@ export const getForecastSummary = async (req, res) => {
     const startDate = forecastDates[0].forecast_date;
     const endDate = forecastDates[forecastDates.length - 1].forecast_date;
 
-    const dailySummaryRows = await sequelize.query(
+    const rawForecastRows = await sequelize.query(
       `
         SELECT
-          DATE(forecast_time) AS forecast_date,
-          ROUND(MAX(temperature), 2) AS max_temperature,
-          ROUND(MIN(temperature), 2) AS min_temperature,
-          ROUND(AVG(rainfall), 2) AS rainfall,
-          ROUND(AVG(humidity), 2) AS relative_humidity,
-          ROUND(AVG(wind_speed), 2) AS wind_speed,
-          ROUND(
-            MOD(
-              DEGREES(
-                ATAN2(
-                  AVG(SIN(RADIANS(wind_direction))),
-                  AVG(COS(RADIANS(wind_direction)))
-                )
-              ) + 360,
-              360
-            ),
-            2
-          ) AS wind_direction,
-          ROUND(AVG(solar_radiation), 2) AS solar_radiation,
-          ROUND(
-            AVG(
-              LEAST(
-                100,
-                (
-                  COALESCE(cloud_low, 0) +
-                  COALESCE(cloud_mid, 0) +
-                  COALESCE(cloud_high, 0)
-                ) / 3
-              )
-            ),
-            2
-          ) AS cloud_cover,
-          ROUND(AVG(soil_moisture), 3) AS soil_moisture,
-          ROUND(AVG(dewpoint), 2) AS dew_point,
-          COUNT(*) AS row_count,
-          MIN(forecast_time) AS first_forecast_time,
-          MAX(forecast_time) AS last_forecast_time
+          forecast_time,
+          latitude,
+          longitude,
+          temperature,
+          rainfall,
+          humidity,
+          wind_speed,
+          wind_direction,
+          solar_radiation,
+          soil_moisture,
+          dewpoint,
+          cloud_low,
+          cloud_mid,
+          cloud_high
         FROM wrf_bangladesh_forecast
         WHERE forecast_time >= :startDate
           AND forecast_time < DATE_ADD(:endDate, INTERVAL 1 DAY)
           ${batchInfo.whereClause}
-        GROUP BY DATE(forecast_time)
-        ORDER BY forecast_date ASC
+        ORDER BY forecast_time ASC
       `,
       {
         replacements: {
@@ -263,9 +261,116 @@ export const getForecastSummary = async (req, res) => {
       }
     );
 
-    const dailySummaryMap = new Map(
-      dailySummaryRows.map((row) => [row.forecast_date, row])
-    );
+    const filteredForecastRows = selectedUpazila
+      ? rawForecastRows.filter((row) =>
+          isPointInsideUpazila(row.latitude, row.longitude, selectedUpazila)
+        )
+      : rawForecastRows;
+
+    const dailyAccumulator = new Map();
+
+    filteredForecastRows.forEach((row) => {
+      const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+
+      if (!dailyAccumulator.has(forecastDate)) {
+        dailyAccumulator.set(forecastDate, {
+          maxTemperature: -Infinity,
+          minTemperature: Infinity,
+          rainfallSum: 0,
+          humiditySum: 0,
+          humidityCount: 0,
+          windSpeedSum: 0,
+          windSpeedCount: 0,
+          windDirectionSinSum: 0,
+          windDirectionCosSum: 0,
+          windDirectionCount: 0,
+          solarRadiationSum: 0,
+          solarRadiationCount: 0,
+          cloudCoverSum: 0,
+          cloudCoverCount: 0,
+          soilMoistureSum: 0,
+          soilMoistureCount: 0,
+          dewPointSum: 0,
+          dewPointCount: 0,
+          rowCount: 0,
+          firstForecastTime: row.forecast_time,
+          lastForecastTime: row.forecast_time,
+        });
+      }
+
+      const aggregate = dailyAccumulator.get(forecastDate);
+      const temperature = normalizeNumber(row.temperature);
+      const rainfall = normalizeNumber(row.rainfall);
+      const humidity = normalizeNumber(row.humidity);
+      const windSpeed = normalizeNumber(row.wind_speed);
+      const windDirection = normalizeNumber(row.wind_direction);
+      const solarRadiation = normalizeNumber(row.solar_radiation);
+      const soilMoisture = normalizeNumber(row.soil_moisture);
+      const dewPoint = normalizeNumber(row.dewpoint);
+      const cloudLow = normalizeNumber(row.cloud_low);
+      const cloudMid = normalizeNumber(row.cloud_mid);
+      const cloudHigh = normalizeNumber(row.cloud_high);
+
+      if (temperature !== null) {
+        aggregate.maxTemperature = Math.max(aggregate.maxTemperature, temperature);
+        aggregate.minTemperature = Math.min(aggregate.minTemperature, temperature);
+      }
+
+      if (rainfall !== null) {
+        aggregate.rainfallSum += rainfall;
+      }
+
+      if (humidity !== null) {
+        aggregate.humiditySum += humidity;
+        aggregate.humidityCount += 1;
+      }
+
+      if (windSpeed !== null) {
+        aggregate.windSpeedSum += windSpeed;
+        aggregate.windSpeedCount += 1;
+      }
+
+      if (windDirection !== null) {
+        aggregate.windDirectionSinSum += Math.sin((windDirection * Math.PI) / 180);
+        aggregate.windDirectionCosSum += Math.cos((windDirection * Math.PI) / 180);
+        aggregate.windDirectionCount += 1;
+      }
+
+      if (solarRadiation !== null) {
+        aggregate.solarRadiationSum += solarRadiation;
+        aggregate.solarRadiationCount += 1;
+      }
+
+      const cloudValues = [cloudLow, cloudMid, cloudHigh].filter((value) => value !== null);
+      if (cloudValues.length) {
+        const cloudCover = Math.min(
+          100,
+          cloudValues.reduce((sum, value) => sum + value, 0) / cloudValues.length
+        );
+        aggregate.cloudCoverSum += cloudCover;
+        aggregate.cloudCoverCount += 1;
+      }
+
+      if (soilMoisture !== null) {
+        aggregate.soilMoistureSum += soilMoisture;
+        aggregate.soilMoistureCount += 1;
+      }
+
+      if (dewPoint !== null) {
+        aggregate.dewPointSum += dewPoint;
+        aggregate.dewPointCount += 1;
+      }
+
+      aggregate.rowCount += 1;
+      aggregate.firstForecastTime =
+        row.forecast_time < aggregate.firstForecastTime
+          ? row.forecast_time
+          : aggregate.firstForecastTime;
+      aggregate.lastForecastTime =
+        row.forecast_time > aggregate.lastForecastTime
+          ? row.forecast_time
+          : aggregate.lastForecastTime;
+    });
 
     const dates = forecastDates.map(({ forecast_date }) => {
       const date = new Date(forecast_date);
@@ -286,8 +391,71 @@ export const getForecastSummary = async (req, res) => {
       unit: rowConfig.unit,
       description: rowConfig.description,
       values: dates.map((dateInfo) => {
-        const dailySummary = dailySummaryMap.get(dateInfo.key);
-        const rawValue = dailySummary?.[rowConfig.key] ?? null;
+        const aggregate = dailyAccumulator.get(dateInfo.key);
+        let rawValue = null;
+
+        if (aggregate) {
+          switch (rowConfig.key) {
+            case "max_temperature":
+              rawValue = Number.isFinite(aggregate.maxTemperature)
+                ? aggregate.maxTemperature
+                : null;
+              break;
+            case "min_temperature":
+              rawValue = Number.isFinite(aggregate.minTemperature)
+                ? aggregate.minTemperature
+                : null;
+              break;
+            case "rainfall":
+              rawValue = aggregate.rainfallSum;
+              break;
+            case "relative_humidity":
+              rawValue = aggregate.humidityCount
+                ? aggregate.humiditySum / aggregate.humidityCount
+                : null;
+              break;
+            case "wind_speed":
+              rawValue = aggregate.windSpeedCount
+                ? aggregate.windSpeedSum / aggregate.windSpeedCount
+                : null;
+              break;
+            case "wind_direction":
+              rawValue = aggregate.windDirectionCount
+                ? (Math.atan2(
+                    aggregate.windDirectionSinSum / aggregate.windDirectionCount,
+                    aggregate.windDirectionCosSum / aggregate.windDirectionCount
+                  ) *
+                    180) /
+                    Math.PI
+                : null;
+              if (rawValue !== null) {
+                rawValue = (rawValue + 360) % 360;
+              }
+              break;
+            case "solar_radiation":
+              rawValue = aggregate.solarRadiationCount
+                ? aggregate.solarRadiationSum / aggregate.solarRadiationCount
+                : null;
+              break;
+            case "cloud_cover":
+              rawValue = aggregate.cloudCoverCount
+                ? aggregate.cloudCoverSum / aggregate.cloudCoverCount
+                : null;
+              break;
+            case "soil_moisture":
+              rawValue = aggregate.soilMoistureCount
+                ? aggregate.soilMoistureSum / aggregate.soilMoistureCount
+                : null;
+              break;
+            case "dew_point":
+              rawValue = aggregate.dewPointCount
+                ? aggregate.dewPointSum / aggregate.dewPointCount
+                : null;
+              break;
+            default:
+              rawValue = null;
+          }
+        }
 
         return {
           date: dateInfo.key,
@@ -297,8 +465,22 @@ export const getForecastSummary = async (req, res) => {
       }),
     }));
 
-    const latestForecastTime = dailySummaryRows[dailySummaryRows.length - 1]?.last_forecast_time || null;
-    const firstForecastTime = dailySummaryRows[0]?.first_forecast_time || null;
+    const dailySummaries = Array.from(dailyAccumulator.values());
+    const matchedGridPoints = new Set(
+      filteredForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
+    ).size;
+    const latestForecastTime =
+      dailySummaries.length
+        ? dailySummaries.reduce((latest, item) =>
+            !latest || item.lastForecastTime > latest ? item.lastForecastTime : latest,
+          null)
+        : null;
+    const firstForecastTime =
+      dailySummaries.length
+        ? dailySummaries.reduce((first, item) =>
+            !first || item.firstForecastTime < first ? item.firstForecastTime : first,
+          null)
+        : null;
 
     res.status(200).json({
       success: true,
@@ -314,10 +496,25 @@ export const getForecastSummary = async (req, res) => {
           latestForecastTime,
           firstForecastTime,
           todayFilterDate: todayDhaka,
+          selectedUpazila: selectedUpazila
+            ? {
+                code: selectedUpazila.code,
+                name: selectedUpazila.name,
+                label: selectedUpazila.label,
+                district: selectedUpazila.district,
+                division: selectedUpazila.division,
+              }
+            : null,
+          matchedGridPoints,
+          matchedPointRows: filteredForecastRows.length,
           notes: [
             `Only rows whose created_at date matches ${todayDhaka} are included.`,
+            selectedUpazila
+              ? `Only forecast grid points that fall inside ${selectedUpazila.label} are used.`
+              : "No upazila filter is applied, so all today's imported rows are used.",
+            "For an upazila, rainfall is summed across matched grid rows while the other parameters are averaged.",
             "Cloud cover is derived from the mean of low, mid, and high cloud layers.",
-            "Rainfall represents the daily mean value across today's imported forecast grid rows.",
+            "The summary spans up to 10 forecast dates from today's imported rows, and the day buttons filter within those dates.",
           ],
         },
       },
@@ -327,6 +524,23 @@ export const getForecastSummary = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch forecast summary",
+      error: error.message,
+    });
+  }
+};
+
+export const getForecastUpazilas = async (req, res) => {
+  try {
+    const upazilas = getUpazilaOptions();
+    res.status(200).json({
+      success: true,
+      data: upazilas,
+    });
+  } catch (error) {
+    console.error("Error fetching forecast upazilas:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch forecast upazilas",
       error: error.message,
     });
   }

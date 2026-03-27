@@ -1,20 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
-const DAY_OPTIONS = [5, 7, 10, 14];
+const DAY_OPTIONS = [3, 5, 7, 10];
 
 const ForecastSummary = () => {
-  const [selectedDays, setSelectedDays] = useState(7);
+  const [selectedDays, setSelectedDays] = useState(10);
+  const [upazilas, setUpazilas] = useState([]);
+  const [selectedUpazilaCode, setSelectedUpazilaCode] = useState("");
+  const [loadingUpazilas, setLoadingUpazilas] = useState(true);
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchSummary = async (days = selectedDays) => {
+  const fetchUpazilas = async () => {
+    setLoadingUpazilas(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.forecastSummaryUpazilas, {
+        headers: getAuthHeaders(),
+      });
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || "Failed to load upazilas");
+      }
+
+      const options = payload.data || [];
+      setUpazilas(options);
+
+      if (options.length > 0) {
+        setSelectedUpazilaCode((currentValue) => currentValue || options[0].code);
+      }
+    } catch (fetchError) {
+      console.error("Upazila load error:", fetchError);
+      setError(fetchError.message || "Unable to load upazila options");
+    } finally {
+      setLoadingUpazilas(false);
+    }
+  };
+
+  const fetchSummary = async (days = selectedDays, upazilaCode = selectedUpazilaCode) => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${API_ENDPOINTS.forecastSummary}?days=${days}`, {
+      const params = new URLSearchParams({
+        days: String(days),
+      });
+
+      if (upazilaCode) {
+        params.append("upazilaCode", upazilaCode);
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.forecastSummary}?${params.toString()}`, {
         headers: getAuthHeaders(),
       });
 
@@ -35,8 +73,13 @@ const ForecastSummary = () => {
   };
 
   useEffect(() => {
-    fetchSummary(selectedDays);
-  }, [selectedDays]);
+    fetchUpazilas();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUpazilaCode) return;
+    fetchSummary(selectedDays, selectedUpazilaCode);
+  }, [selectedDays, selectedUpazilaCode]);
 
   const metaCards = useMemo(() => {
     if (!summaryData?.meta) return [];
@@ -53,20 +96,20 @@ const ForecastSummary = () => {
 
     return [
       {
+        label: "Selected Upazila",
+        value: summaryData.meta.selectedUpazila?.label || "All Bangladesh",
+      },
+      {
         label: "Forecast Days",
         value: summaryData.meta.availableDays || 0,
       },
       {
-        label: "Latest Batch",
-        value: summaryData.meta.batchLabel || "Latest available",
+        label: "Matched Grid Points",
+        value: summaryData.meta.matchedGridPoints || 0,
       },
       {
         label: "Latest Forecast Time",
         value: latestForecastText,
-      },
-      {
-        label: "Today Filter",
-        value: summaryData.meta.todayFilterDate || "Today",
       },
     ];
   }, [summaryData]);
@@ -88,12 +131,30 @@ const ForecastSummary = () => {
                   Forecast Summary
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-100/80 sm:text-base">
-                  A clean daily snapshot of the latest imported WRF forecast, arranged as a
-                  summary table with dates across the top and forecast parameters down the side.
+                  Select an upazila and review a 10-day forecast snapshot built from only the
+                  grid points that fall inside that upazila boundary.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col gap-3 lg:min-w-[420px]">
+                <div className="rounded-2xl border border-white/10 bg-white/8 p-1.5 backdrop-blur-sm">
+                  <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                    Upazila
+                  </label>
+                  <select
+                    value={selectedUpazilaCode}
+                    onChange={(event) => setSelectedUpazilaCode(event.target.value)}
+                    disabled={loadingUpazilas || !upazilas.length}
+                    className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2.5 text-sm font-medium text-white outline-none transition-colors focus:border-white/25"
+                  >
+                    {upazilas.map((upazila) => (
+                      <option key={upazila.code} value={upazila.code} className="text-gray-900">
+                        {upazila.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="inline-flex rounded-2xl border border-white/10 bg-white/8 p-1 backdrop-blur-sm">
                   {DAY_OPTIONS.map((dayOption) => (
                     <button
@@ -113,7 +174,7 @@ const ForecastSummary = () => {
 
                 <button
                   type="button"
-                  onClick={() => fetchSummary(selectedDays)}
+                  onClick={() => fetchSummary(selectedDays, selectedUpazilaCode)}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
                 >
                   <svg
@@ -192,7 +253,7 @@ const ForecastSummary = () => {
                   No forecast summary data is available right now.
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Once rows are imported today, the summary table will appear here.
+                  Once rows are imported today for the selected upazila, the summary table will appear here.
                 </p>
               </div>
             </div>
