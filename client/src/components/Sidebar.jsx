@@ -116,11 +116,20 @@ const Sidebar = () => {
         <p className="px-4 pb-1 pt-1 text-[10px] font-semibold text-teal-400/50 uppercase tracking-[0.15em]">
           Main Menu
         </p>
-
+        <SidebarLink
+          to="/climate-projection"
+          icon={CloudIcon}
+          label="Climate Projection"
+        />
         <SidebarLink
           to="/weather-forecast"
           icon={CloudIcon}
           label="Weather Forecast"
+        />
+        <SidebarLink
+          to="/forecast-summary"
+          icon={CloudIcon}
+          label="Forecast Summary"
         />
         <SidebarLink
           to="/weather-alert"

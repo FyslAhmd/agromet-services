@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
   removeProfilePicture: (id) => `${API_BASE_URL}/users/${id}/profile-picture`,
   approveUser: (id) => `${API_BASE_URL}/users/${id}/approve`,
   rejectUser: (id) => `${API_BASE_URL}/users/${id}/reject`,
+  forecastSummary: `${API_BASE_URL}/forecast-summary`,
 
   weatherStations: `${SAADS_API_URL}/research-measures/stations`,
   weatherData: (stationId, parameter) =>
