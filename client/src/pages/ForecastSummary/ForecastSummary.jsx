@@ -5,6 +5,88 @@ import ForecastSummaryChart from "./components/ForecastSummaryChart";
 const DAY_OPTIONS = [3, 5, 7, 10];
 const DEFAULT_DISTRICT = "Gazipur";
 const DEFAULT_UPAZILA = "Gazipur Sadar";
+const FORECAST_CHART_CONFIGS = [
+  {
+    key: "rainfall",
+    title: "02. Rainfall Forecast",
+    subtitleSuffix: "Rainfall",
+    unit: "mm",
+    icon: "🌧️",
+    color: "#06b6d4",
+    chartType: "column",
+    fileKey: "rainfall",
+  },
+  {
+    key: "relative_humidity",
+    title: "03. Relative Humidity Forecast",
+    subtitleSuffix: "Relative Humidity",
+    unit: "%",
+    icon: "💧",
+    color: "#8b5cf6",
+    chartType: "areaspline",
+    fileKey: "relative_humidity",
+  },
+  {
+    key: "wind_speed",
+    title: "04. Wind Speed Forecast",
+    subtitleSuffix: "Wind Speed",
+    unit: "km/h",
+    icon: "💨",
+    color: "#10b981",
+    chartType: "areaspline",
+    fileKey: "wind_speed",
+  },
+  {
+    key: "wind_direction",
+    title: "05. Wind Direction Forecast",
+    subtitleSuffix: "Wind Direction",
+    unit: "°",
+    icon: "🧭",
+    color: "#f59e0b",
+    chartType: "areaspline",
+    fileKey: "wind_direction",
+  },
+  {
+    key: "solar_radiation",
+    title: "06. Solar Radiation Forecast",
+    subtitleSuffix: "Solar Radiation",
+    unit: "W/m²",
+    icon: "☀️",
+    color: "#f97316",
+    chartType: "areaspline",
+    fileKey: "solar_radiation",
+  },
+  {
+    key: "cloud_cover",
+    title: "07. Cloud Cover Forecast",
+    subtitleSuffix: "Cloud Cover",
+    unit: "%",
+    icon: "☁️",
+    color: "#6366f1",
+    chartType: "areaspline",
+    fileKey: "cloud_cover",
+  },
+  {
+    key: "soil_moisture",
+    title: "08. Soil Moisture Forecast",
+    subtitleSuffix: "Soil Moisture",
+    unit: "m³/m³",
+    icon: "🌱",
+    color: "#84cc16",
+    chartType: "areaspline",
+    fileKey: "soil_moisture",
+  },
+  {
+    key: "dew_point",
+    title: "09. Dew Point Forecast",
+    subtitleSuffix: "Dew Point",
+    unit: "°C",
+    icon: "🌫️",
+    color: "#ec4899",
+    chartType: "areaspline",
+    fileKey: "dew_point",
+  },
+];
 
 const ForecastSummary = () => {
   const [selectedDays, setSelectedDays] = useState(10);
@@ -161,6 +243,40 @@ const ForecastSummary = () => {
         },
       ],
     };
+  })();
+
+  const otherCharts = (() => {
+    if (!summaryData?.dates?.length || !summaryData?.rows?.length) return [];
+
+    const dates = summaryData.dates.map((date) => ({
+      ...date,
+      timestamp: Date.UTC(
+        Number(date.key.slice(0, 4)),
+        Number(date.key.slice(5, 7)) - 1,
+        Number(date.key.slice(8, 10))
+      ),
+    }));
+
+    return FORECAST_CHART_CONFIGS.map((config) => {
+      const row = summaryData.rows.find((item) => item.key === config.key);
+      if (!row) return null;
+
+      return {
+        ...config,
+        dates,
+        series: [
+          {
+            name: row.label,
+            color: config.color,
+            type: config.chartType,
+            data: dates.map((date, index) => [
+              date.timestamp,
+              row.values[index]?.value ?? null,
+            ]),
+          },
+        ],
+      };
+    }).filter(Boolean);
   })();
 
   return (
@@ -343,6 +459,21 @@ const ForecastSummary = () => {
             imageFilename="forecast_summary_temperature"
           />
         ) : null}
+
+        {otherCharts.map((chart) => (
+          <ForecastSummaryChart
+            key={chart.key}
+            title={chart.title}
+            subtitle={`${summaryData?.meta?.selectedUpazila?.label || "Selected Upazila"} | ${chart.subtitleSuffix}`}
+            unit={chart.unit}
+            icon={chart.icon}
+            dates={chart.dates}
+            series={chart.series}
+            csvFilename={`forecast_summary_${chart.fileKey}.csv`}
+            imageFilename={`forecast_summary_${chart.fileKey}`}
+            chartType={chart.chartType}
+          />
+        ))}
       </div>
     </div>
   );

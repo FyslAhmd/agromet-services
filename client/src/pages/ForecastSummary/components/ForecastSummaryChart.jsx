@@ -26,6 +26,7 @@ const ForecastSummaryChart = ({
   series,
   csvFilename,
   imageFilename,
+  chartType = "areaspline",
 }) => {
   const [HC, setHC] = useState(null);
   const [HCReact, setHCReact] = useState(null);
@@ -76,12 +77,12 @@ const ForecastSummaryChart = ({
   const chartSeries = useMemo(
     () =>
       series.map((item) => ({
-        type: "areaspline",
+        type: item.type || chartType,
         name: item.name,
         data: item.data,
         color: item.color,
-        lineWidth: 2.5,
-        fillOpacity: 0.08,
+        lineWidth: (item.type || chartType) === "column" ? 0 : 2.5,
+        fillOpacity: (item.type || chartType) === "column" ? 0 : 0.08,
         marker: {
           enabled: true,
           radius: 4,
@@ -108,7 +109,7 @@ const ForecastSummaryChart = ({
 
     return {
       chart: {
-        type: "areaspline",
+        type: chartType,
         zooming: { type: "x" },
         backgroundColor: "#ffffff",
         height: 420,
@@ -179,6 +180,12 @@ const ForecastSummaryChart = ({
           connectNulls: true,
           states: { hover: { lineWidth: 3.5 } },
         },
+        column: {
+          pointPadding: 0.2,
+          borderWidth: 0,
+          groupPadding: 0.1,
+          states: { hover: { brightness: 0.08 } },
+        },
       },
       series: chartSeries,
       credits: { enabled: false },
@@ -187,15 +194,15 @@ const ForecastSummaryChart = ({
         buttons: { contextButton: { enabled: false } },
       },
     };
-  }, [chartSeries, hcReady, subtitle, title, unit]);
+  }, [chartSeries, chartType, hcReady, subtitle, title, unit]);
 
   const handleImageDownload = () => {
     if (chartRef.current?.chart) {
       chartRef.current.chart.exportChart({
         type: "image/png",
         filename: imageFilename,
-        width: 1400,
-        height: 700,
+        width: 1800,
+        height: 600,
         scale: 2,
         chartOptions: {
           chart: {
