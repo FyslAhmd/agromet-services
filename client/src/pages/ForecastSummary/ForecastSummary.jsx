@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
+import ForecastSummaryChart from "./components/ForecastSummaryChart";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
 const DEFAULT_DISTRICT = "Gazipur";
@@ -118,6 +119,49 @@ const ForecastSummary = () => {
   }, [selectedDays, selectedUpazilaCode]);
 
   const hasRows = Boolean(summaryData?.rows?.length && summaryData?.dates?.length);
+  const temperatureChartData = (() => {
+    if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
+
+    const maxTempRow = summaryData.rows.find((row) => row.key === "max_temperature");
+    const minTempRow = summaryData.rows.find((row) => row.key === "min_temperature");
+
+    if (!maxTempRow || !minTempRow) return null;
+
+    const dates = summaryData.dates.map((date) => ({
+      ...date,
+      timestamp: new Date(`${date.key}T00:00:00`).getTime(),
+    }));
+
+    return {
+      dates,
+      series: [
+        {
+          name: "Max Temperature",
+          color: "#ef4444",
+          data: dates.map((date, index) => [
+            Date.UTC(
+              Number(date.key.slice(0, 4)),
+              Number(date.key.slice(5, 7)) - 1,
+              Number(date.key.slice(8, 10))
+            ),
+            maxTempRow.values[index]?.value ?? null,
+          ]),
+        },
+        {
+          name: "Min Temperature",
+          color: "#3b82f6",
+          data: dates.map((date, index) => [
+            Date.UTC(
+              Number(date.key.slice(0, 4)),
+              Number(date.key.slice(5, 7)) - 1,
+              Number(date.key.slice(8, 10))
+            ),
+            minTempRow.values[index]?.value ?? null,
+          ]),
+        },
+      ],
+    };
+  })();
 
   return (
     <div className="min-h-full lg:p-6">
@@ -286,6 +330,19 @@ const ForecastSummary = () => {
             </div>
           )}
         </section>
+
+        {temperatureChartData ? (
+          <ForecastSummaryChart
+            title="01. Temperature Forecast"
+            subtitle={`${summaryData?.meta?.selectedUpazila?.label || "Selected Upazila"} | MaxT and MinT`}
+            unit="°C"
+            icon="🌡️"
+            dates={temperatureChartData.dates}
+            series={temperatureChartData.series}
+            csvFilename="forecast_summary_temperature.csv"
+            imageFilename="forecast_summary_temperature"
+          />
+        ) : null}
       </div>
     </div>
   );
