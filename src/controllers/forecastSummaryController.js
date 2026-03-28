@@ -40,7 +40,7 @@ const SUMMARY_ROW_CONFIG = [
   {
     key: "wind_speed",
     label: "Wind Speed",
-    unit: "m/s",
+    unit: "km/h",
     description: "Daily average wind speed",
     decimals: 1,
   },
@@ -507,7 +507,7 @@ export const getForecastSummary = async (req, res) => {
               break;
             case "wind_speed":
               rawValue = aggregate.windSpeedCount
-                ? aggregate.windSpeedSum / aggregate.windSpeedCount
+                ? (aggregate.windSpeedSum / aggregate.windSpeedCount) * 3.6
                 : null;
               break;
             case "wind_direction":

@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
+const DEFAULT_DISTRICT = "Gazipur";
+const DEFAULT_UPAZILA = "Gazipur Sadar";
 
 const ForecastSummary = () => {
   const [selectedDays, setSelectedDays] = useState(10);
   const [upazilas, setUpazilas] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedUpazilaCode, setSelectedUpazilaCode] = useState("");
   const [loadingUpazilas, setLoadingUpazilas] = useState(true);
   const [summaryData, setSummaryData] = useState(null);
@@ -29,7 +32,13 @@ const ForecastSummary = () => {
       setUpazilas(options);
 
       if (options.length > 0) {
-        setSelectedUpazilaCode((currentValue) => currentValue || options[0].code);
+        const defaultDistrictOption = options.find(
+          (upazila) => upazila.district === DEFAULT_DISTRICT
+        );
+
+        setSelectedDistrict(
+          (currentValue) => currentValue || defaultDistrictOption?.district || options[0].district || ""
+        );
       }
     } catch (fetchError) {
       console.error("Upazila load error:", fetchError);
@@ -76,6 +85,33 @@ const ForecastSummary = () => {
     fetchUpazilas();
   }, []);
 
+  const districtOptions = Array.from(
+    new Set(upazilas.map((upazila) => upazila.district).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredUpazilas = upazilas.filter(
+    (upazila) => !selectedDistrict || upazila.district === selectedDistrict
+  );
+
+  useEffect(() => {
+    if (!filteredUpazilas.length) {
+      setSelectedUpazilaCode("");
+      return;
+    }
+
+    const hasSelectedUpazila = filteredUpazilas.some(
+      (upazila) => upazila.code === selectedUpazilaCode
+    );
+
+    if (!hasSelectedUpazila) {
+      const defaultUpazilaOption = filteredUpazilas.find(
+        (upazila) => upazila.name === DEFAULT_UPAZILA
+      );
+
+      setSelectedUpazilaCode(defaultUpazilaOption?.code || filteredUpazilas[0].code);
+    }
+  }, [filteredUpazilas, selectedUpazilaCode]);
+
   useEffect(() => {
     if (!selectedUpazilaCode) return;
     fetchSummary(selectedDays, selectedUpazilaCode);
@@ -101,7 +137,25 @@ const ForecastSummary = () => {
                 </p>
               </div>
 
-              <div className="grid gap-3 md:min-w-[520px] md:items-end">
+              <div className="grid gap-3 md:min-w-[520px] md:grid-cols-2 md:items-end">
+                <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                  <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                    District
+                  </label>
+                  <select
+                    value={selectedDistrict}
+                    onChange={(event) => setSelectedDistrict(event.target.value)}
+                    disabled={loadingUpazilas || !districtOptions.length}
+                    className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                  >
+                    {districtOptions.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                     Upazila
@@ -109,12 +163,12 @@ const ForecastSummary = () => {
                   <select
                     value={selectedUpazilaCode}
                     onChange={(event) => setSelectedUpazilaCode(event.target.value)}
-                    disabled={loadingUpazilas || !upazilas.length}
+                    disabled={loadingUpazilas || !filteredUpazilas.length}
                     className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
                   >
-                    {upazilas.map((upazila) => (
+                    {filteredUpazilas.map((upazila) => (
                       <option key={upazila.code} value={upazila.code}>
-                        {upazila.label}
+                        {upazila.name}
                       </option>
                     ))}
                   </select>
