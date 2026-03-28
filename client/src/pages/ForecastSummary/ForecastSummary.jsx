@@ -120,6 +120,7 @@ const ForecastSummary = () => {
                   </select>
                 </div>
 
+                {/*
                 <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:self-center">
                   <div className="grid grid-cols-4 gap-1 md:flex md:flex-wrap md:justify-center">
                     {DAY_OPTIONS.map((dayOption) => (
@@ -138,6 +139,7 @@ const ForecastSummary = () => {
                     ))}
                   </div>
                 </div>
+                */}
               </div>
             </div>
           </div>
