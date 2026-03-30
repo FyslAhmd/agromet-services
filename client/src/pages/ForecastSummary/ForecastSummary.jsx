@@ -359,37 +359,37 @@ const ForecastSummary = () => {
   })();
 
   return (
-    <div className="min-h-full lg:p-6">
-      <div className="space-y-5">
-        <section className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-          <div className="bg-linear-to-r from-[#0a3d3d] via-[#0d4a4a] to-[#083535] px-5 py-6 text-white sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-full sm:px-3 sm:py-3 lg:p-6">
+      <div className="space-y-3 sm:space-y-4 lg:space-y-5">
+        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm sm:rounded-3xl">
+          <div className="bg-linear-to-r from-[#0a3d3d] via-[#0d4a4a] to-[#083535] px-3 py-4 text-white sm:px-5 sm:py-6 lg:px-8">
+            <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                   WRF Bangladesh
                 </p>
-                <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+                <h1 className="mt-1.5 text-xl font-bold tracking-tight sm:mt-2 sm:text-3xl">
                   Forecast Summary
                 </h1>
-                <p className="mt-2 text-sm leading-6 text-teal-100/80 sm:text-base">
+                <p className="mt-1.5 text-xs leading-5 text-teal-100/80 sm:mt-2 sm:text-base sm:leading-6">
                   View spatially averaged forecast values for a region, district, or upazila.
                 </p>
               </div>
 
-              <div className="grid gap-3 md:min-w-130 md:grid-cols-6">
+              <div className="grid gap-2 sm:gap-3 md:min-w-130 md:grid-cols-6">
                 <div
-                  className={`rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm ${
+                  className={`rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 ${
                     selectedScope === "upazila" ? "md:col-span-2" : "md:col-span-3"
                   }`}
                 >
-                  <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                  <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
                     Scope
                   </label>
                   <select
                     value={selectedScope}
                     onChange={(event) => setSelectedScope(event.target.value)}
                     disabled={loadingLocations}
-                    className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                    className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                   >
                     {SCOPE_OPTIONS.map((scopeOption) => (
                       <option key={scopeOption.value} value={scopeOption.value}>
@@ -400,15 +400,15 @@ const ForecastSummary = () => {
                 </div>
 
                 {selectedScope === "region" ? (
-                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-3">
-                    <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                  <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 md:col-span-3">
+                    <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
                       Region
                     </label>
                     <select
                       value={selectedRegionCode}
                       onChange={(event) => setSelectedRegionCode(event.target.value)}
                       disabled={loadingLocations || !regionOptions.length}
-                      className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                      className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                     >
                       {regionOptions.map((region) => (
                         <option key={region.code} value={region.code}>
@@ -420,15 +420,15 @@ const ForecastSummary = () => {
                 ) : null}
 
                 {selectedScope === "district" ? (
-                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-3">
-                    <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                  <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 md:col-span-3">
+                    <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
                       District
                     </label>
                     <select
                       value={selectedDistrictCode}
                       onChange={(event) => setSelectedDistrictCode(event.target.value)}
                       disabled={loadingLocations || !districtOptions.length}
-                      className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                      className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                     >
                       {districtOptions.map((district) => (
                         <option key={district.code} value={district.code}>
@@ -441,15 +441,15 @@ const ForecastSummary = () => {
 
                 {selectedScope === "upazila" ? (
                   <>
-                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-2">
-                      <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                    <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 md:col-span-2">
+                      <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
                         District
                       </label>
                       <select
                         value={selectedDistrictCode}
                         onChange={(event) => setSelectedDistrictCode(event.target.value)}
                         disabled={loadingLocations || !districtOptions.length}
-                        className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                        className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                       >
                         {districtOptions.map((district) => (
                           <option key={district.code} value={district.code}>
@@ -459,15 +459,15 @@ const ForecastSummary = () => {
                       </select>
                     </div>
 
-                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-2">
-                      <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                    <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 md:col-span-2">
+                      <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
                         Upazila
                       </label>
                       <select
                         value={selectedUpazilaCode}
                         onChange={(event) => setSelectedUpazilaCode(event.target.value)}
                         disabled={loadingLocations || !filteredUpazilas.length}
-                        className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                        className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                       >
                         {filteredUpazilas.map((upazila) => (
                           <option key={upazila.code} value={upazila.code}>
@@ -479,14 +479,14 @@ const ForecastSummary = () => {
                   </>
                 ) : null}
 
-                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:col-span-6 md:self-center">
+                <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl md:col-span-6 md:self-center">
                   <div className="grid grid-cols-4 gap-1 md:flex md:flex-wrap md:justify-center">
                     {DAY_OPTIONS.map((dayOption) => (
                       <button
                         key={dayOption}
                         type="button"
                         onClick={() => setSelectedDays(dayOption)}
-                        className={`w-full rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:px-4 md:w-auto ${
+                        className={`w-full rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors sm:rounded-xl sm:px-4 sm:text-xs md:w-auto ${
                           selectedDays === dayOption
                             ? "bg-white text-[#0a3d3d]"
                             : "text-teal-100 hover:bg-white/10"
@@ -502,35 +502,35 @@ const ForecastSummary = () => {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-gray-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 px-5 py-5 sm:px-6">
+        <section className="rounded-2xl border border-gray-100 bg-white shadow-sm sm:rounded-3xl">
+          <div className="border-b border-gray-100 px-3 py-3.5 sm:px-6 sm:py-5">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Daily Forecast Matrix</h2>
+              <h2 className="text-base font-bold text-gray-900 sm:text-lg">Daily Forecast Matrix</h2>
             </div>
           </div>
 
           {loading ? (
-            <div className="flex min-h-80 items-center justify-center px-6 py-10">
+            <div className="flex min-h-64 items-center justify-center px-4 py-8 sm:min-h-80 sm:px-6 sm:py-10">
               <div className="text-center">
-                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
-                <p className="mt-4 text-sm font-medium text-gray-500">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-3 border-teal-500 border-t-transparent sm:h-10 sm:w-10" />
+                <p className="mt-3 text-sm font-medium text-gray-500 sm:mt-4">
                   Preparing forecast summary...
                 </p>
               </div>
             </div>
           ) : error ? (
-            <div className="px-6 py-12">
-              <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm text-red-700">
+            <div className="px-3 py-6 sm:px-6 sm:py-12">
+              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:rounded-2xl sm:px-5 sm:py-4">
                 {error}
               </div>
             </div>
           ) : !hasRows ? (
-            <div className="px-6 py-12">
-              <div className="rounded-2xl border border-gray-100 bg-gray-50 px-5 py-8 text-center">
-                <p className="text-base font-semibold text-gray-700">
+            <div className="px-3 py-6 sm:px-6 sm:py-12">
+              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-center sm:rounded-2xl sm:px-5 sm:py-8">
+                <p className="text-sm font-semibold text-gray-700 sm:text-base">
                   No forecast summary data is available right now.
                 </p>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-xs text-gray-500 sm:text-sm">
                   Once rows are imported today for the selected geography, the summary table will appear here.
                 </p>
               </div>
@@ -541,18 +541,18 @@ const ForecastSummary = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="sticky left-0 z-20 min-w-55 border-b border-r border-gray-200 bg-gray-50 px-4 py-4 text-left text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
+                      <th className="sticky left-0 z-20 min-w-40 border-b border-r border-gray-200 bg-gray-50 px-2.5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.16em] text-gray-500 sm:min-w-55 sm:px-4 sm:py-4 sm:text-xs sm:tracking-[0.18em]">
                         Parameter
                       </th>
                       {summaryData.dates.map((date) => (
                         <th
                           key={date.key}
-                          className="min-w-33 border-b border-gray-200 px-4 py-4 text-center"
+                          className="min-w-24 border-b border-gray-200 px-2.5 py-3 text-center sm:min-w-33 sm:px-4 sm:py-4"
                         >
-                          <div className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-teal-700 sm:text-xs sm:tracking-[0.16em]">
                             {date.dayLabel}
                           </div>
-                          <div className="mt-1 text-sm font-semibold text-gray-900">
+                          <div className="mt-1 text-xs font-semibold text-gray-900 sm:text-sm">
                             {date.label}
                           </div>
                         </th>
@@ -566,17 +566,17 @@ const ForecastSummary = () => {
                         key={row.key}
                         className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
                       >
-                        <th className="sticky left-0 z-10 border-r border-t border-gray-200 bg-inherit px-4 py-4 text-left">
-                          <div className="text-sm font-semibold text-gray-900">{row.label}</div>
-                          <div className="mt-1 text-xs text-gray-500">{row.unit}</div>
+                        <th className="sticky left-0 z-10 border-r border-t border-gray-200 bg-inherit px-2.5 py-3 text-left sm:px-4 sm:py-4">
+                          <div className="text-xs font-semibold text-gray-900 sm:text-sm">{row.label}</div>
+                          <div className="mt-1 text-[10px] text-gray-500 sm:text-xs">{row.unit}</div>
                         </th>
 
                         {row.values.map((value) => (
                           <td
                             key={`${row.key}-${value.date}`}
-                            className="border-t border-gray-200 px-4 py-4 text-center"
+                            className="border-t border-gray-200 px-2.5 py-3 text-center sm:px-4 sm:py-4"
                           >
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-xs font-semibold text-gray-900 sm:text-sm">
                               {value.displayValue}
                             </div>
                           </td>

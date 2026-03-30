@@ -31,7 +31,22 @@ const ForecastSummaryChart = ({
   const [HC, setHC] = useState(null);
   const [HCReact, setHCReact] = useState(null);
   const [hcReady, setHcReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const syncViewport = () => setIsMobile(mediaQuery.matches);
+
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncViewport);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -112,7 +127,7 @@ const ForecastSummaryChart = ({
         type: chartType,
         zooming: { type: "x" },
         backgroundColor: "#ffffff",
-        height: 420,
+        height: isMobile ? 240 : 420,
         animation: { duration: 700 },
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
       },
@@ -194,7 +209,7 @@ const ForecastSummaryChart = ({
         buttons: { contextButton: { enabled: false } },
       },
     };
-  }, [chartSeries, chartType, hcReady, unit]);
+  }, [chartSeries, chartType, hcReady, isMobile, unit]);
 
   const handleImageDownload = () => {
     if (!HC || !chartOptions || !hasData) {
@@ -302,16 +317,16 @@ const ForecastSummaryChart = ({
   const hasData = series.some((item) => item.data.some((point) => typeof point[1] === "number"));
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 bg-linear-to-br from-[#0a3d3d] to-[#0d5555] rounded-xl flex items-center justify-center shadow-sm shrink-0">
-              <span className="text-white text-lg">{icon}</span>
+    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm sm:rounded-2xl">
+      <div className="p-2 sm:p-5">
+        <div className="mb-2 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex items-start gap-1.5 sm:items-center sm:gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-[#0a3d3d] to-[#0d5555] shadow-sm sm:h-10 sm:w-10 sm:rounded-xl">
+              <span className="text-base text-white sm:text-lg">{icon}</span>
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800">{title}</h2>
-              <p className="text-xs text-gray-400">{subtitle}</p>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-gray-800 sm:text-xl">{title}</h2>
+              <p className="text-[10px] leading-3.5 text-gray-400 sm:text-xs sm:leading-4">{subtitle}</p>
             </div>
           </div>
 
@@ -319,7 +334,7 @@ const ForecastSummaryChart = ({
             <div className="flex gap-1.5 self-start sm:self-auto">
               <button
                 onClick={handleImageDownload}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-lg transition-colors shadow-sm"
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-md transition-colors shadow-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs sm:rounded-lg"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -328,7 +343,7 @@ const ForecastSummaryChart = ({
               </button>
               <button
                 onClick={handleCSVDownload}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors shadow-sm"
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-md transition-colors shadow-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs sm:rounded-lg"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -340,8 +355,8 @@ const ForecastSummaryChart = ({
         </div>
 
         {hcReady && chartOptions ? (
-          <div className="bg-white rounded-xl border border-gray-100 p-2 overflow-hidden">
-            <div className="h-105">
+          <div className="overflow-hidden rounded-lg border border-gray-100 bg-white p-0.5 sm:rounded-xl sm:p-2">
+            <div className="h-60 sm:h-105">
               <ChartRenderer
                 HC={HC}
                 HCReact={HCReact}
@@ -351,7 +366,7 @@ const ForecastSummaryChart = ({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-80 gap-2 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 sm:h-80 sm:rounded-xl">
             <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs text-gray-400">Loading chart...</p>
           </div>
