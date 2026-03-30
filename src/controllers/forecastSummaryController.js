@@ -151,6 +151,132 @@ const getSpatialWeight = (latitude) => {
   return Math.cos((normalizedLatitude * Math.PI) / 180);
 };
 
+const buildRainfallDiagnostics = (rows, selectedUpazila, selectedUpazilaCode) => {
+  if (!rows.length) {
+    console.log("[forecast-summary][rainfall] no matched rows for rainfall diagnostics", {
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectedUpazilaLabel: selectedUpazila?.label || null,
+    });
+    return;
+  }
+
+  const rowsByDay = new Map();
+  const rowsByPoint = new Map();
+
+  rows.forEach((row) => {
+    const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+    const pointKey = `${row.latitude}|${row.longitude}`;
+    const rainfall = normalizeNumber(row.rainfall);
+
+    if (!rowsByDay.has(forecastDate)) {
+      rowsByDay.set(forecastDate, []);
+    }
+    rowsByDay.get(forecastDate).push({
+      forecast_time: row.forecast_time,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      rainfall,
+    });
+
+    if (!rowsByPoint.has(pointKey)) {
+      rowsByPoint.set(pointKey, []);
+    }
+    rowsByPoint.get(pointKey).push({
+      forecastDate,
+      forecast_time: row.forecast_time,
+      rainfall,
+    });
+  });
+
+  const dayDiagnostics = Array.from(rowsByDay.entries()).map(([forecastDate, dayRows]) => {
+    const rainfallValues = dayRows
+      .map((row) => row.rainfall)
+      .filter((value) => value !== null);
+
+    const uniquePointCount = new Set(
+      dayRows.map((row) => `${row.latitude}|${row.longitude}`)
+    ).size;
+    const uniqueTimeCount = new Set(dayRows.map((row) => row.forecast_time)).size;
+
+    return {
+      forecastDate,
+      matchedRows: dayRows.length,
+      uniquePointCount,
+      uniqueTimeCount,
+      rainfallMin: rainfallValues.length ? Math.min(...rainfallValues) : null,
+      rainfallMax: rainfallValues.length ? Math.max(...rainfallValues) : null,
+      rainfallAvg: rainfallValues.length
+        ? rainfallValues.reduce((sum, value) => sum + value, 0) / rainfallValues.length
+        : null,
+    };
+  });
+
+  const pointDiagnostics = Array.from(rowsByPoint.entries())
+    .slice(0, 8)
+    .map(([pointKey, pointRows]) => {
+      const sortedRows = [...pointRows].sort(
+        (a, b) => new Date(a.forecast_time).getTime() - new Date(b.forecast_time).getTime()
+      );
+
+      const rainfallSeries = sortedRows
+        .map((row) => row.rainfall)
+        .filter((value) => value !== null);
+
+      let deltaSum = 0;
+      for (let index = 1; index < sortedRows.length; index += 1) {
+        const previous = sortedRows[index - 1].rainfall;
+        const current = sortedRows[index].rainfall;
+        if (previous !== null && current !== null) {
+          deltaSum += current - previous;
+        }
+      }
+
+      let positiveDeltaSum = 0;
+      for (let index = 1; index < sortedRows.length; index += 1) {
+        const previous = sortedRows[index - 1].rainfall;
+        const current = sortedRows[index].rainfall;
+        if (previous !== null && current !== null) {
+          positiveDeltaSum += Math.max(0, current - previous);
+        }
+      }
+
+      const monotonicNonDecreasing = sortedRows.every((row, index) => {
+        if (index === 0) return true;
+        const previous = sortedRows[index - 1].rainfall;
+        const current = row.rainfall;
+        if (previous === null || current === null) return true;
+        return current >= previous;
+      });
+
+      return {
+        pointKey,
+        totalRows: sortedRows.length,
+        firstTime: sortedRows[0]?.forecast_time || null,
+        lastTime: sortedRows[sortedRows.length - 1]?.forecast_time || null,
+        firstRainfall: sortedRows[0]?.rainfall ?? null,
+        lastRainfall: sortedRows[sortedRows.length - 1]?.rainfall ?? null,
+        simpleSum: rainfallSeries.reduce((sum, value) => sum + value, 0),
+        deltaSum,
+        positiveDeltaSum,
+        monotonicNonDecreasing,
+        rainfallSeries: sortedRows.map((row) => ({
+          forecastDate: row.forecastDate,
+          forecast_time: row.forecast_time,
+          rainfall: row.rainfall,
+        })),
+      };
+    });
+
+  console.log("[forecast-summary][rainfall] diagnostics", {
+    selectedUpazilaCode: selectedUpazilaCode || null,
+    selectedUpazilaLabel: selectedUpazila?.label || null,
+    totalMatchedRows: rows.length,
+    uniqueGridPoints: rowsByPoint.size,
+    dailyBreakdown: dayDiagnostics,
+    samplePointBreakdown: pointDiagnostics,
+  });
+};
+
 const getForecastTableColumns = async () => {
   const columns = await sequelize.query("SHOW COLUMNS FROM wrf_bangladesh_forecast", {
     type: sequelize.QueryTypes.SELECT,
@@ -363,6 +489,12 @@ export const getForecastSummary = async (req, res) => {
         uniqueMatchedPoints,
       });
     }
+
+    buildRainfallDiagnostics(
+      filteredForecastRows,
+      selectedUpazila,
+      selectedUpazilaCode
+    );
 
     const pointDayAccumulator = new Map();
 
