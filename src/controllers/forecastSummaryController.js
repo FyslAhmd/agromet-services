@@ -145,6 +145,12 @@ const normalizeNumber = (value) => {
   return Number.isNaN(numericValue) ? null : numericValue;
 };
 
+const getSpatialWeight = (latitude) => {
+  const normalizedLatitude = normalizeNumber(latitude);
+  if (normalizedLatitude === null) return null;
+  return Math.cos((normalizedLatitude * Math.PI) / 180);
+};
+
 const getForecastTableColumns = async () => {
   const columns = await sequelize.query("SHOW COLUMNS FROM wrf_bangladesh_forecast", {
     type: sequelize.QueryTypes.SELECT,
@@ -358,13 +364,18 @@ export const getForecastSummary = async (req, res) => {
       });
     }
 
-    const dailyAccumulator = new Map();
+    const pointDayAccumulator = new Map();
 
     filteredForecastRows.forEach((row) => {
       const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+      const pointKey = `${forecastDate}|${row.latitude}|${row.longitude}`;
 
-      if (!dailyAccumulator.has(forecastDate)) {
-        dailyAccumulator.set(forecastDate, {
+      if (!pointDayAccumulator.has(pointKey)) {
+        pointDayAccumulator.set(pointKey, {
+          forecastDate,
+          latitude: normalizeNumber(row.latitude),
+          longitude: normalizeNumber(row.longitude),
+          spatialWeight: getSpatialWeight(row.latitude),
           maxTemperature: -Infinity,
           minTemperature: Infinity,
           rainfallSum: 0,
@@ -383,13 +394,10 @@ export const getForecastSummary = async (req, res) => {
           soilMoistureCount: 0,
           dewPointSum: 0,
           dewPointCount: 0,
-          rowCount: 0,
-          firstForecastTime: row.forecast_time,
-          lastForecastTime: row.forecast_time,
         });
       }
 
-      const aggregate = dailyAccumulator.get(forecastDate);
+      const aggregate = pointDayAccumulator.get(pointKey);
       const temperature = normalizeNumber(row.temperature);
       const rainfall = normalizeNumber(row.rainfall);
       const humidity = normalizeNumber(row.humidity);
@@ -451,16 +459,120 @@ export const getForecastSummary = async (req, res) => {
         aggregate.dewPointSum += dewPoint;
         aggregate.dewPointCount += 1;
       }
+    });
 
-      aggregate.rowCount += 1;
-      aggregate.firstForecastTime =
-        row.forecast_time < aggregate.firstForecastTime
-          ? row.forecast_time
-          : aggregate.firstForecastTime;
-      aggregate.lastForecastTime =
-        row.forecast_time > aggregate.lastForecastTime
-          ? row.forecast_time
-          : aggregate.lastForecastTime;
+    const dailyAccumulator = new Map();
+
+    pointDayAccumulator.forEach((pointAggregate) => {
+      const {
+        forecastDate,
+        spatialWeight,
+        maxTemperature,
+        minTemperature,
+        rainfallSum,
+        humiditySum,
+        humidityCount,
+        windSpeedSum,
+        windSpeedCount,
+        windDirectionSinSum,
+        windDirectionCosSum,
+        windDirectionCount,
+        solarRadiationSum,
+        solarRadiationCount,
+        cloudCoverSum,
+        cloudCoverCount,
+        soilMoistureSum,
+        soilMoistureCount,
+        dewPointSum,
+        dewPointCount,
+      } = pointAggregate;
+
+      if (!dailyAccumulator.has(forecastDate)) {
+        dailyAccumulator.set(forecastDate, {
+          maxTemperatureWeightedSum: 0,
+          maxTemperatureWeightTotal: 0,
+          minTemperatureWeightedSum: 0,
+          minTemperatureWeightTotal: 0,
+          rainfallWeightedSum: 0,
+          rainfallWeightTotal: 0,
+          humidityWeightedSum: 0,
+          humidityWeightTotal: 0,
+          windSpeedWeightedSum: 0,
+          windSpeedWeightTotal: 0,
+          windDirectionWeightedSinSum: 0,
+          windDirectionWeightedCosSum: 0,
+          windDirectionWeightTotal: 0,
+          solarRadiationWeightedSum: 0,
+          solarRadiationWeightTotal: 0,
+          cloudCoverWeightedSum: 0,
+          cloudCoverWeightTotal: 0,
+          soilMoistureWeightedSum: 0,
+          soilMoistureWeightTotal: 0,
+          dewPointWeightedSum: 0,
+          dewPointWeightTotal: 0,
+        });
+      }
+
+      const dailyAggregate = dailyAccumulator.get(forecastDate);
+      if (spatialWeight === null || Number.isNaN(spatialWeight) || spatialWeight <= 0) {
+        return;
+      }
+
+      if (Number.isFinite(maxTemperature)) {
+        dailyAggregate.maxTemperatureWeightedSum += spatialWeight * maxTemperature;
+        dailyAggregate.maxTemperatureWeightTotal += spatialWeight;
+      }
+
+      if (Number.isFinite(minTemperature)) {
+        dailyAggregate.minTemperatureWeightedSum += spatialWeight * minTemperature;
+        dailyAggregate.minTemperatureWeightTotal += spatialWeight;
+      }
+
+      dailyAggregate.rainfallWeightedSum += spatialWeight * rainfallSum;
+      dailyAggregate.rainfallWeightTotal += spatialWeight;
+
+      if (humidityCount) {
+        const humidityAverage = humiditySum / humidityCount;
+        dailyAggregate.humidityWeightedSum += spatialWeight * humidityAverage;
+        dailyAggregate.humidityWeightTotal += spatialWeight;
+      }
+
+      if (windSpeedCount) {
+        const windSpeedAverage = windSpeedSum / windSpeedCount;
+        dailyAggregate.windSpeedWeightedSum += spatialWeight * windSpeedAverage;
+        dailyAggregate.windSpeedWeightTotal += spatialWeight;
+      }
+
+      if (windDirectionCount) {
+        const pointWindDirection = Math.atan2(windDirectionSinSum, windDirectionCosSum);
+        dailyAggregate.windDirectionWeightedSinSum += spatialWeight * Math.sin(pointWindDirection);
+        dailyAggregate.windDirectionWeightedCosSum += spatialWeight * Math.cos(pointWindDirection);
+        dailyAggregate.windDirectionWeightTotal += spatialWeight;
+      }
+
+      if (solarRadiationCount) {
+        const solarRadiationAverage = solarRadiationSum / solarRadiationCount;
+        dailyAggregate.solarRadiationWeightedSum += spatialWeight * solarRadiationAverage;
+        dailyAggregate.solarRadiationWeightTotal += spatialWeight;
+      }
+
+      if (cloudCoverCount) {
+        const cloudCoverAverage = cloudCoverSum / cloudCoverCount;
+        dailyAggregate.cloudCoverWeightedSum += spatialWeight * cloudCoverAverage;
+        dailyAggregate.cloudCoverWeightTotal += spatialWeight;
+      }
+
+      if (soilMoistureCount) {
+        const soilMoistureAverage = soilMoistureSum / soilMoistureCount;
+        dailyAggregate.soilMoistureWeightedSum += spatialWeight * soilMoistureAverage;
+        dailyAggregate.soilMoistureWeightTotal += spatialWeight;
+      }
+
+      if (dewPointCount) {
+        const dewPointAverage = dewPointSum / dewPointCount;
+        dailyAggregate.dewPointWeightedSum += spatialWeight * dewPointAverage;
+        dailyAggregate.dewPointWeightTotal += spatialWeight;
+      }
     });
 
     const dates = forecastDates.map(({ forecast_date }) => {
@@ -488,33 +600,35 @@ export const getForecastSummary = async (req, res) => {
         if (aggregate) {
           switch (rowConfig.key) {
             case "max_temperature":
-              rawValue = Number.isFinite(aggregate.maxTemperature)
-                ? aggregate.maxTemperature
+              rawValue = aggregate.maxTemperatureWeightTotal
+                ? aggregate.maxTemperatureWeightedSum / aggregate.maxTemperatureWeightTotal
                 : null;
               break;
             case "min_temperature":
-              rawValue = Number.isFinite(aggregate.minTemperature)
-                ? aggregate.minTemperature
+              rawValue = aggregate.minTemperatureWeightTotal
+                ? aggregate.minTemperatureWeightedSum / aggregate.minTemperatureWeightTotal
                 : null;
               break;
             case "rainfall":
-              rawValue = aggregate.rainfallSum;
+              rawValue = aggregate.rainfallWeightTotal
+                ? aggregate.rainfallWeightedSum / aggregate.rainfallWeightTotal
+                : null;
               break;
             case "relative_humidity":
-              rawValue = aggregate.humidityCount
-                ? aggregate.humiditySum / aggregate.humidityCount
+              rawValue = aggregate.humidityWeightTotal
+                ? aggregate.humidityWeightedSum / aggregate.humidityWeightTotal
                 : null;
               break;
             case "wind_speed":
-              rawValue = aggregate.windSpeedCount
-                ? (aggregate.windSpeedSum / aggregate.windSpeedCount) * 3.6
+              rawValue = aggregate.windSpeedWeightTotal
+                ? (aggregate.windSpeedWeightedSum / aggregate.windSpeedWeightTotal) * 3.6
                 : null;
               break;
             case "wind_direction":
-              rawValue = aggregate.windDirectionCount
+              rawValue = aggregate.windDirectionWeightTotal
                 ? (Math.atan2(
-                    aggregate.windDirectionSinSum / aggregate.windDirectionCount,
-                    aggregate.windDirectionCosSum / aggregate.windDirectionCount
+                    aggregate.windDirectionWeightedSinSum,
+                    aggregate.windDirectionWeightedCosSum
                   ) *
                     180) /
                     Math.PI
@@ -524,23 +638,23 @@ export const getForecastSummary = async (req, res) => {
               }
               break;
             case "solar_radiation":
-              rawValue = aggregate.solarRadiationCount
-                ? aggregate.solarRadiationSum / aggregate.solarRadiationCount
+              rawValue = aggregate.solarRadiationWeightTotal
+                ? aggregate.solarRadiationWeightedSum / aggregate.solarRadiationWeightTotal
                 : null;
               break;
             case "cloud_cover":
-              rawValue = aggregate.cloudCoverCount
-                ? aggregate.cloudCoverSum / aggregate.cloudCoverCount
+              rawValue = aggregate.cloudCoverWeightTotal
+                ? aggregate.cloudCoverWeightedSum / aggregate.cloudCoverWeightTotal
                 : null;
               break;
             case "soil_moisture":
-              rawValue = aggregate.soilMoistureCount
-                ? aggregate.soilMoistureSum / aggregate.soilMoistureCount
+              rawValue = aggregate.soilMoistureWeightTotal
+                ? aggregate.soilMoistureWeightedSum / aggregate.soilMoistureWeightTotal
                 : null;
               break;
             case "dew_point":
-              rawValue = aggregate.dewPointCount
-                ? aggregate.dewPointSum / aggregate.dewPointCount
+              rawValue = aggregate.dewPointWeightTotal
+                ? aggregate.dewPointWeightedSum / aggregate.dewPointWeightTotal
                 : null;
               break;
             default:
@@ -561,15 +675,15 @@ export const getForecastSummary = async (req, res) => {
       filteredForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
     ).size;
     const latestForecastTime =
-      dailySummaries.length
-        ? dailySummaries.reduce((latest, item) =>
-            !latest || item.lastForecastTime > latest ? item.lastForecastTime : latest,
+      filteredForecastRows.length
+        ? filteredForecastRows.reduce((latest, row) =>
+            !latest || row.forecast_time > latest ? row.forecast_time : latest,
           null)
         : null;
     const firstForecastTime =
-      dailySummaries.length
-        ? dailySummaries.reduce((first, item) =>
-            !first || item.firstForecastTime < first ? item.firstForecastTime : first,
+      filteredForecastRows.length
+        ? filteredForecastRows.reduce((first, row) =>
+            !first || row.forecast_time < first ? row.forecast_time : first,
           null)
         : null;
 

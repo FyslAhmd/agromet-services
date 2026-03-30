@@ -277,7 +277,7 @@ const ForecastSummaryChart = ({
 
         {hcReady && chartOptions ? (
           <div className="bg-white rounded-xl border border-gray-100 p-2 overflow-hidden">
-            <div className="h-[420px]">
+            <div className="h-105">
               <ChartRenderer
                 HC={HC}
                 HCReact={HCReact}

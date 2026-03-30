@@ -297,7 +297,7 @@ const ForecastSummary = () => {
                 </p>
               </div>
 
-              <div className="grid gap-3 md:min-w-[520px] md:grid-cols-2 md:items-end">
+              <div className="grid gap-3 md:min-w-130 md:grid-cols-2 md:items-end">
                 <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                     District
@@ -367,7 +367,7 @@ const ForecastSummary = () => {
           </div>
 
           {loading ? (
-            <div className="flex min-h-[320px] items-center justify-center px-6 py-10">
+            <div className="flex min-h-80 items-center justify-center px-6 py-10">
               <div className="text-center">
                 <div className="mx-auto h-10 w-10 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
                 <p className="mt-4 text-sm font-medium text-gray-500">
@@ -398,13 +398,13 @@ const ForecastSummary = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="sticky left-0 z-20 min-w-[220px] border-b border-r border-gray-200 bg-gray-50 px-4 py-4 text-left text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
+                      <th className="sticky left-0 z-20 min-w-55 border-b border-r border-gray-200 bg-gray-50 px-4 py-4 text-left text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
                         Parameter
                       </th>
                       {summaryData.dates.map((date) => (
                         <th
                           key={date.key}
-                          className="min-w-[132px] border-b border-gray-200 px-4 py-4 text-center"
+                          className="min-w-33 border-b border-gray-200 px-4 py-4 text-center"
                         >
                           <div className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">
                             {date.dayLabel}
