@@ -117,12 +117,12 @@ const ForecastSummaryChart = ({
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
       },
       title: {
-        text: title,
+        text: null,
         align: "left",
         style: { fontSize: "18px", fontWeight: "bold", color: "#374151" },
       },
       subtitle: {
-        text: subtitle,
+        text: null,
         align: "left",
         style: { color: "#6B7280", fontSize: "13px" },
       },
@@ -194,19 +194,54 @@ const ForecastSummaryChart = ({
         buttons: { contextButton: { enabled: false } },
       },
     };
-  }, [chartSeries, chartType, hcReady, subtitle, title, unit]);
+  }, [chartSeries, chartType, hcReady, unit]);
 
   const handleImageDownload = () => {
     if (chartRef.current?.chart) {
       chartRef.current.chart.exportChart({
         type: "image/png",
         filename: imageFilename,
-        width: 1800,
-        height: 600,
+        sourceWidth: 1800,
+        sourceHeight: 800,
         scale: 2,
         chartOptions: {
           chart: {
             backgroundColor: "#ffffff",
+            width: 1800,
+            height: 800,
+            spacingTop: 30,
+            spacingRight: 24,
+            spacingBottom: 24,
+            spacingLeft: 24,
+            style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
+          },
+          title: {
+            text: title,
+            align: "left",
+            margin: 18,
+            style: { fontSize: "28px", fontWeight: "700", color: "#1f2937" },
+          },
+          subtitle: {
+            text: subtitle,
+            align: "left",
+            style: { fontSize: "16px", color: "#6b7280" },
+          },
+          legend: {
+            itemStyle: { fontSize: "14px", fontWeight: "500", color: "#374151" },
+            symbolRadius: 8,
+          },
+          xAxis: {
+            labels: {
+              style: { fontSize: "13px", color: "#6B7280" },
+            },
+          },
+          yAxis: {
+            title: {
+              style: { fontSize: "14px", fontWeight: "600", color: "#374151" },
+            },
+            labels: {
+              style: { fontSize: "13px", color: "#6B7280" },
+            },
           },
         },
       });
