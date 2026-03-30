@@ -198,13 +198,27 @@ const ForecastSummaryChart = ({
 
   const handleImageDownload = () => {
     if (chartRef.current?.chart) {
-      chartRef.current.chart.exportChart({
-        type: "image/png",
-        filename: imageFilename,
-        sourceWidth: 1800,
-        sourceHeight: 800,
-        scale: 2,
-        chartOptions: {
+      const chart = chartRef.current.chart;
+      const previousOptions = {
+        chart: {
+          width: chart.options.chart?.width ?? null,
+          height: chart.options.chart?.height ?? null,
+          backgroundColor: chart.options.chart?.backgroundColor ?? "#ffffff",
+          spacingTop: chart.options.chart?.spacingTop,
+          spacingRight: chart.options.chart?.spacingRight,
+          spacingBottom: chart.options.chart?.spacingBottom,
+          spacingLeft: chart.options.chart?.spacingLeft,
+        },
+        title: {
+          text: chart.options.title?.text ?? null,
+        },
+        subtitle: {
+          text: chart.options.subtitle?.text ?? null,
+        },
+      };
+
+      chart.update(
+        {
           chart: {
             backgroundColor: "#ffffff",
             width: 1800,
@@ -244,7 +258,28 @@ const ForecastSummaryChart = ({
             },
           },
         },
+        false
+      );
+      chart.redraw();
+
+      const exportMethod = chart.exportChartLocal || chart.exportChart;
+      exportMethod.call(chart, {
+        type: "image/png",
+        filename: imageFilename,
+        sourceWidth: 1800,
+        sourceHeight: 800,
+        scale: 2,
       });
+
+      chart.update(
+        {
+          chart: previousOptions.chart,
+          title: previousOptions.title,
+          subtitle: previousOptions.subtitle,
+        },
+        false
+      );
+      chart.redraw();
     }
   };
 
