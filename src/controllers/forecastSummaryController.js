@@ -27,7 +27,7 @@ const SUMMARY_ROW_CONFIG = [
     key: "rainfall",
     label: "Rainfall",
     unit: "mm",
-    description: "Daily rainfall sum across matched forecast rows",
+    description: "Daily spatial-average rainfall from forecast timestep increments",
     decimals: 1,
   },
   {
@@ -196,7 +196,9 @@ const buildRainfallDiagnostics = (rows, selectedUpazila, selectedUpazilaCode) =>
     const uniquePointCount = new Set(
       dayRows.map((row) => `${row.latitude}|${row.longitude}`)
     ).size;
-    const uniqueTimeCount = new Set(dayRows.map((row) => row.forecast_time)).size;
+    const uniqueTimeCount = new Set(
+      dayRows.map((row) => new Date(row.forecast_time).toISOString())
+    ).size;
 
     return {
       forecastDate,
@@ -275,6 +277,91 @@ const buildRainfallDiagnostics = (rows, selectedUpazila, selectedUpazilaCode) =>
     dailyBreakdown: dayDiagnostics,
     samplePointBreakdown: pointDiagnostics,
   });
+};
+
+const buildPointRainfallDayTotals = (rows) => {
+  const rowsByPoint = new Map();
+
+  rows.forEach((row) => {
+    const pointKey = `${row.latitude}|${row.longitude}`;
+    if (!rowsByPoint.has(pointKey)) {
+      rowsByPoint.set(pointKey, []);
+    }
+    rowsByPoint.get(pointKey).push({
+      forecast_time: row.forecast_time,
+      rainfall: normalizeNumber(row.rainfall),
+      latitude: normalizeNumber(row.latitude),
+      longitude: normalizeNumber(row.longitude),
+    });
+  });
+
+  const pointDayRainfallTotals = new Map();
+  const rainfallDeltaDiagnostics = [];
+
+  rowsByPoint.forEach((pointRows, pointKey) => {
+    const sortedRows = [...pointRows].sort(
+      (a, b) => new Date(a.forecast_time).getTime() - new Date(b.forecast_time).getTime()
+    );
+
+    let previousRainfall = null;
+
+    sortedRows.forEach((row) => {
+      const currentRainfall = row.rainfall;
+      if (currentRainfall === null) {
+        previousRainfall = currentRainfall;
+        return;
+      }
+
+      let rainfallIncrement;
+      if (previousRainfall === null) {
+        // The first stored value at a grid point may already be cumulative,
+        // so we treat it as the baseline instead of new rainfall.
+        rainfallIncrement = 0;
+      } else {
+        const delta = currentRainfall - previousRainfall;
+        rainfallIncrement = delta >= 0 ? delta : currentRainfall;
+      }
+
+      const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+      const pointDayKey = `${forecastDate}|${pointKey}`;
+
+      if (!pointDayRainfallTotals.has(pointDayKey)) {
+        pointDayRainfallTotals.set(pointDayKey, {
+          forecastDate,
+          pointKey,
+          latitude: row.latitude,
+          longitude: row.longitude,
+          rainfallTotal: 0,
+          incrementCount: 0,
+          series: [],
+        });
+      }
+
+      const dayAggregate = pointDayRainfallTotals.get(pointDayKey);
+      dayAggregate.rainfallTotal += rainfallIncrement;
+      dayAggregate.incrementCount += 1;
+      dayAggregate.series.push({
+        forecast_time: row.forecast_time,
+        rawRainfall: currentRainfall,
+        incrementRainfall: rainfallIncrement,
+      });
+
+      rainfallDeltaDiagnostics.push({
+        pointKey,
+        forecastDate,
+        forecast_time: row.forecast_time,
+        rawRainfall: currentRainfall,
+        incrementRainfall: rainfallIncrement,
+      });
+
+      previousRainfall = currentRainfall;
+    });
+  });
+
+  return {
+    pointDayRainfallTotals,
+    rainfallDeltaDiagnostics,
+  };
 };
 
 const getForecastTableColumns = async () => {
@@ -496,6 +583,24 @@ export const getForecastSummary = async (req, res) => {
       selectedUpazilaCode
     );
 
+    const { pointDayRainfallTotals, rainfallDeltaDiagnostics } =
+      buildPointRainfallDayTotals(filteredForecastRows);
+
+    console.log("[forecast-summary][rainfall] increment diagnostics", {
+      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectedUpazilaLabel: selectedUpazila?.label || null,
+      sampleIncrements: rainfallDeltaDiagnostics.slice(0, 24),
+      samplePointDayTotals: Array.from(pointDayRainfallTotals.values())
+        .slice(0, 8)
+        .map((item) => ({
+          forecastDate: item.forecastDate,
+          pointKey: item.pointKey,
+          rainfallTotal: item.rainfallTotal,
+          incrementCount: item.incrementCount,
+          series: item.series.slice(0, 8),
+        })),
+    });
+
     const pointDayAccumulator = new Map();
 
     filteredForecastRows.forEach((row) => {
@@ -510,7 +615,7 @@ export const getForecastSummary = async (req, res) => {
           spatialWeight: getSpatialWeight(row.latitude),
           maxTemperature: -Infinity,
           minTemperature: Infinity,
-          rainfallSum: 0,
+          rainfallTotal: 0,
           humiditySum: 0,
           humidityCount: 0,
           windSpeedSum: 0,
@@ -531,7 +636,6 @@ export const getForecastSummary = async (req, res) => {
 
       const aggregate = pointDayAccumulator.get(pointKey);
       const temperature = normalizeNumber(row.temperature);
-      const rainfall = normalizeNumber(row.rainfall);
       const humidity = normalizeNumber(row.humidity);
       const windSpeed = normalizeNumber(row.wind_speed);
       const windDirection = normalizeNumber(row.wind_direction);
@@ -545,10 +649,6 @@ export const getForecastSummary = async (req, res) => {
       if (temperature !== null) {
         aggregate.maxTemperature = Math.max(aggregate.maxTemperature, temperature);
         aggregate.minTemperature = Math.min(aggregate.minTemperature, temperature);
-      }
-
-      if (rainfall !== null) {
-        aggregate.rainfallSum += rainfall;
       }
 
       if (humidity !== null) {
@@ -593,6 +693,11 @@ export const getForecastSummary = async (req, res) => {
       }
     });
 
+    pointDayAccumulator.forEach((pointAggregate, pointKey) => {
+      pointAggregate.rainfallTotal =
+        pointDayRainfallTotals.get(pointKey)?.rainfallTotal ?? 0;
+    });
+
     const dailyAccumulator = new Map();
 
     pointDayAccumulator.forEach((pointAggregate) => {
@@ -601,7 +706,7 @@ export const getForecastSummary = async (req, res) => {
         spatialWeight,
         maxTemperature,
         minTemperature,
-        rainfallSum,
+        rainfallTotal,
         humiditySum,
         humidityCount,
         windSpeedSum,
@@ -660,7 +765,7 @@ export const getForecastSummary = async (req, res) => {
         dailyAggregate.minTemperatureWeightTotal += spatialWeight;
       }
 
-      dailyAggregate.rainfallWeightedSum += spatialWeight * rainfallSum;
+      dailyAggregate.rainfallWeightedSum += spatialWeight * rainfallTotal;
       dailyAggregate.rainfallWeightTotal += spatialWeight;
 
       if (humidityCount) {
