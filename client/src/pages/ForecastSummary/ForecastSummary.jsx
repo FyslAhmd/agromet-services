@@ -376,8 +376,12 @@ const ForecastSummary = () => {
                 </p>
               </div>
 
-              <div className="grid gap-3 md:min-w-130 md:grid-cols-2 md:items-end xl:grid-cols-3">
-                <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+              <div className="grid gap-3 md:min-w-130 md:grid-cols-6">
+                <div
+                  className={`rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm ${
+                    selectedScope === "upazila" ? "md:col-span-2" : "md:col-span-3"
+                  }`}
+                >
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                     Scope
                   </label>
@@ -396,7 +400,7 @@ const ForecastSummary = () => {
                 </div>
 
                 {selectedScope === "region" ? (
-                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-3">
                     <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                       Region
                     </label>
@@ -416,7 +420,7 @@ const ForecastSummary = () => {
                 ) : null}
 
                 {selectedScope === "district" ? (
-                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-3">
                     <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                       District
                     </label>
@@ -437,7 +441,7 @@ const ForecastSummary = () => {
 
                 {selectedScope === "upazila" ? (
                   <>
-                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-2">
                       <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                         District
                       </label>
@@ -455,7 +459,7 @@ const ForecastSummary = () => {
                       </select>
                     </div>
 
-                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm md:col-span-2">
                       <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
                         Upazila
                       </label>
@@ -475,8 +479,7 @@ const ForecastSummary = () => {
                   </>
                 ) : null}
 
-                {/*
-                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:self-center xl:col-span-full">
+                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:col-span-6 md:self-center">
                   <div className="grid grid-cols-4 gap-1 md:flex md:flex-wrap md:justify-center">
                     {DAY_OPTIONS.map((dayOption) => (
                       <button
@@ -493,12 +496,6 @@ const ForecastSummary = () => {
                       </button>
                     ))}
                   </div>
-                </div>
-                */}
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-teal-50/90 xl:col-span-full">
-                  Spatial averaging uses all forecast grid points that fall inside the selected{" "}
-                  {selectedScope}. {selectedScope === "upazila" ? "Rainfall is also derived from timestep increments before spatial averaging." : ""}
                 </div>
               </div>
             </div>
