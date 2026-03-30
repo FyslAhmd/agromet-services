@@ -108,7 +108,9 @@ const buildUpazilaCache = () => {
       const properties = feature.properties || {};
       const name = properties.ADM3_EN?.trim();
       const code = properties.ADM3_PCODE?.trim();
+      const districtCode = properties.ADM2_PCODE?.trim() || "";
       const district = properties.ADM2_EN?.trim() || "";
+      const regionCode = properties.ADM1_PCODE?.trim() || "";
       const division = properties.ADM1_EN?.trim() || "";
 
       if (!name || !code) {
@@ -122,6 +124,9 @@ const buildUpazilaCache = () => {
         code,
         name,
         label,
+        level: "upazila",
+        regionCode,
+        districtCode,
         district,
         division,
         geometry: feature.geometry,
@@ -133,7 +138,39 @@ const buildUpazilaCache = () => {
 
   const upazilaMap = new Map(upazilas.map((upazila) => [upazila.code, upazila]));
 
+  const regionMap = new Map();
+  const districtMap = new Map();
+
+  upazilas.forEach((upazila) => {
+    if (upazila.regionCode && !regionMap.has(upazila.regionCode)) {
+      regionMap.set(upazila.regionCode, {
+        code: upazila.regionCode,
+        name: upazila.division,
+        label: upazila.division,
+        level: "region",
+      });
+    }
+
+    if (upazila.districtCode && !districtMap.has(upazila.districtCode)) {
+      districtMap.set(upazila.districtCode, {
+        code: upazila.districtCode,
+        name: upazila.district,
+        label: upazila.district,
+        level: "district",
+        regionCode: upazila.regionCode,
+        region: upazila.division,
+      });
+    }
+  });
+
+  const regions = Array.from(regionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  const districts = Array.from(districtMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+
   return {
+    regions,
+    regionMap,
+    districts,
+    districtMap,
     upazilas,
     upazilaMap,
   };
@@ -150,19 +187,144 @@ const getCache = () => {
 export const getUpazilaOptions = () => {
   const { upazilas } = getCache();
 
-  return upazilas.map(({ code, name, label, district, division }) => ({
-    code,
-    name,
-    label,
-    district,
-    division,
-  }));
+  return upazilas.map(
+    ({
+      code,
+      name,
+      label,
+      regionCode,
+      districtCode,
+      district,
+      division,
+    }) => ({
+      code,
+      name,
+      label,
+      regionCode,
+      districtCode,
+      district,
+      division,
+    })
+  );
+};
+
+export const getRegionOptions = () => {
+  const { regions } = getCache();
+  return regions;
+};
+
+export const getDistrictOptions = () => {
+  const { districts } = getCache();
+  return districts;
 };
 
 export const getUpazilaByCode = (code) => {
   if (!code) return null;
   const { upazilaMap } = getCache();
   return upazilaMap.get(code) || null;
+};
+
+export const getDistrictByCode = (code) => {
+  if (!code) return null;
+  const { districtMap } = getCache();
+  return districtMap.get(code) || null;
+};
+
+export const getRegionByCode = (code) => {
+  if (!code) return null;
+  const { regionMap } = getCache();
+  return regionMap.get(code) || null;
+};
+
+export const getForecastLocationOptions = () => ({
+  regions: getRegionOptions(),
+  districts: getDistrictOptions(),
+  upazilas: getUpazilaOptions(),
+});
+
+export const resolveForecastSelection = (selectionType, selectionCode) => {
+  if (!selectionType || !selectionCode) {
+    return null;
+  }
+
+  const normalizedType = selectionType.trim().toLowerCase();
+
+  if (normalizedType === "region") {
+    return getRegionByCode(selectionCode);
+  }
+
+  if (normalizedType === "district") {
+    return getDistrictByCode(selectionCode);
+  }
+
+  if (normalizedType === "upazila") {
+    return getUpazilaByCode(selectionCode);
+  }
+
+  return null;
+};
+
+export const getSelectionUpazilas = (selection) => {
+  const { upazilas } = getCache();
+
+  if (!selection) {
+    return upazilas;
+  }
+
+  if (selection.level === "region") {
+    return upazilas.filter((upazila) => upazila.regionCode === selection.code);
+  }
+
+  if (selection.level === "district") {
+    return upazilas.filter((upazila) => upazila.districtCode === selection.code);
+  }
+
+  if (selection.level === "upazila") {
+    return upazilas.filter((upazila) => upazila.code === selection.code);
+  }
+
+  return [];
+};
+
+const computeCombinedBoundingBox = (upazilas) => {
+  if (!upazilas.length) return null;
+
+  return upazilas.reduce(
+    (combined, upazila) => ({
+      minX: Math.min(combined.minX, upazila.bbox.minX),
+      minY: Math.min(combined.minY, upazila.bbox.minY),
+      maxX: Math.max(combined.maxX, upazila.bbox.maxX),
+      maxY: Math.max(combined.maxY, upazila.bbox.maxY),
+    }),
+    {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity,
+    }
+  );
+};
+
+export const getSelectionMeta = (selection) => {
+  if (!selection) return null;
+
+  const memberUpazilas = getSelectionUpazilas(selection);
+  const firstUpazila = memberUpazilas[0] || null;
+  const bbox =
+    selection.level === "upazila" ? selection.bbox : computeCombinedBoundingBox(memberUpazilas);
+
+  return {
+    ...selection,
+    bbox,
+    memberCount: memberUpazilas.length,
+    district: selection.level === "district" ? selection.name : firstUpazila?.district || null,
+    division:
+      selection.level === "region"
+        ? selection.name
+        : selection.level === "district"
+          ? selection.region
+          : firstUpazila?.division || null,
+  };
 };
 
 export const isPointInsideUpazila = (latitude, longitude, upazila) => {
@@ -186,4 +348,60 @@ export const isPointInsideUpazila = (latitude, longitude, upazila) => {
   }
 
   return isPointInPolygonGeometry([lon, lat], upazila.geometry);
+};
+
+export const isPointInsideSelection = (latitude, longitude, selection) => {
+  if (!selection) return true;
+
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    return false;
+  }
+
+  const memberUpazilas = getSelectionUpazilas(selection);
+  if (!memberUpazilas.length) {
+    return false;
+  }
+
+  const selectionMeta = getSelectionMeta(selection);
+  const bbox = selectionMeta?.bbox;
+
+  if (
+    bbox &&
+    (lon < bbox.minX || lon > bbox.maxX || lat < bbox.minY || lat > bbox.maxY)
+  ) {
+    return false;
+  }
+
+  return memberUpazilas.some((upazila) => isPointInsideUpazila(lat, lon, upazila));
+};
+
+export const getSelectionMatcher = (selection) => {
+  if (!selection) {
+    return () => true;
+  }
+
+  const memberUpazilas = getSelectionUpazilas(selection);
+  const selectionMeta = getSelectionMeta(selection);
+  const bbox = selectionMeta?.bbox || null;
+
+  return (latitude, longitude) => {
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+
+    if (Number.isNaN(lat) || Number.isNaN(lon) || !memberUpazilas.length) {
+      return false;
+    }
+
+    if (
+      bbox &&
+      (lon < bbox.minX || lon > bbox.maxX || lat < bbox.minY || lat > bbox.maxY)
+    ) {
+      return false;
+    }
+
+    return memberUpazilas.some((upazila) => isPointInsideUpazila(lat, lon, upazila));
+  };
 };

@@ -1,8 +1,9 @@
 import sequelize from "../config/database.js";
 import {
-  getUpazilaByCode,
-  getUpazilaOptions,
-  isPointInsideUpazila,
+  getForecastLocationOptions,
+  getSelectionMatcher,
+  getSelectionMeta,
+  resolveForecastSelection,
 } from "../services/upazilaGeometryService.js";
 
 const DEFAULT_DAYS = 10;
@@ -151,11 +152,12 @@ const getSpatialWeight = (latitude) => {
   return Math.cos((normalizedLatitude * Math.PI) / 180);
 };
 
-const buildRainfallDiagnostics = (rows, selectedUpazila, selectedUpazilaCode) => {
+const buildRainfallDiagnostics = (rows, selectedSelection, selectionType, selectionCode) => {
   if (!rows.length) {
     console.log("[forecast-summary][rainfall] no matched rows for rainfall diagnostics", {
-      selectedUpazilaCode: selectedUpazilaCode || null,
-      selectedUpazilaLabel: selectedUpazila?.label || null,
+      selectionType: selectionType || null,
+      selectionCode: selectionCode || null,
+      selectedLabel: selectedSelection?.label || null,
     });
     return;
   }
@@ -270,8 +272,9 @@ const buildRainfallDiagnostics = (rows, selectedUpazila, selectedUpazilaCode) =>
     });
 
   console.log("[forecast-summary][rainfall] diagnostics", {
-    selectedUpazilaCode: selectedUpazilaCode || null,
-    selectedUpazilaLabel: selectedUpazila?.label || null,
+    selectionType: selectionType || null,
+    selectionCode: selectionCode || null,
+    selectedLabel: selectedSelection?.label || null,
     totalMatchedRows: rows.length,
     uniqueGridPoints: rowsByPoint.size,
     dailyBreakdown: dayDiagnostics,
@@ -406,19 +409,32 @@ export const getForecastSummary = async (req, res) => {
       ? DEFAULT_DAYS
       : Math.min(Math.max(requestedDays, 3), MAX_DAYS);
 
-    const selectedUpazilaCode = req.query.upazilaCode?.trim() || "";
-    const selectedUpazila = selectedUpazilaCode
-      ? getUpazilaByCode(selectedUpazilaCode)
+    const selectionType = (req.query.selectionType?.trim() || "").toLowerCase();
+    const selectionCode = (
+      req.query.selectionCode?.trim() ||
+      req.query.upazilaCode?.trim() ||
+      req.query.districtCode?.trim() ||
+      req.query.regionCode?.trim() ||
+      ""
+    );
+
+    const normalizedSelectionType = selectionType || (req.query.upazilaCode ? "upazila" : "");
+    const selectedSelection = selectionCode
+      ? resolveForecastSelection(normalizedSelectionType, selectionCode)
+      : null;
+    const selectedSelectionMeta = selectedSelection
+      ? getSelectionMeta(selectedSelection)
       : null;
 
-    if (selectedUpazilaCode && !selectedUpazila) {
-      console.log("[forecast-summary] invalid upazila code", {
-        selectedUpazilaCode,
+    if (selectionCode && !selectedSelection) {
+      console.log("[forecast-summary] invalid selection", {
+        selectionType: normalizedSelectionType || null,
+        selectionCode,
         days,
       });
       return res.status(404).json({
         success: false,
-        message: "Selected upazila was not found",
+        message: "Selected forecast geography was not found",
       });
     }
 
@@ -428,8 +444,9 @@ export const getForecastSummary = async (req, res) => {
 
     console.log("[forecast-summary] request received", {
       days,
-      selectedUpazilaCode: selectedUpazilaCode || null,
-      selectedUpazilaLabel: selectedUpazila?.label || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
+      selectedLabel: selectedSelectionMeta?.label || null,
       todayDhaka,
       batchType: batchInfo.type,
       batchLabel: batchInfo.label,
@@ -462,7 +479,8 @@ export const getForecastSummary = async (req, res) => {
     );
 
     console.log("[forecast-summary] forecast dates query result", {
-      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
       count: forecastDates.length,
       dates: forecastDates.map((row) => row.forecast_date),
     });
@@ -470,7 +488,8 @@ export const getForecastSummary = async (req, res) => {
     if (!forecastDates.length) {
       console.log("[forecast-summary] no forecast dates found after created_at filter", {
         todayDhaka,
-        selectedUpazilaCode: selectedUpazilaCode || null,
+        selectionType: normalizedSelectionType || null,
+        selectionCode: selectionCode || null,
         batchReplacements: batchInfo.replacements,
       });
       return res.status(200).json({
@@ -493,7 +512,8 @@ export const getForecastSummary = async (req, res) => {
     console.log("[forecast-summary] querying raw forecast rows", {
       startDate,
       endDate,
-      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
     });
 
     const rawForecastRows = await sequelize.query(
@@ -531,7 +551,8 @@ export const getForecastSummary = async (req, res) => {
 
     console.log("[forecast-summary] raw forecast rows fetched", {
       count: rawForecastRows.length,
-      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
       sample: rawForecastRows.slice(0, 3).map((row) => ({
         forecast_time: row.forecast_time,
         latitude: row.latitude,
@@ -540,15 +561,15 @@ export const getForecastSummary = async (req, res) => {
       })),
     });
 
-    const filteredForecastRows = selectedUpazila
-      ? rawForecastRows.filter((row) =>
-          isPointInsideUpazila(row.latitude, row.longitude, selectedUpazila)
-        )
-      : rawForecastRows;
+    const selectionMatcher = getSelectionMatcher(selectedSelection);
+    const filteredForecastRows = rawForecastRows.filter((row) =>
+      selectionMatcher(row.latitude, row.longitude)
+    );
 
     console.log("[forecast-summary] spatial filter result", {
-      selectedUpazilaCode: selectedUpazilaCode || null,
-      selectedUpazilaLabel: selectedUpazila?.label || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
+      selectedLabel: selectedSelectionMeta?.label || null,
       rawCount: rawForecastRows.length,
       filteredCount: filteredForecastRows.length,
       sampleMatchedPoints: filteredForecastRows.slice(0, 5).map((row) => ({
@@ -558,7 +579,7 @@ export const getForecastSummary = async (req, res) => {
       })),
     });
 
-    if (selectedUpazila) {
+    if (selectedSelectionMeta) {
       const uniqueRawPoints = new Set(
         rawForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
       ).size;
@@ -566,12 +587,14 @@ export const getForecastSummary = async (req, res) => {
         filteredForecastRows.map((row) => `${row.latitude}|${row.longitude}`)
       ).size;
 
-      console.log("[forecast-summary] upazila boundary stats", {
-        code: selectedUpazila.code,
-        label: selectedUpazila.label,
-        district: selectedUpazila.district,
-        division: selectedUpazila.division,
-        bbox: selectedUpazila.bbox,
+      console.log("[forecast-summary] geography boundary stats", {
+        level: selectedSelectionMeta.level,
+        code: selectedSelectionMeta.code,
+        label: selectedSelectionMeta.label,
+        district: selectedSelectionMeta.district,
+        division: selectedSelectionMeta.division,
+        bbox: selectedSelectionMeta.bbox,
+        memberCount: selectedSelectionMeta.memberCount,
         uniqueRawPoints,
         uniqueMatchedPoints,
       });
@@ -579,16 +602,18 @@ export const getForecastSummary = async (req, res) => {
 
     buildRainfallDiagnostics(
       filteredForecastRows,
-      selectedUpazila,
-      selectedUpazilaCode
+      selectedSelectionMeta,
+      normalizedSelectionType,
+      selectionCode
     );
 
     const { pointDayRainfallTotals, rainfallDeltaDiagnostics } =
       buildPointRainfallDayTotals(filteredForecastRows);
 
     console.log("[forecast-summary][rainfall] increment diagnostics", {
-      selectedUpazilaCode: selectedUpazilaCode || null,
-      selectedUpazilaLabel: selectedUpazila?.label || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
+      selectedLabel: selectedSelectionMeta?.label || null,
       sampleIncrements: rainfallDeltaDiagnostics.slice(0, 24),
       samplePointDayTotals: Array.from(pointDayRainfallTotals.values())
         .slice(0, 8)
@@ -925,7 +950,8 @@ export const getForecastSummary = async (req, res) => {
         : null;
 
     console.log("[forecast-summary] aggregation complete", {
-      selectedUpazilaCode: selectedUpazilaCode || null,
+      selectionType: normalizedSelectionType || null,
+      selectionCode: selectionCode || null,
       matchedGridPoints,
       matchedPointRows: filteredForecastRows.length,
       aggregatedDays: dailySummaries.length,
@@ -948,13 +974,15 @@ export const getForecastSummary = async (req, res) => {
           latestForecastTime,
           firstForecastTime,
           todayFilterDate: todayDhaka,
-          selectedUpazila: selectedUpazila
+          selectedSelection: selectedSelectionMeta
             ? {
-                code: selectedUpazila.code,
-                name: selectedUpazila.name,
-                label: selectedUpazila.label,
-                district: selectedUpazila.district,
-                division: selectedUpazila.division,
+                code: selectedSelectionMeta.code,
+                name: selectedSelectionMeta.name,
+                label: selectedSelectionMeta.label,
+                level: selectedSelectionMeta.level,
+                district: selectedSelectionMeta.district,
+                division: selectedSelectionMeta.division,
+                memberCount: selectedSelectionMeta.memberCount,
               }
             : null,
           matchedGridPoints,
@@ -972,19 +1000,21 @@ export const getForecastSummary = async (req, res) => {
   }
 };
 
-export const getForecastUpazilas = async (req, res) => {
+export const getForecastLocations = async (req, res) => {
   try {
-    const upazilas = getUpazilaOptions();
+    const locations = getForecastLocationOptions();
     res.status(200).json({
       success: true,
-      data: upazilas,
+      data: locations,
     });
   } catch (error) {
-    console.error("Error fetching forecast upazilas:", error);
+    console.error("Error fetching forecast locations:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch forecast upazilas",
+      message: "Failed to fetch forecast locations",
       error: error.message,
     });
   }
 };
+
+export const getForecastUpazilas = getForecastLocations;

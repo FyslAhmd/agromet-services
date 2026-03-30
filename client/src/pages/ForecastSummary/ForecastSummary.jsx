@@ -3,8 +3,15 @@ import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryChart from "./components/ForecastSummaryChart";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
+const SCOPE_OPTIONS = [
+  { value: "region", label: "Region" },
+  { value: "district", label: "District" },
+  { value: "upazila", label: "Upazila" },
+];
+const DEFAULT_REGION = "Dhaka";
 const DEFAULT_DISTRICT = "Gazipur";
 const DEFAULT_UPAZILA = "Gazipur Sadar";
+
 const FORECAST_CHART_CONFIGS = [
   {
     key: "rainfall",
@@ -90,58 +97,77 @@ const FORECAST_CHART_CONFIGS = [
 
 const ForecastSummary = () => {
   const [selectedDays, setSelectedDays] = useState(10);
-  const [upazilas, setUpazilas] = useState([]);
-  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedScope, setSelectedScope] = useState("upazila");
+  const [locations, setLocations] = useState({
+    regions: [],
+    districts: [],
+    upazilas: [],
+  });
+  const [selectedRegionCode, setSelectedRegionCode] = useState("");
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
   const [selectedUpazilaCode, setSelectedUpazilaCode] = useState("");
-  const [loadingUpazilas, setLoadingUpazilas] = useState(true);
+  const [loadingLocations, setLoadingLocations] = useState(true);
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchUpazilas = async () => {
-    setLoadingUpazilas(true);
+  const fetchLocations = async () => {
+    setLoadingLocations(true);
 
     try {
-      const response = await fetch(API_ENDPOINTS.forecastSummaryUpazilas, {
+      const response = await fetch(API_ENDPOINTS.forecastSummaryLocations, {
         headers: getAuthHeaders(),
       });
       const payload = await response.json();
 
       if (!response.ok || !payload.success) {
-        throw new Error(payload.message || "Failed to load upazilas");
+        throw new Error(payload.message || "Failed to load forecast locations");
       }
 
-      const options = payload.data || [];
-      setUpazilas(options);
+      const nextLocations = payload.data || {
+        regions: [],
+        districts: [],
+        upazilas: [],
+      };
+      setLocations(nextLocations);
 
-      if (options.length > 0) {
-        const defaultDistrictOption = options.find(
-          (upazila) => upazila.district === DEFAULT_DISTRICT
-        );
+      const defaultRegion =
+        nextLocations.regions.find((region) => region.name === DEFAULT_REGION) ||
+        nextLocations.regions[0];
+      const defaultDistrict =
+        nextLocations.districts.find((district) => district.name === DEFAULT_DISTRICT) ||
+        nextLocations.districts[0];
+      const defaultUpazila =
+        nextLocations.upazilas.find((upazila) => upazila.name === DEFAULT_UPAZILA) ||
+        nextLocations.upazilas[0];
 
-        setSelectedDistrict(
-          (currentValue) => currentValue || defaultDistrictOption?.district || options[0].district || ""
-        );
-      }
+      setSelectedRegionCode((currentValue) => currentValue || defaultRegion?.code || "");
+      setSelectedDistrictCode((currentValue) => currentValue || defaultDistrict?.code || "");
+      setSelectedUpazilaCode((currentValue) => currentValue || defaultUpazila?.code || "");
     } catch (fetchError) {
-      console.error("Upazila load error:", fetchError);
-      setError(fetchError.message || "Unable to load upazila options");
+      console.error("Forecast location load error:", fetchError);
+      setError(fetchError.message || "Unable to load forecast locations");
     } finally {
-      setLoadingUpazilas(false);
+      setLoadingLocations(false);
     }
   };
 
-  const fetchSummary = async (days = selectedDays, upazilaCode = selectedUpazilaCode) => {
+  const fetchSummary = async (
+    days = selectedDays,
+    selectionType = selectedScope,
+    selectionCode = ""
+  ) => {
     setLoading(true);
     setError("");
 
     try {
       const params = new URLSearchParams({
         days: String(days),
+        selectionType,
       });
 
-      if (upazilaCode) {
-        params.append("upazilaCode", upazilaCode);
+      if (selectionCode) {
+        params.append("selectionCode", selectionCode);
       }
 
       const response = await fetch(`${API_ENDPOINTS.forecastSummary}?${params.toString()}`, {
@@ -165,16 +191,51 @@ const ForecastSummary = () => {
   };
 
   useEffect(() => {
-    fetchUpazilas();
+    fetchLocations();
   }, []);
 
-  const districtOptions = Array.from(
-    new Set(upazilas.map((upazila) => upazila.district).filter(Boolean))
-  ).sort((a, b) => a.localeCompare(b));
+  const regionOptions = locations.regions || [];
+  const districtOptions = locations.districts || [];
+  const upazilaOptions = locations.upazilas || [];
 
-  const filteredUpazilas = upazilas.filter(
-    (upazila) => !selectedDistrict || upazila.district === selectedDistrict
+  const activeRegionCodeFromDistrict =
+    districtOptions.find((district) => district.code === selectedDistrictCode)?.regionCode || "";
+
+  const filteredUpazilas = upazilaOptions.filter(
+    (upazila) => !selectedDistrictCode || upazila.districtCode === selectedDistrictCode
   );
+
+  useEffect(() => {
+    if (!regionOptions.length) {
+      setSelectedRegionCode("");
+      return;
+    }
+
+    const hasSelectedRegion = regionOptions.some((region) => region.code === selectedRegionCode);
+    if (!hasSelectedRegion) {
+      const defaultRegion =
+        regionOptions.find((region) => region.name === DEFAULT_REGION) || regionOptions[0];
+      setSelectedRegionCode(defaultRegion?.code || "");
+    }
+  }, [regionOptions, selectedRegionCode]);
+
+  useEffect(() => {
+    if (!districtOptions.length) {
+      setSelectedDistrictCode("");
+      return;
+    }
+
+    const hasSelectedDistrict = districtOptions.some(
+      (district) => district.code === selectedDistrictCode
+    );
+
+    if (!hasSelectedDistrict) {
+      const defaultDistrict =
+        districtOptions.find((district) => district.name === DEFAULT_DISTRICT) ||
+        districtOptions[0];
+      setSelectedDistrictCode(defaultDistrict?.code || "");
+    }
+  }, [districtOptions, selectedDistrictCode]);
 
   useEffect(() => {
     if (!filteredUpazilas.length) {
@@ -187,20 +248,51 @@ const ForecastSummary = () => {
     );
 
     if (!hasSelectedUpazila) {
-      const defaultUpazilaOption = filteredUpazilas.find(
-        (upazila) => upazila.name === DEFAULT_UPAZILA
-      );
-
-      setSelectedUpazilaCode(defaultUpazilaOption?.code || filteredUpazilas[0].code);
+      const defaultUpazila =
+        filteredUpazilas.find((upazila) => upazila.name === DEFAULT_UPAZILA) ||
+        filteredUpazilas[0];
+      setSelectedUpazilaCode(defaultUpazila?.code || "");
     }
   }, [filteredUpazilas, selectedUpazilaCode]);
 
   useEffect(() => {
-    if (!selectedUpazilaCode) return;
-    fetchSummary(selectedDays, selectedUpazilaCode);
-  }, [selectedDays, selectedUpazilaCode]);
+    if (selectedScope !== "upazila") {
+      return;
+    }
+
+    const activeDistrict = districtOptions.find(
+      (district) => district.code === selectedDistrictCode
+    );
+
+    if (activeDistrict?.regionCode && activeDistrict.regionCode !== selectedRegionCode) {
+      setSelectedRegionCode(activeDistrict.regionCode);
+    }
+  }, [districtOptions, selectedDistrictCode, selectedRegionCode, selectedScope]);
+
+  useEffect(() => {
+    let selectionCode = "";
+
+    if (selectedScope === "region") {
+      selectionCode = selectedRegionCode;
+    } else if (selectedScope === "district") {
+      selectionCode = selectedDistrictCode;
+    } else {
+      selectionCode = selectedUpazilaCode;
+    }
+
+    if (!selectionCode) return;
+    fetchSummary(selectedDays, selectedScope, selectionCode);
+  }, [
+    selectedDays,
+    selectedScope,
+    selectedRegionCode,
+    selectedDistrictCode,
+    selectedUpazilaCode,
+  ]);
 
   const hasRows = Boolean(summaryData?.rows?.length && summaryData?.dates?.length);
+  const selectedLabel = summaryData?.meta?.selectedSelection?.label || "Selected Area";
+
   const temperatureChartData = (() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
 
@@ -211,7 +303,11 @@ const ForecastSummary = () => {
 
     const dates = summaryData.dates.map((date) => ({
       ...date,
-      timestamp: new Date(`${date.key}T00:00:00`).getTime(),
+      timestamp: Date.UTC(
+        Number(date.key.slice(0, 4)),
+        Number(date.key.slice(5, 7)) - 1,
+        Number(date.key.slice(8, 10))
+      ),
     }));
 
     return {
@@ -220,26 +316,12 @@ const ForecastSummary = () => {
         {
           name: "Max Temperature",
           color: "#ef4444",
-          data: dates.map((date, index) => [
-            Date.UTC(
-              Number(date.key.slice(0, 4)),
-              Number(date.key.slice(5, 7)) - 1,
-              Number(date.key.slice(8, 10))
-            ),
-            maxTempRow.values[index]?.value ?? null,
-          ]),
+          data: dates.map((date, index) => [date.timestamp, maxTempRow.values[index]?.value ?? null]),
         },
         {
           name: "Min Temperature",
           color: "#3b82f6",
-          data: dates.map((date, index) => [
-            Date.UTC(
-              Number(date.key.slice(0, 4)),
-              Number(date.key.slice(5, 7)) - 1,
-              Number(date.key.slice(8, 10))
-            ),
-            minTempRow.values[index]?.value ?? null,
-          ]),
+          data: dates.map((date, index) => [date.timestamp, minTempRow.values[index]?.value ?? null]),
         },
       ],
     };
@@ -269,10 +351,7 @@ const ForecastSummary = () => {
             name: row.label,
             color: config.color,
             type: config.chartType,
-            data: dates.map((date, index) => [
-              date.timestamp,
-              row.values[index]?.value ?? null,
-            ]),
+            data: dates.map((date, index) => [date.timestamp, row.values[index]?.value ?? null]),
           },
         ],
       };
@@ -293,49 +372,111 @@ const ForecastSummary = () => {
                   Forecast Summary
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-teal-100/80 sm:text-base">
-                  Select an upazila and choose how many upcoming forecast days you want to see.
+                  View spatially averaged forecast values for a region, district, or upazila.
                 </p>
               </div>
 
-              <div className="grid gap-3 md:min-w-130 md:grid-cols-2 md:items-end">
+              <div className="grid gap-3 md:min-w-130 md:grid-cols-2 md:items-end xl:grid-cols-3">
                 <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
                   <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                    District
+                    Scope
                   </label>
                   <select
-                    value={selectedDistrict}
-                    onChange={(event) => setSelectedDistrict(event.target.value)}
-                    disabled={loadingUpazilas || !districtOptions.length}
+                    value={selectedScope}
+                    onChange={(event) => setSelectedScope(event.target.value)}
+                    disabled={loadingLocations}
                     className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
                   >
-                    {districtOptions.map((district) => (
-                      <option key={district} value={district}>
-                        {district}
+                    {SCOPE_OPTIONS.map((scopeOption) => (
+                      <option key={scopeOption.value} value={scopeOption.value}>
+                        {scopeOption.label}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
-                  <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                    Upazila
-                  </label>
-                  <select
-                    value={selectedUpazilaCode}
-                    onChange={(event) => setSelectedUpazilaCode(event.target.value)}
-                    disabled={loadingUpazilas || !filteredUpazilas.length}
-                    className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
-                  >
-                    {filteredUpazilas.map((upazila) => (
-                      <option key={upazila.code} value={upazila.code}>
-                        {upazila.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {selectedScope === "region" ? (
+                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                    <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                      Region
+                    </label>
+                    <select
+                      value={selectedRegionCode}
+                      onChange={(event) => setSelectedRegionCode(event.target.value)}
+                      disabled={loadingLocations || !regionOptions.length}
+                      className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                    >
+                      {regionOptions.map((region) => (
+                        <option key={region.code} value={region.code}>
+                          {region.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
+                {selectedScope === "district" ? (
+                  <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                    <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                      District
+                    </label>
+                    <select
+                      value={selectedDistrictCode}
+                      onChange={(event) => setSelectedDistrictCode(event.target.value)}
+                      disabled={loadingLocations || !districtOptions.length}
+                      className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                    >
+                      {districtOptions.map((district) => (
+                        <option key={district.code} value={district.code}>
+                          {district.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
+                {selectedScope === "upazila" ? (
+                  <>
+                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                      <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                        District
+                      </label>
+                      <select
+                        value={selectedDistrictCode}
+                        onChange={(event) => setSelectedDistrictCode(event.target.value)}
+                        disabled={loadingLocations || !districtOptions.length}
+                        className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                      >
+                        {districtOptions.map((district) => (
+                          <option key={district.code} value={district.code}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-2xl bg-white/10 p-1.5 backdrop-blur-sm">
+                      <label className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
+                        Upazila
+                      </label>
+                      <select
+                        value={selectedUpazilaCode}
+                        onChange={(event) => setSelectedUpazilaCode(event.target.value)}
+                        disabled={loadingLocations || !filteredUpazilas.length}
+                        className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300"
+                      >
+                        {filteredUpazilas.map((upazila) => (
+                          <option key={upazila.code} value={upazila.code}>
+                            {upazila.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                ) : null}
 
                 {/*
-                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:self-center">
+                <div className="rounded-2xl bg-white/10 p-1 backdrop-blur-sm md:self-center xl:col-span-full">
                   <div className="grid grid-cols-4 gap-1 md:flex md:flex-wrap md:justify-center">
                     {DAY_OPTIONS.map((dayOption) => (
                       <button
@@ -354,6 +495,11 @@ const ForecastSummary = () => {
                   </div>
                 </div>
                 */}
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-teal-50/90 xl:col-span-full">
+                  Spatial averaging uses all forecast grid points that fall inside the selected{" "}
+                  {selectedScope}. {selectedScope === "upazila" ? "Rainfall is also derived from timestep increments before spatial averaging." : ""}
+                </div>
               </div>
             </div>
           </div>
@@ -388,7 +534,7 @@ const ForecastSummary = () => {
                   No forecast summary data is available right now.
                 </p>
                 <p className="mt-2 text-sm text-gray-500">
-                  Once rows are imported today for the selected upazila, the summary table will appear here.
+                  Once rows are imported today for the selected geography, the summary table will appear here.
                 </p>
               </div>
             </div>
@@ -450,7 +596,7 @@ const ForecastSummary = () => {
         {temperatureChartData ? (
           <ForecastSummaryChart
             title="01. Temperature Forecast"
-            subtitle={`${summaryData?.meta?.selectedUpazila?.label || "Selected Upazila"} | MaxT and MinT`}
+            subtitle={`${selectedLabel} | MaxT and MinT`}
             unit="°C"
             icon="🌡️"
             dates={temperatureChartData.dates}
@@ -464,7 +610,7 @@ const ForecastSummary = () => {
           <ForecastSummaryChart
             key={chart.key}
             title={chart.title}
-            subtitle={`${summaryData?.meta?.selectedUpazila?.label || "Selected Upazila"} | ${chart.subtitleSuffix}`}
+            subtitle={`${selectedLabel} | ${chart.subtitleSuffix}`}
             unit={chart.unit}
             icon={chart.icon}
             dates={chart.dates}
