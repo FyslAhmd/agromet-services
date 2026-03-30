@@ -197,90 +197,84 @@ const ForecastSummaryChart = ({
   }, [chartSeries, chartType, hcReady, unit]);
 
   const handleImageDownload = () => {
-    if (chartRef.current?.chart) {
-      const chart = chartRef.current.chart;
-      const previousOptions = {
-        chart: {
-          width: chart.options.chart?.width ?? null,
-          height: chart.options.chart?.height ?? null,
-          backgroundColor: chart.options.chart?.backgroundColor ?? "#ffffff",
-          spacingTop: chart.options.chart?.spacingTop,
-          spacingRight: chart.options.chart?.spacingRight,
-          spacingBottom: chart.options.chart?.spacingBottom,
-          spacingLeft: chart.options.chart?.spacingLeft,
-        },
-        title: {
-          text: chart.options.title?.text ?? null,
-        },
-        subtitle: {
-          text: chart.options.subtitle?.text ?? null,
-        },
-      };
-
-      chart.update(
-        {
-          chart: {
-            backgroundColor: "#ffffff",
-            width: 1800,
-            height: 800,
-            spacingTop: 30,
-            spacingRight: 24,
-            spacingBottom: 24,
-            spacingLeft: 24,
-            style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
-          },
-          title: {
-            text: title,
-            align: "left",
-            margin: 18,
-            style: { fontSize: "28px", fontWeight: "700", color: "#1f2937" },
-          },
-          subtitle: {
-            text: subtitle,
-            align: "left",
-            style: { fontSize: "16px", color: "#6b7280" },
-          },
-          legend: {
-            itemStyle: { fontSize: "14px", fontWeight: "500", color: "#374151" },
-            symbolRadius: 8,
-          },
-          xAxis: {
-            labels: {
-              style: { fontSize: "13px", color: "#6B7280" },
-            },
-          },
-          yAxis: {
-            title: {
-              style: { fontSize: "14px", fontWeight: "600", color: "#374151" },
-            },
-            labels: {
-              style: { fontSize: "13px", color: "#6B7280" },
-            },
-          },
-        },
-        false
-      );
-      chart.redraw();
-
-      const exportMethod = chart.exportChartLocal || chart.exportChart;
-      exportMethod.call(chart, {
-        type: "image/png",
-        filename: imageFilename,
-        sourceWidth: 1800,
-        sourceHeight: 800,
-        scale: 2,
-      });
-
-      chart.update(
-        {
-          chart: previousOptions.chart,
-          title: previousOptions.title,
-          subtitle: previousOptions.subtitle,
-        },
-        false
-      );
-      chart.redraw();
+    if (!HC || !chartOptions || !hasData) {
+      return;
     }
+
+    const exportContainer = document.createElement("div");
+    exportContainer.style.position = "fixed";
+    exportContainer.style.left = "-99999px";
+    exportContainer.style.top = "0";
+    exportContainer.style.width = "1800px";
+    exportContainer.style.height = "800px";
+    exportContainer.style.pointerEvents = "none";
+    exportContainer.style.opacity = "0";
+    document.body.appendChild(exportContainer);
+
+    const exportChart = HC.chart(exportContainer, {
+      ...chartOptions,
+      chart: {
+        ...chartOptions.chart,
+        renderTo: exportContainer,
+        width: 1800,
+        height: 800,
+        backgroundColor: "#ffffff",
+        animation: false,
+        spacingTop: 30,
+        spacingRight: 24,
+        spacingBottom: 24,
+        spacingLeft: 24,
+        style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
+      },
+      title: {
+        text: title,
+        align: "left",
+        margin: 18,
+        style: { fontSize: "28px", fontWeight: "700", color: "#1f2937" },
+      },
+      subtitle: {
+        text: subtitle,
+        align: "left",
+        style: { fontSize: "16px", color: "#6b7280" },
+      },
+      legend: {
+        ...chartOptions.legend,
+        itemStyle: { fontSize: "14px", fontWeight: "500", color: "#374151" },
+        symbolRadius: 8,
+      },
+      xAxis: {
+        ...chartOptions.xAxis,
+        labels: {
+          ...chartOptions.xAxis?.labels,
+          style: { fontSize: "13px", color: "#6B7280" },
+        },
+      },
+      yAxis: {
+        ...chartOptions.yAxis,
+        title: {
+          ...chartOptions.yAxis?.title,
+          style: { fontSize: "14px", fontWeight: "600", color: "#374151" },
+        },
+        labels: {
+          ...chartOptions.yAxis?.labels,
+          style: { fontSize: "13px", color: "#6B7280" },
+        },
+      },
+    });
+
+    const exportMethod = exportChart.exportChartLocal || exportChart.exportChart;
+    exportMethod.call(exportChart, {
+      type: "image/png",
+      filename: imageFilename,
+      sourceWidth: 1800,
+      sourceHeight: 800,
+      scale: 2,
+    });
+
+    window.setTimeout(() => {
+      exportChart.destroy();
+      exportContainer.remove();
+    }, 1500);
   };
 
   const handleCSVDownload = () => {
