@@ -6,7 +6,91 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const AMD3_PATH = path.join(__dirname, "..", "..", "client", "public", "amd3.json");
 
+const REGION_DEFINITIONS = [
+  {
+    name: "Dhaka",
+    districts: [
+      "Dhaka",
+      "Gazipur",
+      "Munshiganj",
+      "Manikganj",
+      "Narayanganj",
+      "Narsingdi",
+      "Tangail",
+      "Kishoreganj",
+    ],
+  },
+  {
+    name: "Mymensingh",
+    districts: ["Mymensingh", "Sherpur", "Jamalpur", "Netrakona"],
+  },
+  {
+    name: "Comilla",
+    districts: ["Comilla", "Chandpur", "Brahamanbaria"],
+  },
+  {
+    name: "Chittagong",
+    districts: ["Chittagong", "Feni", "Noakhali", "Lakshmipur", "Cox's Bazar"],
+  },
+  {
+    name: "Rangamati",
+    districts: ["Rangamati", "Bandarban", "Khagrachhari"],
+  },
+  {
+    name: "Sylhet",
+    districts: ["Sylhet", "Maulvibazar", "Habiganj", "Sunamganj"],
+  },
+  {
+    name: "Rajshahi",
+    districts: ["Rajshahi", "Natore", "Naogaon"],
+  },
+  {
+    name: "Bogra",
+    districts: ["Bogra", "Pabna", "Sirajganj", "Joypurhat"],
+  },
+  {
+    name: "Rangpur",
+    districts: ["Rangpur", "Lalmonirhat", "Nilphamari", "Gaibandha", "Kurigram"],
+  },
+  {
+    name: "Dinajpur",
+    districts: ["Dinajpur", "Thakurgaon", "Panchagarh"],
+  },
+  {
+    name: "Khulna",
+    districts: ["Khulna", "Satkhira", "Narail", "Bagerhat"],
+  },
+  {
+    name: "Jessore",
+    districts: ["Jessore", "Chuadanga", "Kushtia", "Magura", "Jhenaidah", "Meherpur"],
+  },
+  {
+    name: "Barisal",
+    districts: ["Barisal", "Jhalokati", "Patuakhali", "Pirojpur", "Bhola", "Barguna"],
+  },
+  {
+    name: "Faridpur",
+    districts: ["Faridpur", "Madaripur", "Rajbari", "Gopalganj", "Shariatpur"],
+  },
+];
+
+const DISTRICT_NAME_ALIASES = {
+  brahamanbaria: "brahmanbaria",
+  brahmanbaria: "brahamanbaria",
+};
+
 let cachedData = null;
+
+const normalizeName = (value = "") => value.trim().toLowerCase().replace(/\s+/g, " ");
+
+const toRegionCode = (name) =>
+  `region-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+
+const getDistrictLookupCandidates = (districtName) => {
+  const normalizedName = normalizeName(districtName);
+  const aliasName = DISTRICT_NAME_ALIASES[normalizedName];
+  return aliasName ? [normalizedName, aliasName] : [normalizedName];
+};
 
 const computeBoundingBox = (geometry) => {
   let minX = Infinity;
@@ -165,12 +249,52 @@ const buildUpazilaCache = () => {
 
   const divisions = Array.from(divisionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
   const districts = Array.from(districtMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  const districtNameMap = new Map(
+    districts.map((district) => [normalizeName(district.name), district])
+  );
+
+  const regions = REGION_DEFINITIONS.map((region) => {
+    const matchedDistricts = region.districts
+      .map((districtName) => {
+        const lookupCandidates = getDistrictLookupCandidates(districtName);
+        for (const candidate of lookupCandidates) {
+          const district = districtNameMap.get(candidate);
+          if (district) {
+            return district;
+          }
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    const districtCodes = Array.from(
+      new Set(matchedDistricts.map((district) => district.code).filter(Boolean))
+    );
+
+    const divisionCodes = Array.from(
+      new Set(matchedDistricts.map((district) => district.divisionCode).filter(Boolean))
+    );
+
+    return {
+      code: toRegionCode(region.name),
+      name: region.name,
+      label: region.name,
+      level: "region",
+      districtCodes,
+      divisionCodes,
+    };
+  });
+
+  const regionMap = new Map(regions.map((region) => [region.code, region]));
 
   return {
     divisions,
     divisionMap,
     districts,
     districtMap,
+    regions,
+    regionMap,
     upazilas,
     upazilaMap,
   };
@@ -213,6 +337,11 @@ export const getDivisionOptions = () => {
   return divisions;
 };
 
+export const getRegionOptions = () => {
+  const { regions } = getCache();
+  return regions;
+};
+
 export const getDistrictOptions = () => {
   const { districts } = getCache();
   return districts;
@@ -236,7 +365,14 @@ export const getDivisionByCode = (code) => {
   return divisionMap.get(code) || null;
 };
 
+export const getRegionByCode = (code) => {
+  if (!code) return null;
+  const { regionMap } = getCache();
+  return regionMap.get(code) || null;
+};
+
 export const getForecastLocationOptions = () => ({
+  regions: getRegionOptions(),
   divisions: getDivisionOptions(),
   districts: getDistrictOptions(),
   upazilas: getUpazilaOptions(),
@@ -248,6 +384,10 @@ export const resolveForecastSelection = (selectionType, selectionCode) => {
   }
 
   const normalizedType = selectionType.trim().toLowerCase();
+
+  if (normalizedType === "region") {
+    return getRegionByCode(selectionCode);
+  }
 
   if (normalizedType === "division") {
     return getDivisionByCode(selectionCode);
@@ -273,6 +413,11 @@ export const getSelectionUpazilas = (selection) => {
 
   if (selection.level === "division") {
     return upazilas.filter((upazila) => upazila.divisionCode === selection.code);
+  }
+
+  if (selection.level === "region") {
+    const regionDistrictCodes = new Set(selection.districtCodes || []);
+    return upazilas.filter((upazila) => regionDistrictCodes.has(upazila.districtCode));
   }
 
   if (selection.level === "district") {
@@ -317,12 +462,19 @@ export const getSelectionMeta = (selection) => {
     ...selection,
     bbox,
     memberCount: memberUpazilas.length,
-    district: selection.level === "district" ? selection.name : firstUpazila?.district || null,
+    district:
+      selection.level === "district"
+        ? selection.name
+        : selection.level === "region"
+          ? null
+          : firstUpazila?.district || null,
     division:
       selection.level === "division"
         ? selection.name
         : selection.level === "district"
           ? selection.division
+          : selection.level === "region"
+            ? null
           : firstUpazila?.division || null,
   };
 };
