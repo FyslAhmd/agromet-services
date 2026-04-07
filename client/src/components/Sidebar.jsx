@@ -17,6 +17,7 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { AlertTriangle } from "lucide-react";
+import { CiCloudRainbow, CiCloudSun } from "react-icons/ci";
 import { useAuthContext } from "./context/AuthProvider";
 import { UPLOADS_BASE_URL } from "../config/api";
 import { toast } from "react-hot-toast";
@@ -118,7 +119,7 @@ const Sidebar = () => {
         </p>
         <SidebarLink
           to="/climate-projection"
-          icon={CloudIcon}
+          icon={CiCloudRainbow}
           label="Climate Projection"
         />
         <SidebarLink
@@ -128,7 +129,7 @@ const Sidebar = () => {
         />
         <SidebarLink
           to="/forecast-summary"
-          icon={CloudIcon}
+          icon={CiCloudSun}
           label="Forecast Summary"
         />
         <SidebarLink

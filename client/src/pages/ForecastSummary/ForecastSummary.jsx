@@ -17,7 +17,7 @@ const DEFAULT_UPAZILA = "Gazipur Sadar";
 const FORECAST_CHART_CONFIGS = [
   {
     key: "rainfall",
-    title: "02. Rainfall Forecast",
+    title: "Rainfall Forecast",
     subtitleSuffix: "Rainfall",
     unit: "mm",
     icon: "🌧️",
@@ -27,7 +27,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "relative_humidity",
-    title: "03. Relative Humidity Forecast",
+    title: "Relative Humidity Forecast",
     subtitleSuffix: "Relative Humidity",
     unit: "%",
     icon: "💧",
@@ -37,7 +37,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "wind_speed",
-    title: "04. Wind Speed Forecast",
+    title: "Wind Speed Forecast",
     subtitleSuffix: "Wind Speed",
     unit: "km/h",
     icon: "💨",
@@ -47,7 +47,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "wind_direction",
-    title: "05. Wind Direction Forecast",
+    title: "Wind Direction Forecast",
     subtitleSuffix: "Wind Direction",
     unit: "°",
     icon: "🧭",
@@ -57,7 +57,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "solar_radiation",
-    title: "06. Solar Radiation Forecast",
+    title: "Solar Radiation Forecast",
     subtitleSuffix: "Solar Radiation",
     unit: "W/m²",
     icon: "☀️",
@@ -67,7 +67,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "cloud_cover",
-    title: "07. Cloud Cover Forecast",
+    title: "Cloud Cover Forecast",
     subtitleSuffix: "Cloud Cover",
     unit: "%",
     icon: "☁️",
@@ -77,7 +77,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "soil_moisture",
-    title: "08. Soil Moisture Forecast",
+    title: "Soil Moisture Forecast",
     subtitleSuffix: "Soil Moisture",
     unit: "m³/m³",
     icon: "🌱",
@@ -87,7 +87,7 @@ const FORECAST_CHART_CONFIGS = [
   },
   {
     key: "dew_point",
-    title: "09. Dew Point Forecast",
+    title: "Dew Point Forecast",
     subtitleSuffix: "Dew Point",
     unit: "°C",
     icon: "🌫️",
@@ -640,7 +640,7 @@ const ForecastSummary = () => {
 
         {temperatureChartData ? (
           <ForecastSummaryChart
-            title="01. Temperature Forecast"
+            title="Temperature Forecast"
             subtitle={`${selectedLabel} | MaxT and MinT`}
             unit="°C"
             icon="🌡️"
