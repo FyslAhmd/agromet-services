@@ -66,6 +66,16 @@ const FORECAST_CHART_CONFIGS = [
     fileKey: "solar_radiation",
   },
   {
+    key: "sunshine_hour",
+    title: "Sunshine Hour Forecast",
+    subtitleSuffix: "Sunshine Hour",
+    unit: "h",
+    icon: "🌤️",
+    color: "#eab308",
+    chartType: "areaspline",
+    fileKey: "sunshine_hour",
+  },
+  {
     key: "cloud_cover",
     title: "Cloud Cover Forecast",
     subtitleSuffix: "Cloud Cover",

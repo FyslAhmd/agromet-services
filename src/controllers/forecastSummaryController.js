@@ -8,6 +8,9 @@ import {
 
 const DEFAULT_DAYS = 10;
 const MAX_DAYS = 10;
+const ANGSTROM_PRESCOTT_A = 0.25;
+const ANGSTROM_PRESCOTT_B = 0.5;
+const SOLAR_RADIATION_WATTS_TO_MJ_PER_DAY = 0.0864;
 
 const SUMMARY_ROW_CONFIG = [
   {
@@ -58,6 +61,13 @@ const SUMMARY_ROW_CONFIG = [
     unit: "W/m²",
     description: "Daily average solar radiation",
     decimals: 0,
+  },
+  {
+    key: "sunshine_hour",
+    label: "Sunshine",
+    unit: "h",
+    description: "Estimated sunshine duration from the Angstrom-Prescott relation",
+    decimals: 1,
   },
   {
     key: "cloud_cover",
@@ -159,6 +169,60 @@ const getSpatialWeight = (latitude) => {
   const normalizedLatitude = normalizeNumber(latitude);
   if (normalizedLatitude === null) return null;
   return Math.cos((normalizedLatitude * Math.PI) / 180);
+};
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getDayOfYear = (dateString) => {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+  return Math.floor((date.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+};
+
+const calculateSunshineHour = ({ solarRadiationWatts, latitude, forecastDate }) => {
+  const normalizedSolarRadiation = normalizeNumber(solarRadiationWatts);
+  const normalizedLatitude = normalizeNumber(latitude);
+
+  if (
+    normalizedSolarRadiation === null ||
+    normalizedLatitude === null ||
+    !forecastDate
+  ) {
+    return null;
+  }
+
+  const dayOfYear = getDayOfYear(forecastDate);
+  const latitudeRadians = (normalizedLatitude * Math.PI) / 180;
+  const inverseRelativeDistance =
+    1 + 0.033 * Math.cos((2 * Math.PI * dayOfYear) / 365);
+  const solarDeclination =
+    0.409 * Math.sin((2 * Math.PI * dayOfYear) / 365 - 1.39);
+  const sunsetHourAngle = Math.acos(
+    clamp(-Math.tan(latitudeRadians) * Math.tan(solarDeclination), -1, 1)
+  );
+  const maximumDayLength = (24 / Math.PI) * sunsetHourAngle;
+  const extraterrestrialRadiation =
+    ((24 * 60) / Math.PI) *
+    0.082 *
+    inverseRelativeDistance *
+    (
+      sunsetHourAngle * Math.sin(latitudeRadians) * Math.sin(solarDeclination) +
+      Math.cos(latitudeRadians) *
+        Math.cos(solarDeclination) *
+        Math.sin(sunsetHourAngle)
+    );
+
+  if (extraterrestrialRadiation <= 0 || maximumDayLength <= 0) {
+    return null;
+  }
+
+  const solarRadiationMjPerDay =
+    normalizedSolarRadiation * SOLAR_RADIATION_WATTS_TO_MJ_PER_DAY;
+  const relativeSunshineDuration =
+    (solarRadiationMjPerDay / extraterrestrialRadiation - ANGSTROM_PRESCOTT_A) /
+    ANGSTROM_PRESCOTT_B;
+
+  return clamp(relativeSunshineDuration, 0, 1) * maximumDayLength;
 };
 
 const buildRainfallDiagnostics = (rows, selectedSelection, selectionType, selectionCode) => {
@@ -692,6 +756,7 @@ export const getForecastSummary = async (req, res) => {
           windDirectionCount: 0,
           solarRadiationSum: 0,
           solarRadiationCount: 0,
+          sunshineHour: null,
           cloudCoverSum: 0,
           cloudCoverCount: 0,
           soilMoistureSum: 0,
@@ -770,6 +835,7 @@ export const getForecastSummary = async (req, res) => {
     pointDayAccumulator.forEach((pointAggregate) => {
       const {
         forecastDate,
+        latitude,
         spatialWeight,
         maxTemperature,
         minTemperature,
@@ -808,6 +874,8 @@ export const getForecastSummary = async (req, res) => {
           windDirectionWeightTotal: 0,
           solarRadiationWeightedSum: 0,
           solarRadiationWeightTotal: 0,
+          sunshineHourWeightedSum: 0,
+          sunshineHourWeightTotal: 0,
           cloudCoverWeightedSum: 0,
           cloudCoverWeightTotal: 0,
           soilMoistureWeightedSum: 0,
@@ -817,7 +885,7 @@ export const getForecastSummary = async (req, res) => {
         });
       }
 
-      const dailyAggregate = dailyAccumulator.get(forecastDate);
+        const dailyAggregate = dailyAccumulator.get(forecastDate);
       if (spatialWeight === null || Number.isNaN(spatialWeight) || spatialWeight <= 0) {
         return;
       }
@@ -856,8 +924,19 @@ export const getForecastSummary = async (req, res) => {
 
       if (solarRadiationCount) {
         const solarRadiationAverage = solarRadiationSum / solarRadiationCount;
+        const sunshineHour = calculateSunshineHour({
+          solarRadiationWatts: solarRadiationAverage,
+          latitude,
+          forecastDate,
+        });
+
         dailyAggregate.solarRadiationWeightedSum += spatialWeight * solarRadiationAverage;
         dailyAggregate.solarRadiationWeightTotal += spatialWeight;
+
+        if (sunshineHour !== null) {
+          dailyAggregate.sunshineHourWeightedSum += spatialWeight * sunshineHour;
+          dailyAggregate.sunshineHourWeightTotal += spatialWeight;
+        }
       }
 
       if (cloudCoverCount) {
@@ -944,6 +1023,11 @@ export const getForecastSummary = async (req, res) => {
             case "solar_radiation":
               rawValue = aggregate.solarRadiationWeightTotal
                 ? aggregate.solarRadiationWeightedSum / aggregate.solarRadiationWeightTotal
+                : null;
+              break;
+            case "sunshine_hour":
+              rawValue = aggregate.sunshineHourWeightTotal
+                ? aggregate.sunshineHourWeightedSum / aggregate.sunshineHourWeightTotal
                 : null;
               break;
             case "cloud_cover":
