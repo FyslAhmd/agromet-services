@@ -129,6 +129,15 @@ const getDhakaToday = () =>
     timeZone: "Asia/Dhaka",
   }).format(new Date());
 
+const getDhakaRelativeDate = (dateString, offsetDays) => {
+  const baseDate = new Date(`${dateString}T12:00:00+06:00`);
+  baseDate.setUTCDate(baseDate.getUTCDate() + offsetDays);
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+  }).format(baseDate);
+};
+
 const getDhakaDayRangeUtc = (dateString) => {
   const startUtc = new Date(`${dateString}T00:00:00+06:00`);
   const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
@@ -375,8 +384,8 @@ const getForecastTableColumns = async () => {
   return new Set(columns.map((column) => column.Field));
 };
 
-const resolveTodayFilter = async (columnSet, todayDhaka) => {
-  const dayRange = getDhakaDayRangeUtc(todayDhaka);
+const resolveCreatedAtFilter = async (columnSet, dateString) => {
+  const dayRange = getDhakaDayRangeUtc(dateString);
   const batchInfo = {
     whereClause: `
       AND created_at >= :createdAtStartUtc
@@ -386,9 +395,9 @@ const resolveTodayFilter = async (columnSet, todayDhaka) => {
       createdAtStartUtc: dayRange.startUtc,
       createdAtEndUtc: dayRange.endUtc,
     },
-    label: `Imported on ${todayDhaka}`,
-    type: "today_created_at",
-    value: todayDhaka,
+    label: `Imported on ${dateString}`,
+    type: "created_at_date",
+    value: dateString,
   };
 
   if (!columnSet.has("created_at")) {
@@ -401,6 +410,32 @@ const resolveTodayFilter = async (columnSet, todayDhaka) => {
 
   return batchInfo;
 };
+
+const getForecastDatesForBatch = async ({ days, todayDhaka, batchInfo }) =>
+  sequelize.query(
+    `
+      SELECT forecast_date
+      FROM (
+        SELECT DATE(forecast_time) AS forecast_date
+        FROM wrf_bangladesh_forecast
+        WHERE forecast_time IS NOT NULL
+          AND DATE(forecast_time) >= :todayDhaka
+        ${batchInfo.whereClause}
+        GROUP BY DATE(forecast_time)
+        ORDER BY forecast_date ASC
+        LIMIT :days
+      ) AS latest_dates
+      ORDER BY forecast_date ASC
+    `,
+    {
+      replacements: {
+        todayDhaka,
+        ...batchInfo.replacements,
+        days,
+      },
+      type: sequelize.QueryTypes.SELECT,
+    }
+  );
 
 export const getForecastSummary = async (req, res) => {
   try {
@@ -439,8 +474,11 @@ export const getForecastSummary = async (req, res) => {
     }
 
     const todayDhaka = getDhakaToday();
+    const yesterdayDhaka = getDhakaRelativeDate(todayDhaka, -1);
     const forecastColumns = await getForecastTableColumns();
-    const batchInfo = await resolveTodayFilter(forecastColumns, todayDhaka);
+    const todayBatchInfo = await resolveCreatedAtFilter(forecastColumns, todayDhaka);
+    const yesterdayBatchInfo = await resolveCreatedAtFilter(forecastColumns, yesterdayDhaka);
+    let batchInfo = todayBatchInfo;
 
     console.log("[forecast-summary] request received", {
       days,
@@ -448,46 +486,48 @@ export const getForecastSummary = async (req, res) => {
       selectionCode: selectionCode || null,
       selectedLabel: selectedSelectionMeta?.label || null,
       todayDhaka,
+      yesterdayDhaka,
       batchType: batchInfo.type,
       batchLabel: batchInfo.label,
       batchReplacements: batchInfo.replacements,
     });
 
-    const forecastDates = await sequelize.query(
-      `
-        SELECT forecast_date
-        FROM (
-          SELECT DATE(forecast_time) AS forecast_date
-          FROM wrf_bangladesh_forecast
-          WHERE forecast_time IS NOT NULL
-            AND DATE(forecast_time) >= :todayDhaka
-          ${batchInfo.whereClause}
-          GROUP BY DATE(forecast_time)
-          ORDER BY forecast_date ASC
-          LIMIT :days
-        ) AS latest_dates
-        ORDER BY forecast_date ASC
-      `,
-      {
-        replacements: {
-          todayDhaka,
-          ...batchInfo.replacements,
-          days,
-        },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    let forecastDates = await getForecastDatesForBatch({
+      days,
+      todayDhaka,
+      batchInfo,
+    });
 
     console.log("[forecast-summary] forecast dates query result", {
       selectionType: normalizedSelectionType || null,
       selectionCode: selectionCode || null,
+      attemptedBatchDate: batchInfo.value,
       count: forecastDates.length,
       dates: forecastDates.map((row) => row.forecast_date),
     });
 
+    if (!forecastDates.length && todayBatchInfo.value !== null) {
+      batchInfo = yesterdayBatchInfo;
+      forecastDates = await getForecastDatesForBatch({
+        days,
+        todayDhaka,
+        batchInfo,
+      });
+
+      console.log("[forecast-summary] fallback to yesterday batch", {
+        todayBatchDate: todayDhaka,
+        fallbackBatchDate: yesterdayDhaka,
+        selectionType: normalizedSelectionType || null,
+        selectionCode: selectionCode || null,
+        count: forecastDates.length,
+        dates: forecastDates.map((row) => row.forecast_date),
+      });
+    }
+
     if (!forecastDates.length) {
       console.log("[forecast-summary] no forecast dates found after created_at filter", {
         todayDhaka,
+        yesterdayDhaka,
         selectionType: normalizedSelectionType || null,
         selectionCode: selectionCode || null,
         batchReplacements: batchInfo.replacements,
@@ -501,6 +541,8 @@ export const getForecastSummary = async (req, res) => {
             daysRequested: days,
             batchLabel: formatBatchLabel(batchInfo),
             todayFilterDate: todayDhaka,
+            effectiveImportDate: batchInfo.value,
+            fallbackUsed: batchInfo.value === yesterdayDhaka,
           },
         },
       });
@@ -974,6 +1016,8 @@ export const getForecastSummary = async (req, res) => {
           latestForecastTime,
           firstForecastTime,
           todayFilterDate: todayDhaka,
+          effectiveImportDate: batchInfo.value,
+          fallbackUsed: batchInfo.value === yesterdayDhaka,
           selectedSelection: selectedSelectionMeta
             ? {
                 code: selectedSelectionMeta.code,
