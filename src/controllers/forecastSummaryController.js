@@ -8,9 +8,11 @@ import {
 
 const DEFAULT_DAYS = 10;
 const MAX_DAYS = 10;
+const FORECAST_SUMMARY_CACHE_TTL_MS = 5 * 60 * 1000;
 const ANGSTROM_PRESCOTT_A = 0.25;
 const ANGSTROM_PRESCOTT_B = 0.5;
 const SOLAR_RADIATION_WATTS_TO_MJ_PER_DAY = 0.0864;
+const forecastSummaryCache = new Map();
 
 const SUMMARY_ROW_CONFIG = [
   {
@@ -223,6 +225,39 @@ const calculateSunshineHour = ({ solarRadiationWatts, latitude, forecastDate }) 
     ANGSTROM_PRESCOTT_B;
 
   return clamp(relativeSunshineDuration, 0, 1) * maximumDayLength;
+};
+
+const getForecastSummaryCacheKey = ({
+  todayDhaka,
+  days,
+  selectionType,
+  selectionCode,
+}) => `${todayDhaka}|${days}|${selectionType || "all"}|${selectionCode || "all"}`;
+
+const getCachedForecastSummary = (cacheKey) => {
+  const cachedEntry = forecastSummaryCache.get(cacheKey);
+  if (!cachedEntry) return null;
+
+  if (Date.now() - cachedEntry.createdAt > FORECAST_SUMMARY_CACHE_TTL_MS) {
+    forecastSummaryCache.delete(cacheKey);
+    return null;
+  }
+
+  return cachedEntry.payload;
+};
+
+const setCachedForecastSummary = (cacheKey, payload) => {
+  forecastSummaryCache.set(cacheKey, {
+    createdAt: Date.now(),
+    payload,
+  });
+
+  if (forecastSummaryCache.size > 100) {
+    const oldestKey = forecastSummaryCache.keys().next().value;
+    if (oldestKey) {
+      forecastSummaryCache.delete(oldestKey);
+    }
+  }
 };
 
 const buildRainfallDiagnostics = (rows, selectedSelection, selectionType, selectionCode) => {
@@ -539,6 +574,23 @@ export const getForecastSummary = async (req, res) => {
 
     const todayDhaka = getDhakaToday();
     const yesterdayDhaka = getDhakaRelativeDate(todayDhaka, -1);
+    const cacheKey = getForecastSummaryCacheKey({
+      todayDhaka,
+      days,
+      selectionType: normalizedSelectionType,
+      selectionCode,
+    });
+    const cachedPayload = getCachedForecastSummary(cacheKey);
+
+    if (cachedPayload) {
+      console.log("[forecast-summary] cache hit", {
+        cacheKey,
+        selectionType: normalizedSelectionType || null,
+        selectionCode: selectionCode || null,
+      });
+      return res.status(200).json(cachedPayload);
+    }
+
     const forecastColumns = await getForecastTableColumns();
     const todayBatchInfo = await resolveCreatedAtFilter(forecastColumns, todayDhaka);
     const yesterdayBatchInfo = await resolveCreatedAtFilter(forecastColumns, yesterdayDhaka);
@@ -596,7 +648,7 @@ export const getForecastSummary = async (req, res) => {
         selectionCode: selectionCode || null,
         batchReplacements: batchInfo.replacements,
       });
-      return res.status(200).json({
+      const emptyPayload = {
         success: true,
         data: {
           dates: [],
@@ -609,17 +661,30 @@ export const getForecastSummary = async (req, res) => {
             fallbackUsed: batchInfo.value === yesterdayDhaka,
           },
         },
-      });
+      };
+
+      setCachedForecastSummary(cacheKey, emptyPayload);
+      return res.status(200).json(emptyPayload);
     }
 
     const startDate = forecastDates[0].forecast_date;
     const endDate = forecastDates[forecastDates.length - 1].forecast_date;
+
+    const bboxFilterClause = selectedSelectionMeta?.bbox
+      ? `
+          AND latitude >= :bboxMinLat
+          AND latitude <= :bboxMaxLat
+          AND longitude >= :bboxMinLon
+          AND longitude <= :bboxMaxLon
+        `
+      : "";
 
     console.log("[forecast-summary] querying raw forecast rows", {
       startDate,
       endDate,
       selectionType: normalizedSelectionType || null,
       selectionCode: selectionCode || null,
+      bbox: selectedSelectionMeta?.bbox || null,
     });
 
     const rawForecastRows = await sequelize.query(
@@ -643,6 +708,7 @@ export const getForecastSummary = async (req, res) => {
         WHERE forecast_time >= :startDate
           AND forecast_time < DATE_ADD(:endDate, INTERVAL 1 DAY)
           ${batchInfo.whereClause}
+          ${bboxFilterClause}
         ORDER BY forecast_time ASC
       `,
       {
@@ -650,6 +716,14 @@ export const getForecastSummary = async (req, res) => {
           ...batchInfo.replacements,
           startDate,
           endDate,
+          ...(selectedSelectionMeta?.bbox
+            ? {
+                bboxMinLat: selectedSelectionMeta.bbox.minY,
+                bboxMaxLat: selectedSelectionMeta.bbox.maxY,
+                bboxMinLon: selectedSelectionMeta.bbox.minX,
+                bboxMaxLon: selectedSelectionMeta.bbox.maxX,
+              }
+            : {}),
         },
         type: sequelize.QueryTypes.SELECT,
       }
@@ -1086,7 +1160,7 @@ export const getForecastSummary = async (req, res) => {
       firstForecastTime,
     });
 
-    res.status(200).json({
+    const responsePayload = {
       success: true,
       data: {
         dates,
@@ -1117,7 +1191,10 @@ export const getForecastSummary = async (req, res) => {
           matchedPointRows: filteredForecastRows.length,
         },
       },
-    });
+    };
+
+    setCachedForecastSummary(cacheKey, responsePayload);
+    res.status(200).json(responsePayload);
   } catch (error) {
     console.error("Error fetching forecast summary:", error);
     res.status(500).json({

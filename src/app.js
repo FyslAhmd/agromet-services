@@ -24,6 +24,7 @@ import feedbackRoutes from "./routes/feedbackRoutes.js";
 import historicalDataRequestRoutes from "./routes/historicalDataRequestRoutes.js";
 import weatherProxyRoutes from "./routes/weatherProxyRoutes.js";
 import forecastSummaryRoutes from "./routes/forecastSummaryRoutes.js";
+import { ensureForecastSummaryIndexes } from "./services/forecastSummaryIndexService.js";
 
 // Import models
 import User from "./models/User.js";
@@ -162,6 +163,8 @@ async function initializeDatabase() {
     // Sync all models (create tables)
     await sequelize.sync({ alter: true });
     console.log('✅ Database tables synchronized successfully');
+
+    await ensureForecastSummaryIndexes();
 
     // Create default admin user
     // await createDefaultAdmin();
