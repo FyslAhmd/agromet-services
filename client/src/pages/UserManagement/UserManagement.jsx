@@ -74,7 +74,7 @@ const UserManagement = () => {
   const handleApprove = async (userId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(
+      const response = await axios.patch(
         `${API_BASE_URL}/users/${userId}/approve`,
         {},
         {
@@ -83,7 +83,7 @@ const UserManagement = () => {
           },
         }
       );
-      toast.success("User approved successfully!");
+      toast.success(response.data?.message || "User approved successfully!");
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to approve user");
@@ -94,7 +94,7 @@ const UserManagement = () => {
   const handleReject = async (userId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.patch(
+      const response = await axios.patch(
         `${API_BASE_URL}/users/${userId}/reject`,
         {},
         {
@@ -103,7 +103,7 @@ const UserManagement = () => {
           },
         }
       );
-      toast.success("User rejected successfully!");
+      toast.success(response.data?.message || "User rejected successfully!");
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reject user");

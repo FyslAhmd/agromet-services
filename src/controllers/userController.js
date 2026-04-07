@@ -3,12 +3,82 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
+import nodemailer from "nodemailer";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const APP_NAME = "BRRI Agromet Services";
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "agromet@brri.gov.bd";
+
+const createEmailTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+};
+
+const buildAccountStatusEmail = ({ user, status }) => {
+  const isApproved = status === "approved";
+  const title = isApproved ? "Account Approved" : "Account Request Update";
+  const subject = isApproved
+    ? "Your BRRI Agromet account is approved"
+    : "Update on your BRRI Agromet account request";
+  const accentColor = isApproved ? "#0f766e" : "#b91c1c";
+  const bodyText = isApproved
+    ? "Your account request has been approved. You can now sign in and use the Agromet Services portal."
+    : "Your account request was not approved at this time. Please contact support for assistance or clarification.";
+  const ctaText = isApproved ? "You may now log in with your registered credentials." : "Please contact support if you would like to appeal or submit again.";
+
+  return {
+    subject,
+    html: `
+      <div style="background:#f4f7f9;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+          <div style="padding:16px 20px;background:${accentColor};color:#ffffff;">
+            <h2 style="margin:0;font-size:20px;font-weight:700;">${title}</h2>
+          </div>
+          <div style="padding:20px;line-height:1.6;">
+            <p style="margin-top:0;">Dear ${user.name || user.username || "User"},</p>
+            <p>${bodyText}</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin:14px 0;">
+              <p style="margin:0;"><strong>Username:</strong> ${user.username || "-"}</p>
+              <p style="margin:6px 0 0 0;"><strong>Email:</strong> ${user.email || "-"}</p>
+              <p style="margin:6px 0 0 0;"><strong>Current Status:</strong> ${status}</p>
+            </div>
+            <p style="margin:0 0 12px 0;">${ctaText}</p>
+            <p style="margin:0;">Support: <a href="mailto:${SUPPORT_EMAIL}" style="color:${accentColor};text-decoration:none;">${SUPPORT_EMAIL}</a></p>
+          </div>
+          <div style="padding:14px 20px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;">
+            This is an automated message from ${APP_NAME}. Please do not reply directly.
+          </div>
+        </div>
+      </div>
+    `,
+  };
+};
+
+const sendAccountStatusNotification = async (user, status) => {
+  if (!process.env.EMAIL_USER) {
+    throw new Error("EMAIL_USER is not configured");
+  }
+
+  const transporter = createEmailTransporter();
+  const { subject, html } = buildAccountStatusEmail({ user, status });
+
+  await transporter.sendMail({
+    from: `"${APP_NAME}" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject,
+    html,
+  });
+};
 
 // User Registration
 export const registerUser = async (req, res) => {
@@ -346,7 +416,21 @@ export const approveUser = async (req, res) => {
 
     await user.update({ status: 'approved' });
 
-    res.json({ message: 'User approved successfully', user });
+    let notificationSent = false;
+    try {
+      await sendAccountStatusNotification(user, 'approved');
+      notificationSent = true;
+    } catch (emailError) {
+      console.error(`Approval email failed for user ${user.id}:`, emailError.message);
+    }
+
+    res.json({
+      message: notificationSent
+        ? 'User approved successfully and email sent'
+        : 'User approved successfully, but email notification could not be sent',
+      notificationSent,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -365,7 +449,21 @@ export const rejectUser = async (req, res) => {
 
     await user.update({ status: 'rejected' });
 
-    res.json({ message: 'User rejected successfully', user });
+    let notificationSent = false;
+    try {
+      await sendAccountStatusNotification(user, 'rejected');
+      notificationSent = true;
+    } catch (emailError) {
+      console.error(`Rejection email failed for user ${user.id}:`, emailError.message);
+    }
+
+    res.json({
+      message: notificationSent
+        ? 'User rejected successfully and email sent'
+        : 'User rejected successfully, but email notification could not be sent',
+      notificationSent,
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
