@@ -4,11 +4,11 @@ import ForecastSummaryChart from "./components/ForecastSummaryChart";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
 const SCOPE_OPTIONS = [
-  { value: "region", label: "Region" },
+  { value: "division", label: "Division" },
   { value: "district", label: "District" },
   { value: "upazila", label: "Upazila" },
 ];
-const DEFAULT_REGION = "Dhaka";
+const DEFAULT_DIVISION = "Dhaka";
 const DEFAULT_DISTRICT = "Gazipur";
 const DEFAULT_UPAZILA = "Gazipur Sadar";
 
@@ -99,11 +99,11 @@ const ForecastSummary = () => {
   const [selectedDays, setSelectedDays] = useState(10);
   const [selectedScope, setSelectedScope] = useState("upazila");
   const [locations, setLocations] = useState({
-    regions: [],
+    divisions: [],
     districts: [],
     upazilas: [],
   });
-  const [selectedRegionCode, setSelectedRegionCode] = useState("");
+  const [selectedDivisionCode, setSelectedDivisionCode] = useState("");
   const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
   const [selectedUpazilaCode, setSelectedUpazilaCode] = useState("");
   const [loadingLocations, setLoadingLocations] = useState(true);
@@ -125,15 +125,15 @@ const ForecastSummary = () => {
       }
 
       const nextLocations = payload.data || {
-        regions: [],
+        divisions: [],
         districts: [],
         upazilas: [],
       };
       setLocations(nextLocations);
 
-      const defaultRegion =
-        nextLocations.regions.find((region) => region.name === DEFAULT_REGION) ||
-        nextLocations.regions[0];
+      const defaultDivision =
+        nextLocations.divisions.find((division) => division.name === DEFAULT_DIVISION) ||
+        nextLocations.divisions[0];
       const defaultDistrict =
         nextLocations.districts.find((district) => district.name === DEFAULT_DISTRICT) ||
         nextLocations.districts[0];
@@ -141,7 +141,7 @@ const ForecastSummary = () => {
         nextLocations.upazilas.find((upazila) => upazila.name === DEFAULT_UPAZILA) ||
         nextLocations.upazilas[0];
 
-      setSelectedRegionCode((currentValue) => currentValue || defaultRegion?.code || "");
+      setSelectedDivisionCode((currentValue) => currentValue || defaultDivision?.code || "");
       setSelectedDistrictCode((currentValue) => currentValue || defaultDistrict?.code || "");
       setSelectedUpazilaCode((currentValue) => currentValue || defaultUpazila?.code || "");
     } catch (fetchError) {
@@ -194,30 +194,30 @@ const ForecastSummary = () => {
     fetchLocations();
   }, []);
 
-  const regionOptions = locations.regions || [];
+  const divisionOptions = locations.divisions || [];
   const districtOptions = locations.districts || [];
   const upazilaOptions = locations.upazilas || [];
 
-  const activeRegionCodeFromDistrict =
-    districtOptions.find((district) => district.code === selectedDistrictCode)?.regionCode || "";
+  const activeDivisionCodeFromDistrict =
+    districtOptions.find((district) => district.code === selectedDistrictCode)?.divisionCode || "";
 
   const filteredUpazilas = upazilaOptions.filter(
     (upazila) => !selectedDistrictCode || upazila.districtCode === selectedDistrictCode
   );
 
   useEffect(() => {
-    if (!regionOptions.length) {
-      setSelectedRegionCode("");
+    if (!divisionOptions.length) {
+      setSelectedDivisionCode("");
       return;
     }
 
-    const hasSelectedRegion = regionOptions.some((region) => region.code === selectedRegionCode);
-    if (!hasSelectedRegion) {
-      const defaultRegion =
-        regionOptions.find((region) => region.name === DEFAULT_REGION) || regionOptions[0];
-      setSelectedRegionCode(defaultRegion?.code || "");
+    const hasSelectedDivision = divisionOptions.some((division) => division.code === selectedDivisionCode);
+    if (!hasSelectedDivision) {
+      const defaultDivision =
+        divisionOptions.find((division) => division.name === DEFAULT_DIVISION) || divisionOptions[0];
+      setSelectedDivisionCode(defaultDivision?.code || "");
     }
-  }, [regionOptions, selectedRegionCode]);
+  }, [divisionOptions, selectedDivisionCode]);
 
   useEffect(() => {
     if (!districtOptions.length) {
@@ -264,16 +264,16 @@ const ForecastSummary = () => {
       (district) => district.code === selectedDistrictCode
     );
 
-    if (activeDistrict?.regionCode && activeDistrict.regionCode !== selectedRegionCode) {
-      setSelectedRegionCode(activeDistrict.regionCode);
+    if (activeDistrict?.divisionCode && activeDistrict.divisionCode !== selectedDivisionCode) {
+      setSelectedDivisionCode(activeDistrict.divisionCode);
     }
-  }, [districtOptions, selectedDistrictCode, selectedRegionCode, selectedScope]);
+  }, [districtOptions, selectedDistrictCode, selectedDivisionCode, selectedScope]);
 
   useEffect(() => {
     let selectionCode = "";
 
-    if (selectedScope === "region") {
-      selectionCode = selectedRegionCode;
+    if (selectedScope === "division") {
+      selectionCode = selectedDivisionCode;
     } else if (selectedScope === "district") {
       selectionCode = selectedDistrictCode;
     } else {
@@ -285,7 +285,7 @@ const ForecastSummary = () => {
   }, [
     selectedDays,
     selectedScope,
-    selectedRegionCode,
+    selectedDivisionCode,
     selectedDistrictCode,
     selectedUpazilaCode,
   ]);
@@ -372,7 +372,7 @@ const ForecastSummary = () => {
                   Forecast Summary
                 </h1>
                 <p className="mt-1.5 text-xs leading-5 text-teal-100/80 sm:mt-2 sm:text-base sm:leading-6">
-                  View spatially averaged forecast values for a region, district, or upazila.
+                  View spatially averaged forecast values for a division, district, or upazila.
                 </p>
               </div>
 
@@ -399,20 +399,20 @@ const ForecastSummary = () => {
                   </select>
                 </div>
 
-                {selectedScope === "region" ? (
+                {selectedScope === "division" ? (
                   <div className="rounded-xl bg-white/10 p-1 backdrop-blur-sm sm:rounded-2xl sm:p-1.5 md:col-span-3">
                     <label className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-100/70 sm:text-[11px]">
-                      Region
+                      Division
                     </label>
                     <select
-                      value={selectedRegionCode}
-                      onChange={(event) => setSelectedRegionCode(event.target.value)}
-                      disabled={loadingLocations || !regionOptions.length}
+                      value={selectedDivisionCode}
+                      onChange={(event) => setSelectedDivisionCode(event.target.value)}
+                      disabled={loadingLocations || !divisionOptions.length}
                       className="w-full rounded-lg border border-white/10 bg-white px-2.5 py-2 text-sm font-medium text-gray-900 outline-none transition-colors focus:border-teal-300 sm:rounded-xl sm:px-3 sm:py-2.5"
                     >
-                      {regionOptions.map((region) => (
-                        <option key={region.code} value={region.code}>
-                          {region.name}
+                      {divisionOptions.map((division) => (
+                        <option key={division.code} value={division.code}>
+                          {division.name}
                         </option>
                       ))}
                     </select>

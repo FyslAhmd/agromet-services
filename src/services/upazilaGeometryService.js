@@ -110,9 +110,9 @@ const buildUpazilaCache = () => {
       const code = properties.ADM3_PCODE?.trim();
       const districtCode = properties.ADM2_PCODE?.trim() || "";
       const district = properties.ADM2_EN?.trim() || "";
-      const regionCode = properties.ADM1_PCODE?.trim() || "";
+      const divisionCode = properties.ADM1_PCODE?.trim() || "";
       const division = properties.ADM1_EN?.trim() || "";
-
+      
       if (!name || !code) {
         return null;
       }
@@ -125,7 +125,7 @@ const buildUpazilaCache = () => {
         name,
         label,
         level: "upazila",
-        regionCode,
+        divisionCode,
         districtCode,
         district,
         division,
@@ -138,16 +138,16 @@ const buildUpazilaCache = () => {
 
   const upazilaMap = new Map(upazilas.map((upazila) => [upazila.code, upazila]));
 
-  const regionMap = new Map();
+  const divisionMap = new Map();
   const districtMap = new Map();
 
   upazilas.forEach((upazila) => {
-    if (upazila.regionCode && !regionMap.has(upazila.regionCode)) {
-      regionMap.set(upazila.regionCode, {
-        code: upazila.regionCode,
+    if (upazila.divisionCode && !divisionMap.has(upazila.divisionCode)) {
+      divisionMap.set(upazila.divisionCode, {
+        code: upazila.divisionCode,
         name: upazila.division,
         label: upazila.division,
-        level: "region",
+        level: "division",
       });
     }
 
@@ -157,18 +157,18 @@ const buildUpazilaCache = () => {
         name: upazila.district,
         label: upazila.district,
         level: "district",
-        regionCode: upazila.regionCode,
-        region: upazila.division,
+        divisionCode: upazila.divisionCode,
+        division: upazila.division,
       });
     }
   });
 
-  const regions = Array.from(regionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  const divisions = Array.from(divisionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
   const districts = Array.from(districtMap.values()).sort((a, b) => a.label.localeCompare(b.label));
 
   return {
-    regions,
-    regionMap,
+    divisions,
+    divisionMap,
     districts,
     districtMap,
     upazilas,
@@ -192,7 +192,7 @@ export const getUpazilaOptions = () => {
       code,
       name,
       label,
-      regionCode,
+      divisionCode,
       districtCode,
       district,
       division,
@@ -200,7 +200,7 @@ export const getUpazilaOptions = () => {
       code,
       name,
       label,
-      regionCode,
+      divisionCode,
       districtCode,
       district,
       division,
@@ -208,9 +208,9 @@ export const getUpazilaOptions = () => {
   );
 };
 
-export const getRegionOptions = () => {
-  const { regions } = getCache();
-  return regions;
+export const getDivisionOptions = () => {
+  const { divisions } = getCache();
+  return divisions;
 };
 
 export const getDistrictOptions = () => {
@@ -230,14 +230,14 @@ export const getDistrictByCode = (code) => {
   return districtMap.get(code) || null;
 };
 
-export const getRegionByCode = (code) => {
+export const getDivisionByCode = (code) => {
   if (!code) return null;
-  const { regionMap } = getCache();
-  return regionMap.get(code) || null;
+  const { divisionMap } = getCache();
+  return divisionMap.get(code) || null;
 };
 
 export const getForecastLocationOptions = () => ({
-  regions: getRegionOptions(),
+  divisions: getDivisionOptions(),
   districts: getDistrictOptions(),
   upazilas: getUpazilaOptions(),
 });
@@ -249,8 +249,8 @@ export const resolveForecastSelection = (selectionType, selectionCode) => {
 
   const normalizedType = selectionType.trim().toLowerCase();
 
-  if (normalizedType === "region") {
-    return getRegionByCode(selectionCode);
+  if (normalizedType === "division") {
+    return getDivisionByCode(selectionCode);
   }
 
   if (normalizedType === "district") {
@@ -271,8 +271,8 @@ export const getSelectionUpazilas = (selection) => {
     return upazilas;
   }
 
-  if (selection.level === "region") {
-    return upazilas.filter((upazila) => upazila.regionCode === selection.code);
+  if (selection.level === "division") {
+    return upazilas.filter((upazila) => upazila.divisionCode === selection.code);
   }
 
   if (selection.level === "district") {
@@ -319,10 +319,10 @@ export const getSelectionMeta = (selection) => {
     memberCount: memberUpazilas.length,
     district: selection.level === "district" ? selection.name : firstUpazila?.district || null,
     division:
-      selection.level === "region"
+      selection.level === "division"
         ? selection.name
         : selection.level === "district"
-          ? selection.region
+          ? selection.division
           : firstUpazila?.division || null,
   };
 };

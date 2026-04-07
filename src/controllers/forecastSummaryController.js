@@ -414,7 +414,7 @@ export const getForecastSummary = async (req, res) => {
       req.query.selectionCode?.trim() ||
       req.query.upazilaCode?.trim() ||
       req.query.districtCode?.trim() ||
-      req.query.regionCode?.trim() ||
+      req.query.divisionCode?.trim() ||
       ""
     );
 
