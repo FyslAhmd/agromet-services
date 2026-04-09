@@ -146,7 +146,7 @@ const ForecastSummaryCombinedChart = ({
         spacingTop: 16,
         spacingBottom: 22,
         spacingLeft: 10,
-        spacingRight: isMobile ? 18 : 82,
+        spacingRight: isMobile ? 12 : 42,
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
       },
       title: { text: null },
@@ -192,7 +192,7 @@ const ForecastSummaryCombinedChart = ({
           min: 0,
           max: Math.max(1, rainfallMax * 1.2),
           opposite: true,
-          offset: 56,
+          offset: isMobile ? 20 : 34,
           gridLineWidth: 0,
           labels: { style: { fontSize: "11px", color: "#0891b2" } },
         },
@@ -201,19 +201,52 @@ const ForecastSummaryCombinedChart = ({
         shared: true,
         crosshairs: true,
         xDateFormat: "%A, %b %e, %Y",
-        headerFormat:
-          '<div style="font-size:12px;font-weight:bold;margin-bottom:8px;">{point.key}</div>',
-        pointFormatter: function () {
-          const unit = this.series.userOptions.unit || "";
-          const decimals = this.series.type === "column" ? 1 : 2;
-          const valueText = typeof this.y === "number" ? this.y.toFixed(decimals) : "—";
+        formatter: function () {
+          const hoveredPoints = this.points || (this.point ? [this.point] : []);
+          const dateLabel =
+            typeof this.x === "number" ? HC.dateFormat("%A, %b %e, %Y", this.x) : "";
+
+          const dayTPoint = hoveredPoints.find((point) => point.series.name === "DayT");
+          const nightTPoint = hoveredPoints.find((point) => point.series.name === "NightT");
+          const dayNightDifference =
+            typeof dayTPoint?.y === "number" && typeof nightTPoint?.y === "number"
+              ? dayTPoint.y - nightTPoint.y
+              : null;
+
+          const tooltipRows = hoveredPoints.flatMap((point) => {
+            const unit = point.series.userOptions.unit || "";
+            const decimals = point.series.type === "column" ? 1 : 2;
+            const valueText =
+              typeof point.y === "number" && !Number.isNaN(point.y)
+                ? point.y.toFixed(decimals)
+                : "—";
+
+            const rows = [
+              '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' +
+                `<span style="color:${point.series.color}">●</span>` +
+                `<span style="font-weight:500;">${point.series.name}:</span>` +
+                `<b>${valueText}</b> ${unit}` +
+                "</div>",
+            ];
+
+            if (point.series.name === "NightT") {
+              rows.push(
+                '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' +
+                  '<span style="color:#64748b">●</span>' +
+                  '<span style="font-weight:500;">DayT - NightT:</span>' +
+                  `<b>${
+                    dayNightDifference !== null ? dayNightDifference.toFixed(2) : "—"
+                  }</b> °C` +
+                  "</div>"
+              );
+            }
+
+            return rows;
+          });
 
           return (
-            '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' +
-            `<span style="color:${this.series.color}">●</span>` +
-            `<span style="font-weight:500;">${this.series.name}:</span>` +
-            `<b>${valueText}</b> ${unit}` +
-            "</div>"
+            `<div style="font-size:12px;font-weight:bold;margin-bottom:8px;">${dateLabel}</div>` +
+            tooltipRows.join("")
           );
         },
         useHTML: true,
@@ -261,7 +294,7 @@ const ForecastSummaryCombinedChart = ({
         buttons: { contextButton: { enabled: false } },
       },
     };
-  }, [chartHeight, chartSeries, hcReady, isMobile]);
+  }, [HC, chartHeight, chartSeries, hcReady, isMobile]);
 
   const handleImageDownload = () => {
     if (!HC || !chartOptions || !hasData) {
