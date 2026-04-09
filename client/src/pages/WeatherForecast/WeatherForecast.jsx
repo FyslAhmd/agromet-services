@@ -199,6 +199,7 @@ const WeatherForecast = () => {
   });
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [selectedFeatureCode, setSelectedFeatureCode] = useState("");
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
@@ -370,9 +371,19 @@ const WeatherForecast = () => {
         code: feature.properties.code,
         name: feature.properties.name,
         label: feature.properties.label,
+        district: feature.properties.district,
+        districtCode: feature.properties.districtCode,
         feature,
       })),
     [mapFeatures]
+  );
+
+  const districtOptions = useMemo(
+    () =>
+      [...(locationsData.districts || [])].sort((a, b) =>
+        (a.label || a.name || "").localeCompare(b.label || b.name || "")
+      ),
+    [locationsData.districts]
   );
 
   const selectedFeature = useMemo(
@@ -380,6 +391,29 @@ const WeatherForecast = () => {
       featureOptions.find((option) => option.code === selectedFeatureCode)?.feature || null,
     [featureOptions, selectedFeatureCode]
   );
+
+  useEffect(() => {
+    if (locationType !== "upazila") {
+      setSelectedDistrictCode("");
+      return;
+    }
+
+    const selectedOption = featureOptions.find((option) => option.code === selectedFeatureCode);
+    if (selectedOption?.districtCode) {
+      setSelectedDistrictCode((current) =>
+        current === selectedOption.districtCode ? current : selectedOption.districtCode
+      );
+      return;
+    }
+
+    if (selectedDistrictCode) return;
+
+    const defaultDistrict =
+      districtOptions.find((option) => option.name === DEFAULT_DISTRICT || option.label === DEFAULT_DISTRICT) ||
+      districtOptions[0];
+
+    setSelectedDistrictCode(defaultDistrict?.code || "");
+  }, [districtOptions, featureOptions, locationType, selectedDistrictCode, selectedFeatureCode]);
 
   useEffect(() => {
     if (!featureOptions.length) {
@@ -527,12 +561,14 @@ const WeatherForecast = () => {
   };
 
   const filteredLocationOptions = featureOptions.filter((option) =>
+    (locationType !== "upazila" || !selectedDistrictCode || option.districtCode === selectedDistrictCode) &&
     option.label.toLowerCase().includes(locationSearch.toLowerCase())
   );
 
   const handleLocationTypeChange = (nextType) => {
     setLocationType(nextType);
     setSelectedFeatureCode("");
+    setSelectedDistrictCode("");
     setLocationSearch("");
     setLocationDropdownOpen(false);
     setMapCenter(DEFAULT_MAP_CENTER);
@@ -542,6 +578,27 @@ const WeatherForecast = () => {
     setSelectedFeatureCode(code);
     setLocationSearch("");
     setLocationDropdownOpen(false);
+  };
+
+  const handleDistrictSelect = (districtCode) => {
+    setSelectedDistrictCode(districtCode);
+    setLocationSearch("");
+
+    if (locationType !== "upazila") return;
+
+    const districtUpazilas = featureOptions.filter(
+      (option) => option.districtCode === districtCode
+    );
+
+    if (!districtUpazilas.length) {
+      setSelectedFeatureCode("");
+      return;
+    }
+
+    const preferredUpazila =
+      districtUpazilas.find((option) => option.name === DEFAULT_UPAZILA) || districtUpazilas[0];
+
+    setSelectedFeatureCode(preferredUpazila.code);
   };
 
   const selectedLabel =
@@ -691,11 +748,28 @@ const WeatherForecast = () => {
 
                     {locationDropdownOpen ? (
                       <div className="absolute left-0 right-0 top-full mt-1.5 rounded-xl border border-gray-200 bg-white p-1 shadow-2xl sm:rounded-2xl sm:p-1.5">
+                        {locationType === "upazila" ? (
+                          <select
+                            value={selectedDistrictCode}
+                            onChange={(event) => handleDistrictSelect(event.target.value)}
+                            className="mb-1.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-sm"
+                          >
+                            {districtOptions.map((district) => (
+                              <option key={district.code} value={district.code}>
+                                {district.label || district.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
                         <input
                           type="text"
                           value={locationSearch}
                           onChange={(event) => setLocationSearch(event.target.value)}
-                          placeholder={`Search ${locationType} name...`}
+                          placeholder={
+                            locationType === "upazila"
+                              ? "Search upazila name..."
+                              : `Search ${locationType} name...`
+                          }
                           className="mb-1.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-sm"
                         />
                         <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-0.5 sm:rounded-xl">
