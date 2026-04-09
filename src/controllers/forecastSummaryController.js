@@ -30,6 +30,20 @@ const SUMMARY_ROW_CONFIG = [
     decimals: 1,
   },
   {
+    key: "day_temperature",
+    label: "DayT",
+    unit: "°C",
+    description: "Daytime average temperature (06:00-17:59)",
+    decimals: 1,
+  },
+  {
+    key: "night_temperature",
+    label: "NightT",
+    unit: "°C",
+    description: "Nighttime average temperature (18:00-05:59)",
+    decimals: 1,
+  },
+  {
     key: "rainfall",
     label: "Rainfall",
     unit: "mm",
@@ -173,6 +187,32 @@ const getSpatialWeight = (latitude) => {
   return Math.cos((normalizedLatitude * Math.PI) / 180);
 };
 
+const getForecastDateKey = (row) =>
+  row?.forecast_date || new Date(row.forecast_time).toISOString().slice(0, 10);
+
+const getForecastHour = (row) => {
+  const parsedHour = Number.parseInt(row?.forecast_hour, 10);
+  if (!Number.isNaN(parsedHour) && parsedHour >= 0 && parsedHour <= 23) {
+    return parsedHour;
+  }
+
+  if (!row?.forecast_time) {
+    return null;
+  }
+
+  const fallbackDate = new Date(row.forecast_time);
+  if (Number.isNaN(fallbackDate.getTime())) {
+    return null;
+  }
+
+  return fallbackDate.getHours();
+};
+
+const isDayTemperatureHour = (hour) => Number.isInteger(hour) && hour >= 6 && hour < 18;
+
+const isNightTemperatureHour = (hour) =>
+  Number.isInteger(hour) && (hour >= 18 || hour < 6);
+
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const getDayOfYear = (dateString) => {
@@ -274,7 +314,7 @@ const buildRainfallDiagnostics = (rows, selectedSelection, selectionType, select
   const rowsByPoint = new Map();
 
   rows.forEach((row) => {
-    const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+    const forecastDate = getForecastDateKey(row);
     const pointKey = `${row.latitude}|${row.longitude}`;
     const rainfall = normalizeNumber(row.rainfall);
 
@@ -433,7 +473,7 @@ const buildPointRainfallDayTotals = (rows) => {
         rainfallIncrement = delta >= 0 ? delta : currentRainfall;
       }
 
-      const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+      const forecastDate = getForecastDateKey(row);
       const pointDayKey = `${forecastDate}|${pointKey}`;
 
       if (!pointDayRainfallTotals.has(pointDayKey)) {
@@ -691,6 +731,8 @@ export const getForecastSummary = async (req, res) => {
       `
         SELECT
           forecast_time,
+          DATE(forecast_time) AS forecast_date,
+          HOUR(forecast_time) AS forecast_hour,
           latitude,
           longitude,
           temperature,
@@ -809,7 +851,8 @@ export const getForecastSummary = async (req, res) => {
     const pointDayAccumulator = new Map();
 
     filteredForecastRows.forEach((row) => {
-      const forecastDate = new Date(row.forecast_time).toISOString().slice(0, 10);
+      const forecastDate = getForecastDateKey(row);
+      const forecastHour = getForecastHour(row);
       const pointKey = `${forecastDate}|${row.latitude}|${row.longitude}`;
 
       if (!pointDayAccumulator.has(pointKey)) {
@@ -820,6 +863,10 @@ export const getForecastSummary = async (req, res) => {
           spatialWeight: getSpatialWeight(row.latitude),
           maxTemperature: -Infinity,
           minTemperature: Infinity,
+          dayTemperatureSum: 0,
+          dayTemperatureCount: 0,
+          nightTemperatureSum: 0,
+          nightTemperatureCount: 0,
           rainfallTotal: 0,
           humiditySum: 0,
           humidityCount: 0,
@@ -855,6 +902,16 @@ export const getForecastSummary = async (req, res) => {
       if (temperature !== null) {
         aggregate.maxTemperature = Math.max(aggregate.maxTemperature, temperature);
         aggregate.minTemperature = Math.min(aggregate.minTemperature, temperature);
+
+        if (isDayTemperatureHour(forecastHour)) {
+          aggregate.dayTemperatureSum += temperature;
+          aggregate.dayTemperatureCount += 1;
+        }
+
+        if (isNightTemperatureHour(forecastHour)) {
+          aggregate.nightTemperatureSum += temperature;
+          aggregate.nightTemperatureCount += 1;
+        }
       }
 
       if (humidity !== null) {
@@ -913,6 +970,10 @@ export const getForecastSummary = async (req, res) => {
         spatialWeight,
         maxTemperature,
         minTemperature,
+        dayTemperatureSum,
+        dayTemperatureCount,
+        nightTemperatureSum,
+        nightTemperatureCount,
         rainfallTotal,
         humiditySum,
         humidityCount,
@@ -937,6 +998,10 @@ export const getForecastSummary = async (req, res) => {
           maxTemperatureWeightTotal: 0,
           minTemperatureWeightedSum: 0,
           minTemperatureWeightTotal: 0,
+          dayTemperatureWeightedSum: 0,
+          dayTemperatureWeightTotal: 0,
+          nightTemperatureWeightedSum: 0,
+          nightTemperatureWeightTotal: 0,
           rainfallWeightedSum: 0,
           rainfallWeightTotal: 0,
           humidityWeightedSum: 0,
@@ -972,6 +1037,18 @@ export const getForecastSummary = async (req, res) => {
       if (Number.isFinite(minTemperature)) {
         dailyAggregate.minTemperatureWeightedSum += spatialWeight * minTemperature;
         dailyAggregate.minTemperatureWeightTotal += spatialWeight;
+      }
+
+      if (dayTemperatureCount) {
+        const dayTemperatureAverage = dayTemperatureSum / dayTemperatureCount;
+        dailyAggregate.dayTemperatureWeightedSum += spatialWeight * dayTemperatureAverage;
+        dailyAggregate.dayTemperatureWeightTotal += spatialWeight;
+      }
+
+      if (nightTemperatureCount) {
+        const nightTemperatureAverage = nightTemperatureSum / nightTemperatureCount;
+        dailyAggregate.nightTemperatureWeightedSum += spatialWeight * nightTemperatureAverage;
+        dailyAggregate.nightTemperatureWeightTotal += spatialWeight;
       }
 
       dailyAggregate.rainfallWeightedSum += spatialWeight * rainfallTotal;
@@ -1064,6 +1141,16 @@ export const getForecastSummary = async (req, res) => {
             case "min_temperature":
               rawValue = aggregate.minTemperatureWeightTotal
                 ? aggregate.minTemperatureWeightedSum / aggregate.minTemperatureWeightTotal
+                : null;
+              break;
+            case "day_temperature":
+              rawValue = aggregate.dayTemperatureWeightTotal
+                ? aggregate.dayTemperatureWeightedSum / aggregate.dayTemperatureWeightTotal
+                : null;
+              break;
+            case "night_temperature":
+              rawValue = aggregate.nightTemperatureWeightTotal
+                ? aggregate.nightTemperatureWeightedSum / aggregate.nightTemperatureWeightTotal
                 : null;
               break;
             case "rainfall":
