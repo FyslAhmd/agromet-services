@@ -1,27 +1,141 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./WeatherForecast.css";
 import {
-  CloudRain,
-  Wind,
-  Droplets,
-  CloudDrizzle,
-  Thermometer,
-  Navigation,
-  Cloud,
-  MapPin,
   AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
+  CalendarDays,
+  Cloud,
+  CloudRain,
+  CloudDrizzle,
+  Droplets,
+  MapPin,
+  Navigation,
+  Sprout,
+  Sun,
+  Thermometer,
+  Wind,
 } from "lucide-react";
-
-import { API_BASE_URL } from "../../config/api";
 import L from "leaflet";
+import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
-const WEATHER_API_URL = `${API_BASE_URL}/weather`;
 const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
+const DEFAULT_SCOPE = "region";
+const DEFAULT_REGION = "Dhaka";
+const DEFAULT_DIVISION = "Dhaka";
+const DEFAULT_DISTRICT = "Gazipur";
+const DEFAULT_UPAZILA = "Gazipur Sadar";
+
+const SCOPE_OPTIONS = [
+  { value: "region", label: "Region" },
+  { value: "division", label: "Division" },
+  { value: "district", label: "District" },
+  { value: "upazila", label: "Upazila" },
+];
+
+const DISPLAY_ROW_ORDER = [
+  "max_temperature",
+  "min_temperature",
+  "rainfall",
+  "relative_humidity",
+  "wind_speed",
+  "wind_direction",
+  "solar_radiation",
+  "sunshine_hour",
+  "cloud_cover",
+  "soil_moisture",
+  "dew_point",
+];
+
+const METRIC_CONFIG = {
+  temp: {
+    label: "Temperature",
+    unit: "°C",
+    icon: Thermometer,
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    border: "border-orange-100",
+    rows: ["max_temperature", "min_temperature"],
+  },
+  rf: {
+    label: "Rainfall",
+    unit: "mm",
+    icon: CloudDrizzle,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    border: "border-blue-100",
+    rows: ["rainfall"],
+  },
+  rh: {
+    label: "Humidity",
+    unit: "%",
+    icon: Droplets,
+    color: "text-cyan-600",
+    bg: "bg-cyan-50",
+    border: "border-cyan-100",
+    rows: ["relative_humidity"],
+  },
+  windspd: {
+    label: "Wind Speed",
+    unit: "km/h",
+    icon: Wind,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-100",
+    rows: ["wind_speed"],
+  },
+  winddir: {
+    label: "Direction",
+    unit: "°",
+    icon: Navigation,
+    color: "text-sky-600",
+    bg: "bg-sky-50",
+    border: "border-sky-100",
+    rows: ["wind_direction"],
+  },
+  cldcvr: {
+    label: "Cloud Cover",
+    unit: "%",
+    icon: Cloud,
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    border: "border-violet-100",
+    rows: ["cloud_cover"],
+  },
+  solar: {
+    label: "Solar Radiation",
+    unit: "W/m²",
+    icon: Sun,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-100",
+    rows: ["solar_radiation"],
+  },
+};
+
+const METRIC_BUTTONS = [
+  { key: "rf", shortLabel: "Rainfall", icon: CloudDrizzle },
+  { key: "temp", shortLabel: "Temp", icon: Thermometer },
+  { key: "rh", shortLabel: "Humidity", icon: Droplets },
+  { key: "windspd", shortLabel: "Wind", icon: Wind },
+  { key: "winddir", shortLabel: "Dir", icon: Navigation },
+  { key: "cldcvr", shortLabel: "Cloud", icon: Cloud },
+  { key: "solar", shortLabel: "Solar", icon: Sun },
+];
+
+const ROW_ICONS = {
+  max_temperature: Thermometer,
+  min_temperature: Thermometer,
+  rainfall: CloudRain,
+  relative_humidity: Droplets,
+  wind_speed: Wind,
+  wind_direction: Navigation,
+  solar_radiation: Sun,
+  sunshine_hour: Sun,
+  cloud_cover: Cloud,
+  soil_moisture: Sprout,
+  dew_point: Droplets,
+};
 
 const getResponsiveMapZoom = () => {
   if (typeof window === "undefined") return 7;
@@ -32,57 +146,96 @@ const getResponsiveMapHeight = () => {
   if (typeof window === "undefined") return "620px";
   if (window.innerWidth >= 1024) return "620px";
   if (window.innerWidth >= 768) return "520px";
-  return "400px";
+  return "420px";
 };
 
-// Component to handle map zoom and center changes
 const MapController = ({ center, zoom }) => {
   const map = useMap();
+
   useEffect(() => {
-    if (center && zoom) map.setView(center, zoom);
+    if (center && zoom) {
+      map.setView(center, zoom);
+    }
   }, [center, zoom, map]);
+
   return null;
 };
 
-// Component to auto-fit map to a GeoJSON feature's bounds
 const FitBoundsController = ({ feature }) => {
   const map = useMap();
+
   useEffect(() => {
     if (!feature) return;
+
     try {
       const geoLayer = L.geoJSON(feature);
       const bounds = geoLayer.getBounds();
+
       if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [20, 20], maxZoom: 12 });
+        map.fitBounds(bounds, {
+          padding: [20, 20],
+          maxZoom: feature.properties.level === "upazila" ? 11 : 9,
+        });
       }
-    } catch (e) {
-      console.error("Error fitting bounds:", e);
+    } catch (error) {
+      console.error("Error fitting bounds:", error);
     }
   }, [feature, map]);
+
   return null;
 };
 
+const normalizeName = (value = "") =>
+  value.trim().toLowerCase().replace(/\s+/g, " ");
+
+const geometryToMultiPolygonCoordinates = (geometry) => {
+  if (!geometry?.type || !geometry?.coordinates) return [];
+  if (geometry.type === "Polygon") {
+    return [geometry.coordinates];
+  }
+  if (geometry.type === "MultiPolygon") {
+    return geometry.coordinates;
+  }
+  return [];
+};
+
+const createMergedFeature = (features, properties) => ({
+  type: "Feature",
+  properties,
+  geometry: {
+    type: "MultiPolygon",
+    coordinates: features.flatMap((feature) =>
+      geometryToMultiPolygonCoordinates(feature.geometry)
+    ),
+  },
+});
+
 const WeatherForecast = () => {
-  const [locationType, setLocationType] = useState("division");
+  const [locationType, setLocationType] = useState(DEFAULT_SCOPE);
   const [mapCenter, setMapCenter] = useState(DEFAULT_MAP_CENTER);
   const [mapZoom, setMapZoom] = useState(getResponsiveMapZoom);
-  const [geoJSONData, setGeoJSONData] = useState(null);
-  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [mapHeight, setMapHeight] = useState(getResponsiveMapHeight);
+  const [baseGeoJSON, setBaseGeoJSON] = useState(null);
+  const [locationsData, setLocationsData] = useState({
+    regions: [],
+    divisions: [],
+    districts: [],
+    upazilas: [],
+  });
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [selectedFeatureCode, setSelectedFeatureCode] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
-  const [forecastData, setForecastData] = useState([]);
+  const [summaryData, setSummaryData] = useState(null);
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [forecastError, setForecastError] = useState(null);
-  const [locationsData, setLocationsData] = useState([]);
   const [activeMetric, setActiveMetric] = useState("temp");
-  const [mapHeight, setMapHeight] = useState(getResponsiveMapHeight);
 
-  // Load GeoJSON data
   useEffect(() => {
-    fetch("/bangladesh.geojson")
+    fetch("/amd3.json")
       .then((response) => response.json())
-      .then((data) => setGeoJSONData(data))
-      .catch((error) => console.error("Error loading GeoJSON:", error));
+      .then((data) => setBaseGeoJSON(data))
+      .catch((error) => console.error("Error loading amd3:", error));
   }, []);
 
   useEffect(() => {
@@ -97,116 +250,222 @@ const WeatherForecast = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Auto-select on initial load
   useEffect(() => {
-    if (!geoJSONData) return;
-
-    let feature = null;
-
-    if (locationType === "division" || locationType === "region") {
-      const dhakaFeatures = geoJSONData.features.filter(
-        (f) => f.properties.NAME_1 === "Dhaka",
-      );
-      if (dhakaFeatures.length > 0) {
-        feature = {
-          type: "Feature",
-          properties: { NAME_1: "Dhaka", NAME_2: null, NAME_3: null },
-          geometry: { type: "MultiPolygon", coordinates: [] },
-        };
-        dhakaFeatures.forEach((f) => {
-          if (f.geometry.type === "Polygon")
-            feature.geometry.coordinates.push(f.geometry.coordinates);
-          else if (f.geometry.type === "MultiPolygon")
-            feature.geometry.coordinates.push(...f.geometry.coordinates);
+    const fetchLocations = async () => {
+      setLoadingLocations(true);
+      try {
+        const response = await fetch(API_ENDPOINTS.forecastSummaryLocations, {
+          headers: getAuthHeaders(),
         });
-      }
-    } else if (locationType === "district") {
-      const districtMap = new Map();
-      geoJSONData.features.forEach((f) => {
-        const name = f.properties.NAME_2;
-        if (!districtMap.has(name)) districtMap.set(name, []);
-        districtMap.get(name).push(f);
-      });
-      const firstName = districtMap.keys().next().value;
-      const feats = districtMap.get(firstName);
-      if (feats?.length > 0) {
-        feature = {
-          type: "Feature",
-          properties: {
-            NAME_1: feats[0].properties.NAME_1,
-            NAME_2: firstName,
-            NAME_3: null,
-          },
-          geometry: { type: "MultiPolygon", coordinates: [] },
-        };
-        feats.forEach((f) => {
-          if (f.geometry.type === "Polygon")
-            feature.geometry.coordinates.push(f.geometry.coordinates);
-          else if (f.geometry.type === "MultiPolygon")
-            feature.geometry.coordinates.push(...f.geometry.coordinates);
-        });
-      }
-    } else {
-      feature = geoJSONData.features.find((f) => f.properties.NAME_3);
-    }
+        const payload = await response.json();
 
-    if (feature) {
-      setSelectedFeature(feature);
-    }
-  }, [geoJSONData, locationType]);
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message || "Failed to load locations");
+        }
 
-  // Load locations data from API
-  useEffect(() => {
-    fetch(`${WEATHER_API_URL}/locations`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success && data.data?.result)
-          setLocationsData(data.data.result);
-      })
-      .catch((err) => console.error("Error loading locations:", err));
+        setLocationsData(
+          payload.data || { regions: [], divisions: [], districts: [], upazilas: [] }
+        );
+      } catch (error) {
+        console.error("Error loading forecast locations:", error);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    fetchLocations();
   }, []);
 
-  // Fetch forecast data when a feature is selected
+  const mapFeatures = useMemo(() => {
+    if (!baseGeoJSON?.features?.length) return [];
+
+    const upazilaFeatures = baseGeoJSON.features.map((feature) => ({
+      ...feature,
+      properties: {
+        code: feature.properties.ADM3_PCODE,
+        name: feature.properties.ADM3_EN,
+        label: feature.properties.ADM3_EN,
+        level: "upazila",
+        district: feature.properties.ADM2_EN,
+        districtCode: feature.properties.ADM2_PCODE,
+        division: feature.properties.ADM1_EN,
+        divisionCode: feature.properties.ADM1_PCODE,
+      },
+    }));
+
+    if (locationType === "upazila") {
+      return upazilaFeatures
+        .filter((feature) => feature.properties.code)
+        .sort((a, b) =>
+          (a.properties.label || "").localeCompare(b.properties.label || "")
+        );
+    }
+
+    if (locationType === "district") {
+      const districtMap = new Map();
+
+      upazilaFeatures.forEach((feature) => {
+        const districtCode = feature.properties.districtCode;
+        if (!districtCode) return;
+
+        if (!districtMap.has(districtCode)) {
+          districtMap.set(districtCode, []);
+        }
+        districtMap.get(districtCode).push(feature);
+      });
+
+      return Array.from(districtMap.values())
+        .map((features) =>
+          createMergedFeature(features, {
+            code: features[0].properties.districtCode,
+            name: features[0].properties.district,
+            label: features[0].properties.district,
+            level: "district",
+            division: features[0].properties.division,
+            divisionCode: features[0].properties.divisionCode,
+          })
+        )
+        .sort((a, b) =>
+          (a.properties.label || "").localeCompare(b.properties.label || "")
+        );
+    }
+
+    if (locationType === "division") {
+      const divisionMap = new Map();
+
+      upazilaFeatures.forEach((feature) => {
+        const divisionCode = feature.properties.divisionCode;
+        if (!divisionCode) return;
+
+        if (!divisionMap.has(divisionCode)) {
+          divisionMap.set(divisionCode, []);
+        }
+        divisionMap.get(divisionCode).push(feature);
+      });
+
+      return Array.from(divisionMap.values())
+        .map((features) =>
+          createMergedFeature(features, {
+            code: features[0].properties.divisionCode,
+            name: features[0].properties.division,
+            label: features[0].properties.division,
+            level: "division",
+          })
+        )
+        .sort((a, b) =>
+          (a.properties.label || "").localeCompare(b.properties.label || "")
+        );
+    }
+
+    const districtCodeToFeatures = new Map();
+    upazilaFeatures.forEach((feature) => {
+      const districtCode = feature.properties.districtCode;
+      if (!districtCode) return;
+
+      if (!districtCodeToFeatures.has(districtCode)) {
+        districtCodeToFeatures.set(districtCode, []);
+      }
+      districtCodeToFeatures.get(districtCode).push(feature);
+    });
+
+    return (locationsData.regions || [])
+      .map((region) => {
+        const regionFeatures = (region.districtCodes || []).flatMap(
+          (districtCode) => districtCodeToFeatures.get(districtCode) || []
+        );
+
+        if (!regionFeatures.length) return null;
+
+        return createMergedFeature(regionFeatures, {
+          code: region.code,
+          name: region.name,
+          label: region.label,
+          level: "region",
+        });
+      })
+      .filter(Boolean)
+      .sort((a, b) =>
+        (a.properties.label || "").localeCompare(b.properties.label || "")
+      );
+  }, [baseGeoJSON, locationType, locationsData.regions]);
+
+  const featureOptions = useMemo(
+    () =>
+      mapFeatures.map((feature) => ({
+        code: feature.properties.code,
+        name: feature.properties.name,
+        label: feature.properties.label,
+        feature,
+      })),
+    [mapFeatures]
+  );
+
+  const selectedFeature = useMemo(
+    () =>
+      featureOptions.find((option) => option.code === selectedFeatureCode)?.feature || null,
+    [featureOptions, selectedFeatureCode]
+  );
+
   useEffect(() => {
-    if (!selectedFeature) {
-      setForecastData([]);
+    if (!featureOptions.length) {
+      setSelectedFeatureCode("");
+      return;
+    }
+
+    const hasSelectedFeature = featureOptions.some(
+      (option) => option.code === selectedFeatureCode
+    );
+
+    if (hasSelectedFeature) return;
+
+    let defaultOption = null;
+
+    if (locationType === "region") {
+      defaultOption = featureOptions.find((option) => option.name === DEFAULT_REGION);
+    } else if (locationType === "division") {
+      defaultOption = featureOptions.find((option) => option.name === DEFAULT_DIVISION);
+    } else if (locationType === "district") {
+      defaultOption = featureOptions.find((option) => option.name === DEFAULT_DISTRICT);
+    } else {
+      defaultOption = featureOptions.find((option) => option.name === DEFAULT_UPAZILA);
+    }
+
+    setSelectedFeatureCode(defaultOption?.code || featureOptions[0].code);
+  }, [featureOptions, locationType, selectedFeatureCode]);
+
+  useEffect(() => {
+    if (!selectedFeatureCode) {
+      setSummaryData(null);
       setForecastError(null);
       return;
     }
-    if (locationsData.length === 0) return;
 
     const fetchForecast = async () => {
       setIsLoadingForecast(true);
       setForecastError(null);
+
       try {
-        let url = "";
-        if (locationType === "division" || locationType === "region") {
-          url = `${WEATHER_API_URL}/forecast?type=division&id=${getDivisionId(selectedFeature.properties.NAME_1)}`;
-        } else if (locationType === "district") {
-          url = `${WEATHER_API_URL}/forecast?type=district&id=${getDistrictId(selectedFeature.properties.NAME_2)}`;
-        } else {
-          url = `${WEATHER_API_URL}/forecast?type=upazila&id=${getUpazilaId(selectedFeature.properties.NAME_3)}`;
+        const params = new URLSearchParams({
+          days: "10",
+          selectionType: locationType,
+          selectionCode: selectedFeatureCode,
+        });
+
+        const response = await fetch(`${API_ENDPOINTS.forecastSummary}?${params.toString()}`, {
+          headers: getAuthHeaders(),
+        });
+        const payload = await response.json();
+
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.message || "Failed to load forecast data");
         }
 
-        const response = await fetch(url);
-        const text = await response.text();
-        // BMD API sometimes returns PHP errors before JSON
-        const jsonStart = text.indexOf("{");
-        if (jsonStart === -1)
-          throw new Error("Invalid response from weather service");
-        const data = JSON.parse(text.slice(jsonStart));
-
-        if (data?.success && data.data?.result?.daily) {
-          setForecastData(data.data.result.daily.slice(0, 5));
-        } else {
-          setForecastData([]);
-          setForecastError("No forecast data returned for this location.");
-        }
+        setSummaryData(payload.data);
       } catch (error) {
-        console.error("Error fetching forecast:", error);
-        setForecastData([]);
+        console.error("Error loading local forecast:", error);
+        setSummaryData(null);
         setForecastError(
-          "Unable to load forecast. The weather service may be temporarily unavailable.",
+          "Unable to load local forecast data for this location right now."
         );
       } finally {
         setIsLoadingForecast(false);
@@ -214,68 +473,8 @@ const WeatherForecast = () => {
     };
 
     fetchForecast();
-  }, [selectedFeature, locationType, locationsData]);
+  }, [locationType, selectedFeatureCode]);
 
-  // ID resolution helpers
-  const getDivisionId = (name) => {
-    const loc = locationsData.find((l) => l.division === name);
-    return loc ? loc.adm1_pcode : "30";
-  };
-  const getDistrictId = (name) => {
-    const loc = locationsData.find((l) => l.district === name);
-    return loc ? loc.adm2_pcode : locationsData[0]?.adm2_pcode || "3026";
-  };
-  const getUpazilaId = (name) => {
-    const loc = locationsData.find((l) => l.upazila === name);
-    return loc ? loc.adm3_pcode : locationsData[0]?.adm3_pcode || "302602";
-  };
-
-  const handleLocationTypeChange = (type) => {
-    setLocationType(type);
-    setMapCenter(DEFAULT_MAP_CENTER);
-    setSelectedFeature(null);
-    setLocationSearch("");
-    setLocationDropdownOpen(false);
-    // setMapZoom(type === "upazila" ? 8 : 7);
-  };
-
-  // GeoJSON filtering / merging
-  const getFilteredGeoJSON = () => {
-    if (!geoJSONData) return null;
-    if (locationType === "upazila") return geoJSONData;
-
-    const groupKey = locationType === "district" ? "NAME_2" : "NAME_1";
-    const groupMap = new Map();
-    geoJSONData.features.forEach((f) => {
-      const name = f.properties[groupKey];
-      if (!groupMap.has(name)) groupMap.set(name, []);
-      groupMap.get(name).push(f);
-    });
-
-    const merged = [];
-    groupMap.forEach((feats, name) => {
-      if (feats.length === 0) return;
-      const m = {
-        type: "Feature",
-        properties: {
-          NAME_1: feats[0].properties.NAME_1,
-          NAME_2: locationType === "district" ? name : null,
-          NAME_3: null,
-        },
-        geometry: { type: "MultiPolygon", coordinates: [] },
-      };
-      feats.forEach((f) => {
-        if (f.geometry.type === "Polygon")
-          m.geometry.coordinates.push(f.geometry.coordinates);
-        else if (f.geometry.type === "MultiPolygon")
-          m.geometry.coordinates.push(...f.geometry.coordinates);
-      });
-      merged.push(m);
-    });
-    return { type: "FeatureCollection", features: merged };
-  };
-
-  // Colors
   const colors = [
     "#4ECDC4",
     "#45B7D1",
@@ -299,286 +498,150 @@ const WeatherForecast = () => {
     "#FF6B6B",
   ];
 
-  const getColorForLocation = (feature) => {
-    let name = "";
-    if (locationType === "division" || locationType === "region")
-      name = feature.properties.NAME_1 || "";
-    else if (locationType === "district")
-      name = feature.properties.NAME_2 || "";
-    else name = feature.properties.NAME_3 || "";
+  const getColorForFeature = (feature) => {
+    const name = feature?.properties?.label || feature?.properties?.name || "";
     let hash = 0;
-    for (let i = 0; i < name.length; i++)
+    for (let i = 0; i < name.length; i += 1) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const isSelected = (feature) => {
-    if (!selectedFeature) return false;
-    if (locationType === "division" || locationType === "region")
-      return feature.properties.NAME_1 === selectedFeature.properties.NAME_1;
-    if (locationType === "district")
-      return feature.properties.NAME_2 === selectedFeature.properties.NAME_2;
-    return feature.properties.NAME_3 === selectedFeature.properties.NAME_3;
-  };
+  const isSelected = (feature) => feature?.properties?.code === selectedFeatureCode;
 
   const geoJSONStyle = (feature) => ({
-    fillColor: getColorForLocation(feature),
-    weight: isSelected(feature) ? 1 : locationType === "upazila" ? 0.5 : 1.5,
-    opacity: isSelected(feature) ? 1 : 0.4,
-    color: isSelected(feature) ? "#fff" : "#fff",
-    fillOpacity: isSelected(feature) ? 1 : 0.4,
+    fillColor: getColorForFeature(feature),
+    weight: isSelected(feature) ? 1.3 : locationType === "upazila" ? 0.5 : 1,
+    opacity: isSelected(feature) ? 1 : 0.45,
+    color: "#ffffff",
+    fillOpacity: isSelected(feature) ? 0.95 : 0.45,
   });
 
-  const getFeatureName = (feature) => {
-    if (!feature) return "";
-    if (locationType === "region") {
-      return feature.properties.NAME_1 || "";
-    }
-    if (locationType === "division") {
-      return feature.properties.NAME_1 || "";
-    }
-    if (locationType === "district") {
-      return feature.properties.NAME_2 || "";
-    }
-    return (
-      feature.properties.NAME_3 ||
-      feature.properties.NAME_2 ||
-      feature.properties.NAME_1 ||
-      ""
-    );
-  };
-
   const onEachFeature = (feature, layer) => {
-    const name = getFeatureName(feature);
+    const label = feature.properties?.label || feature.properties?.name || "";
+    if (!label) return;
 
-    if (name) {
-      layer.bindTooltip(name, {
-        permanent: false,
-        direction: "top",
-        opacity: 0.95,
-      });
-
-      layer.on({
-        click: () => {
-          setSelectedFeature(feature);
-        },
-        mouseover: (e) => {
-          if (!isSelected(feature)) {
-            e.target.setStyle({
-              fillOpacity: 0.65,
-              weight: 1,
-              color: "#fff",
-              opacity: 0.8,
-            });
-          }
-          e.target.bringToFront();
-        },
-        mouseout: (e) => {
-          if (!isSelected(feature)) e.target.setStyle(geoJSONStyle(feature));
-        },
-      });
-    }
-  };
-
-  const getSecondaryMapData = () => {
-    if (!selectedFeature) return getFilteredGeoJSON();
-    return { type: "FeatureCollection", features: [selectedFeature] };
-  };
-
-  const getLocationOptions = () => {
-    const data = getFilteredGeoJSON();
-    if (!data?.features?.length) return [];
-
-    const optionMap = new Map();
-
-    data.features.forEach((feature) => {
-      const name = getFeatureName(feature);
-      if (!name) return;
-
-      // Keep the first occurrence for dropdown selection so duplicate
-      // upazila names from the GeoJSON do not render multiple times.
-      if (!optionMap.has(name)) {
-        optionMap.set(name, {
-          key: `${locationType}-${name}`,
-          name,
-          feature,
-        });
-      }
+    layer.bindTooltip(label, {
+      permanent: false,
+      direction: "top",
+      opacity: 0.95,
     });
 
-    return Array.from(optionMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    layer.on({
+      click: () => {
+        setSelectedFeatureCode(feature.properties.code);
+        setLocationDropdownOpen(false);
+      },
+      mouseover: (event) => {
+        if (!isSelected(feature)) {
+          event.target.setStyle({
+            fillOpacity: 0.7,
+            weight: 1,
+            color: "#ffffff",
+            opacity: 0.85,
+          });
+        }
+        event.target.bringToFront();
+      },
+      mouseout: (event) => {
+        if (!isSelected(feature)) {
+          event.target.setStyle(geoJSONStyle(feature));
+        }
+      },
+    });
   };
 
-  const locationOptions = getLocationOptions();
-  const filteredLocationOptions = locationOptions.filter((item) =>
-    item.name.toLowerCase().includes(locationSearch.toLowerCase())
+  const filteredLocationOptions = featureOptions.filter((option) =>
+    option.label.toLowerCase().includes(locationSearch.toLowerCase())
   );
 
-  const handleLocationSelect = (name) => {
-    const match = locationOptions.find((item) => item.name === name);
-    if (!match) return;
-    setSelectedFeature(match.feature);
+  const handleLocationTypeChange = (nextType) => {
+    setLocationType(nextType);
+    setSelectedFeatureCode("");
+    setLocationSearch("");
+    setLocationDropdownOpen(false);
+    setMapCenter(DEFAULT_MAP_CENTER);
+  };
+
+  const handleLocationSelect = (code) => {
+    setSelectedFeatureCode(code);
     setLocationSearch("");
     setLocationDropdownOpen(false);
   };
 
-  const getMetricInfo = (metric) => {
-    const map = {
-      rf: {
-        label: "Rainfall",
-        unit: "mm",
-        icon: Droplets,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
-        border: "border-blue-100",
-      },
-      temp: {
-        label: "Temperature",
-        unit: "°C",
-        icon: Thermometer,
-        color: "text-orange-600",
-        bg: "bg-orange-50",
-        border: "border-orange-100",
-      },
-      rh: {
-        label: "Humidity",
-        unit: "%",
-        icon: CloudDrizzle,
-        color: "text-cyan-600",
-        bg: "bg-cyan-50",
-        border: "border-cyan-100",
-      },
-      windspd: {
-        label: "Wind Speed",
-        unit: "km/h",
-        icon: Wind,
-        color: "text-emerald-600",
-        bg: "bg-emerald-50",
-        border: "border-emerald-100",
-      },
-      winddir: {
-        label: "Direction",
-        unit: "°",
-        icon: Navigation,
-        color: "text-sky-600",
-        bg: "bg-sky-50",
-        border: "border-sky-100",
-      },
-      cldcvr: {
-        label: "Cloud Cover",
-        unit: "oktas",
-        icon: Cloud,
-        color: "text-violet-600",
-        bg: "bg-violet-50",
-        border: "border-violet-100",
-      },
-      windgust: {
-        label: "Wind Gust",
-        unit: "km/h",
-        icon: CloudRain,
-        color: "text-rose-600",
-        bg: "bg-rose-50",
-        border: "border-rose-100",
-      },
-    };
-    return (
-      map[metric] || {
-        label: "Unknown",
-        unit: "",
-        icon: BarChart3,
-        color: "text-gray-600",
-        bg: "bg-gray-50",
-        border: "border-gray-100",
-      }
-    );
-  };
+  const selectedLabel =
+    selectedFeature?.properties?.label || selectedFeature?.properties?.name || "";
+  const activeMetricInfo = METRIC_CONFIG[activeMetric] || METRIC_CONFIG.temp;
+  const ActiveMetricIcon = activeMetricInfo.icon;
+  const orderedRows = useMemo(() => {
+    const rows = summaryData?.rows || [];
+    return DISPLAY_ROW_ORDER.map((key) => rows.find((row) => row.key === key)).filter(Boolean);
+  }, [summaryData]);
 
-  const metricButtons = [
-    { key: "rf", shortLabel: "Rainfall", icon: Droplets },
-    { key: "temp", shortLabel: "Temp", icon: Thermometer },
-    { key: "rh", shortLabel: "Humidity", icon: CloudDrizzle },
-    { key: "windspd", shortLabel: "Wind", icon: Wind },
-    { key: "winddir", shortLabel: "Dir", icon: Navigation },
-    { key: "cldcvr", shortLabel: "Cloud", icon: Cloud },
-    { key: "windgust", shortLabel: "Gust", icon: CloudRain },
-  ];
+  const dailyCards = useMemo(() => {
+    if (!summaryData?.dates?.length || !orderedRows.length) return [];
 
-  const locationTypeOptions = [
-    { value: "region", label: "Region" },
-    { value: "division", label: "Division" },
-    { value: "district", label: "District" },
-    { value: "upazila", label: "Upazila" },
-  ];
+    const selectedRows = activeMetricInfo.rows
+      .map((key) => orderedRows.find((row) => row.key === key))
+      .filter(Boolean);
 
-  const selectedName = getFeatureName(selectedFeature);
-  const selectedDivision = selectedFeature?.properties?.NAME_1;
-
-  const formatDate = (dateStr) => {
-    try {
-      const d = new Date(dateStr);
-      return {
-        day: d.toLocaleDateString("en-US", { weekday: "short" }),
-        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      };
-    } catch {
-      return { day: "", date: dateStr };
-    }
-  };
+    return summaryData.dates.map((dateInfo, index) => ({
+      ...dateInfo,
+      metrics: selectedRows.map((row) => ({
+        key: row.key,
+        label: row.label,
+        unit: row.unit,
+        value: row.values[index]?.displayValue || "—",
+      })),
+    }));
+  }, [activeMetricInfo.rows, orderedRows, summaryData]);
 
   return (
-    <div className="w-full min-h-full space-y-5">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div className="w-full min-h-full space-y-4 sm:space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             Weather Forecast
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            5-day weather forecast across Bangladesh — powered by BMD
+          <p className="mt-1 text-sm text-gray-500">
+            10-day local WRF forecast across Bangladesh
           </p>
         </div>
 
-        {/* Location type toggle */}
-        <div className="flex items-center gap-0.5 sm:gap-1 bg-white rounded-xl border border-gray-200 p-1 shadow-sm shrink-0">
-          {locationTypeOptions.map((opt) => (
+        <div className="flex items-center gap-0.5 sm:gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm shrink-0">
+          {SCOPE_OPTIONS.map((option) => (
             <button
-              key={opt.value}
-              onClick={() => handleLocationTypeChange(opt.value)}
-              className={`flex-1 sm:flex-none px-2.5 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all duration-150 text-center ${
-                locationType === opt.value
+              key={option.value}
+              onClick={() => handleLocationTypeChange(option.value)}
+              className={`flex-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition-all duration-150 text-center sm:flex-none sm:px-3.5 sm:text-xs ${
+                locationType === option.value
                   ? "bg-[#0d4a4a] text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
               }`}
             >
-              {opt.label}
+              {option.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* LEFT: Map */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-teal-600" />
-                <h2 className="text-sm font-semibold text-gray-700">
-                  Bangladesh Map
-                </h2>
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                <MapPin className="h-4 w-4 text-teal-600" />
+                <h2 className="text-sm font-semibold text-gray-700">Bangladesh Map</h2>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-gray-400">
                   {locationType} view
                 </span>
               </div>
-              {selectedFeature && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full border border-teal-100">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                  {selectedName}
+              {selectedLabel ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse" />
+                  {selectedLabel}
                 </span>
-              )}
+              ) : null}
             </div>
 
             <div className="relative weather-map" style={{ height: mapHeight }}>
@@ -586,12 +649,8 @@ const WeatherForecast = () => {
                 center={mapCenter}
                 zoom={mapZoom}
                 className="absolute inset-0"
-                style={{
-                  height: "100%",
-                  width: "100%",
-                  backgroundColor: "#f0f4f8",
-                }}
-                zoomControl={true}
+                style={{ height: "100%", width: "100%", backgroundColor: "#f0f4f8" }}
+                zoomControl
                 attributionControl={false}
               >
                 <MapController center={mapCenter} zoom={mapZoom} />
@@ -599,61 +658,56 @@ const WeatherForecast = () => {
                   url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
                   opacity={0.4}
                 />
-                {geoJSONData && (
+                {selectedFeature ? <FitBoundsController feature={selectedFeature} /> : null}
+                {mapFeatures.length ? (
                   <GeoJSON
-                    key={`geojson-${locationType}-${selectedName}`}
-                    data={getFilteredGeoJSON()}
+                    key={`weather-forecast-map-${locationType}-${selectedFeatureCode || "none"}`}
+                    data={{ type: "FeatureCollection", features: mapFeatures }}
                     style={geoJSONStyle}
                     onEachFeature={onEachFeature}
                   />
-                )}
+                ) : null}
               </MapContainer>
 
-              {/* Metric selector buttons - horizontal on mobile (top-right), vertical on desktop (left below zoom) */}
-              <div className="absolute z-400 flex
-                top-3 right-16 flex-row gap-1
-                sm:top-22.5 sm:left-2 sm:right-auto sm:flex-col sm:gap-1.5"
+              <div
+                className="absolute z-400 flex top-3 right-16 flex-row gap-1 sm:top-22.5 sm:left-2 sm:right-auto sm:flex-col sm:gap-1.5"
               >
-                {metricButtons.map(({ key, icon: Icon }) => {
-                  const info = getMetricInfo(key);
+                {METRIC_BUTTONS.map(({ key, icon: Icon }) => {
+                  const info = METRIC_CONFIG[key];
                   return (
                     <button
                       key={key}
                       onClick={() => setActiveMetric(key)}
                       title={info.label}
-                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-md transition-all duration-150 border-2 ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-md transition-all duration-150 sm:h-10 sm:w-10 ${
                         activeMetric === key
-                          ? "bg-[#0d9e6d] border-white text-white scale-110"
-                          : "bg-[#5a6068] border-transparent text-white/80 hover:bg-[#4a5058] hover:scale-105"
+                          ? "scale-110 border-white bg-[#0d9e6d] text-white"
+                          : "border-transparent bg-[#5a6068] text-white/80 hover:scale-105 hover:bg-[#4a5058]"
                       }`}
                     >
-                      <Icon className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
+                      <Icon className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
                     </button>
                   );
                 })}
               </div>
 
               <div className="absolute bottom-4 left-4 right-4 z-400">
-                <div className="mx-auto max-w-[16rem] sm:max-w-md rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white/95 p-2 sm:p-3 shadow-xl backdrop-blur-sm">
-                  <div className="mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
-                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-teal-600" />
-                    <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="mx-auto max-w-[16rem] rounded-xl border border-gray-200/80 bg-white/95 p-2 shadow-xl backdrop-blur-sm sm:max-w-md sm:rounded-2xl sm:p-3">
+                  <div className="mb-1.5 flex items-center gap-1.5 sm:mb-2 sm:gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-teal-600 sm:h-4 sm:w-4" />
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
                       Select {locationType}
                     </p>
                   </div>
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() =>
-                        setLocationDropdownOpen((current) => !current)
-                      }
-                      className="flex w-full items-center justify-between rounded-lg sm:rounded-xl border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                      onClick={() => setLocationDropdownOpen((current) => !current)}
+                      className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-left text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
                     >
-                      <span className="truncate pr-2 sm:pr-3 text-xs sm:text-sm">
-                        {selectedName || `Choose ${locationType}...`}
-                      </span>
+                      <span className="truncate pr-2">{selectedLabel || `Choose ${locationType}...`}</span>
                       <svg
-                        className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-gray-400 transition-transform ${
+                        className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform sm:h-4 sm:w-4 ${
                           locationDropdownOpen ? "rotate-180" : ""
                         }`}
                         fill="none"
@@ -669,298 +723,156 @@ const WeatherForecast = () => {
                       </svg>
                     </button>
 
-                    {locationDropdownOpen && (
-                      <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-1.5 sm:p-2 shadow-2xl">
+                    {locationDropdownOpen ? (
+                      <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-gray-200 bg-white p-1.5 shadow-2xl sm:rounded-2xl sm:p-2">
                         <input
                           type="text"
                           value={locationSearch}
-                          onChange={(e) => setLocationSearch(e.target.value)}
+                          onChange={(event) => setLocationSearch(event.target.value)}
                           placeholder={`Search ${locationType} name...`}
-                          className="mb-1.5 sm:mb-2 w-full rounded-lg sm:rounded-xl border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+                          className="mb-1.5 w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:mb-2 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
                         />
-                        <div className="max-h-32 sm:max-h-40 overflow-y-auto rounded-lg sm:rounded-xl border border-gray-100 bg-gray-50/50 p-1">
-                          {filteredLocationOptions.length > 0 ? (
-                            filteredLocationOptions.map((item) => (
+                        <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-1 sm:rounded-xl">
+                          {filteredLocationOptions.length ? (
+                            filteredLocationOptions.map((option) => (
                               <button
-                                key={item.key}
+                                key={option.code}
                                 type="button"
-                                onClick={() => handleLocationSelect(item.name)}
-                                className={`flex w-full items-center rounded-md sm:rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-left text-xs sm:text-sm transition-colors ${
-                                  item.name === selectedName
+                                onClick={() => handleLocationSelect(option.code)}
+                                className={`flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-xs transition-colors sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm ${
+                                  option.code === selectedFeatureCode
                                     ? "bg-teal-50 text-teal-700"
                                     : "text-gray-700 hover:bg-white"
                                 }`}
                               >
-                                <span className="truncate">{item.name}</span>
+                                <span className="truncate">{option.label}</span>
                               </button>
                             ))
                           ) : (
-                            <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-400">
+                            <div className="px-2.5 py-1.5 text-xs text-gray-400 sm:px-3 sm:py-2 sm:text-sm">
                               No matching {locationType} found.
                             </div>
                           )}
                         </div>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
-
-              {!selectedFeature && (
-                <div
-                  className="absolute left-1/2 z-400 -translate-x-1/2 pointer-events-none"
-                  style={{ bottom: "8.75rem" }}
-                >
-                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-gray-200/60 text-xs font-medium text-gray-600">
-                    Click a {locationType} on the map to see its forecast
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* RIGHT: Info + Forecast */}
-        <div className="lg:col-span-5 flex flex-col gap-5">
-          {/* Selected Area mini map */}
-          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-teal-600" />
-                <h2 className="text-sm font-semibold text-gray-700">
-                  Selected Area
-                </h2>
-              </div>
-              {selectedDivision && selectedDivision !== selectedName && (
-                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-                  {selectedDivision} Div.
-                </span>
-              )}
-            </div>
-            <div className="relative" style={{ height: "200px" }}>
-              <MapContainer
-                center={[23.8103, 90.4125]}
-                zoom={7}
-                className="absolute inset-0"
-                style={{
-                  height: "100%",
-                  width: "100%",
-                  backgroundColor: "#f0f4f8",
-                }}
-                zoomControl={true}
-                scrollWheelZoom={true}
-                dragging={true}
-                doubleClickZoom={true}
-                attributionControl={false}
-              >
-                <FitBoundsController feature={selectedFeature} />
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-                  opacity={0.35}
-                />
-                {geoJSONData && (
-                  <GeoJSON
-                    key={`secondary-${locationType}-${selectedName || "all"}`}
-                    data={getSecondaryMapData()}
-                    style={(f) => ({
-                      fillColor: getColorForLocation(f),
-                      weight: 1,
-                      opacity: 0.8,
-                      color: "#fff",
-                      fillOpacity: 0.6,
-                    })}
-                  />
-                )}
-              </MapContainer>
-
-              <div className="absolute bottom-3 left-3 z-400">
-                <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-md border border-gray-200/60">
-                  <p className="text-sm font-bold text-gray-800">
-                    {selectedName || "No area selected"}
-                  </p>
-                  {selectedFeature && (
-                    <p className="text-[10px] text-gray-500 capitalize">
-                      {locationType}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Forecast Card — ALWAYS VISIBLE */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col flex-1">
-            {/* Card header */}
-            <div className="px-4 py-3 bg-linear-to-r from-[#0a3d3d] to-[#0d5555] flex items-center justify-between">
+        <div className="lg:col-span-5">
+          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm flex flex-col h-full">
+            <div className="flex items-center justify-between bg-linear-to-r from-[#0a3d3d] to-[#0d5555] px-4 py-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <CloudRain className="w-4.5 h-4.5 text-teal-300" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+                  <ActiveMetricIcon className="h-4.5 w-4.5 text-teal-300" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white leading-tight">
-                    5-Day Forecast
+                  <h3 className="text-sm font-semibold leading-tight text-white">
+                    10-Day {activeMetricInfo.label} Forecast
                   </h3>
                   <p className="text-[11px] text-teal-300/70">
-                    {selectedName
-                      ? `${selectedName} · ${locationType}`
-                      : `Select a ${locationType}`}
+                    {selectedLabel ? `${selectedLabel} · ${locationType}` : `Select a ${locationType}`}
                   </p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-teal-300/80 bg-white/10 px-2.5 py-1 rounded-full">
-                {(() => { const info = getMetricInfo(activeMetric); const MI = info.icon; return <><MI className="w-3 h-3" />{info.label} ({info.unit})</>; })()}
+              <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-medium text-teal-300/80">
+                {activeMetricInfo.label} ({activeMetricInfo.unit})
               </span>
             </div>
 
-            {/* Forecast content */}
             <div className="flex-1 overflow-y-auto">
-              {isLoadingForecast ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <div className="w-8 h-8 border-[3px] border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+              {isLoadingForecast || loadingLocations ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-teal-200 border-t-teal-600" />
                   <p className="text-xs font-medium text-gray-400">
-                    Loading forecast data…
+                    Loading 10-day {activeMetricInfo.label.toLowerCase()} forecast…
                   </p>
                 </div>
-              ) : forecastError && forecastData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700">
-                      Forecast Unavailable
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1 leading-relaxed max-w-65">
-                      {forecastError}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const f = selectedFeature;
-                      setSelectedFeature(null);
-                      setTimeout(() => setSelectedFeature(f), 50);
-                    }}
-                    className="mt-1 px-4 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors border border-teal-200"
-                  >
-                    Retry
-                  </button>
+              ) : forecastError ? (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm font-semibold text-gray-700">Forecast Unavailable</p>
+                  <p className="mt-2 text-xs leading-relaxed text-gray-400">
+                    {forecastError}
+                  </p>
                 </div>
-              ) : forecastData.length > 0 ? (
-                <div className="p-3 space-y-2">
-                  {forecastData.map((item, index) => {
-                    const metric = item[activeMetric];
-                    const avg =
-                      metric?.val_avg != null
-                        ? parseFloat(metric.val_avg)
-                        : null;
-                    const min =
-                      metric?.val_min != null
-                        ? parseFloat(metric.val_min)
-                        : null;
-                    const max =
-                      metric?.val_max != null
-                        ? parseFloat(metric.val_max)
-                        : null;
-                    const { day, date } = formatDate(item.date);
-                    const info = getMetricInfo(activeMetric);
-                    const MetricIcon = info.icon;
-
-                    return (
-                      <div
-                        key={index}
-                        className={`group flex items-center gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${
-                          index === 0
-                            ? `${info.bg} ${info.border}`
-                            : "border-gray-100 hover:border-gray-200 bg-white"
-                        }`}
-                      >
-                        {/* Date */}
-                        <div className="w-14 shrink-0 text-center">
-                          <p
-                            className={`text-[10px] font-bold uppercase tracking-wider ${index === 0 ? info.color : "text-gray-400"}`}
-                          >
-                            {index === 0 ? "Today" : day}
-                          </p>
-                          <p className="text-xs font-medium text-gray-600 mt-0.5">
-                            {date}
-                          </p>
-                        </div>
-
-                        <div className="w-px h-8 bg-gray-200 shrink-0" />
-
-                        {/* Average */}
-                        <div className="flex-1 flex items-center gap-2">
-                          <MetricIcon
-                            className={`w-4 h-4 shrink-0 ${index === 0 ? info.color : "text-gray-400"}`}
-                          />
-                          <span
-                            className={`text-lg font-bold ${index === 0 ? info.color : "text-gray-800"}`}
-                          >
-                            {avg != null ? avg.toFixed(1) : "—"}
-                          </span>
-                          <span className="text-[10px] text-gray-400 font-medium">
-                            {info.unit}
-                          </span>
-                        </div>
-
-                        {/* Min / Max */}
-                        {(min != null || max != null) && (
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            {min != null && (
-                              <div
-                                className="flex items-center gap-0.5"
-                                title="Minimum"
-                              >
-                                <TrendingDown className="w-3 h-3 text-blue-400" />
-                                <span className="text-[11px] font-semibold text-blue-600">
-                                  {min.toFixed(1)}
+              ) : dailyCards.length ? (
+                <div className="overflow-x-auto p-3 sm:p-4">
+                  <div className="min-w-max overflow-hidden rounded-2xl border border-gray-200">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="min-w-28 border-b border-r border-gray-200 px-3 py-3 text-left text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500">
+                            Date
+                          </th>
+                          {(dailyCards[0]?.metrics || []).map((metric, index) => (
+                            <th
+                              key={metric.key}
+                              className="min-w-24 border-b border-gray-200 px-3 py-3 text-center bg-white"
+                            >
+                              <div className="flex items-center justify-center gap-1.5">
+                                {(() => {
+                                  const MetricIcon = ROW_ICONS[metric.key] || Thermometer;
+                                  return <MetricIcon className="h-3.5 w-3.5 text-teal-600" />;
+                                })()}
+                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-teal-700">
+                                  {metric.label}
                                 </span>
                               </div>
-                            )}
-                            {max != null && (
-                              <div
-                                className="flex items-center gap-0.5"
-                                title="Maximum"
-                              >
-                                <TrendingUp className="w-3 h-3 text-red-400" />
-                                <span className="text-[11px] font-semibold text-red-500">
-                                  {max.toFixed(1)}
-                                </span>
+                              <div className="mt-1 text-[10px] text-gray-500">
+                                {metric.unit}
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {dailyCards.map((dayCard, dayIndex) => (
+                          <tr
+                            key={dayCard.key}
+                            className={dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                          >
+                            <td className={`border-r border-t border-gray-200 px-3 py-3 text-left ${
+                              dayIndex === 0 ? activeMetricInfo.bg : ""
+                            }`}>
+                              <span className="text-xs font-semibold text-gray-900">
+                                {dayCard.label}
+                              </span>
+                            </td>
+
+                            {dayCard.metrics.map((metric) => (
+                              <td
+                                key={`${dayCard.key}-${metric.key}`}
+                                className={`border-t border-gray-200 px-3 py-3 text-center ${
+                                  dayIndex === 0 ? activeMetricInfo.bg : ""
+                                }`}
+                              >
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {metric.value}
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 px-6 text-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-gray-300" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-600">
-                      No Forecast Yet
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                      Select a {locationType} on the map to view its 5-day
-                      weather forecast.
-                    </p>
-                  </div>
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm font-semibold text-gray-700">No Forecast Yet</p>
+                  <p className="mt-2 text-xs leading-relaxed text-gray-400">
+                    Select a {locationType} on the map to view the local 10-day {activeMetricInfo.label.toLowerCase()} forecast.
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="text-center pb-2">
-        <p className="text-[11px] text-gray-400">
-          Data source: Bangladesh Meteorological Department (BMD) · Updated
-          daily
-        </p>
       </div>
     </div>
   );
