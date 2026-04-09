@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryChart from "./components/ForecastSummaryChart";
+import ForecastSummaryCombinedChart from "./components/ForecastSummaryCombinedChart";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
 const SCOPE_OPTIONS = [
@@ -365,6 +366,80 @@ const ForecastSummary = () => {
     };
   })();
 
+  const combinedChartData = (() => {
+    if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
+
+    const dayTempRow = summaryData.rows.find((row) => row.key === "day_temperature");
+    const nightTempRow = summaryData.rows.find((row) => row.key === "night_temperature");
+    const dewPointRow = summaryData.rows.find((row) => row.key === "dew_point");
+    const humidityRow = summaryData.rows.find((row) => row.key === "relative_humidity");
+    const rainfallRow = summaryData.rows.find((row) => row.key === "rainfall");
+
+    if (!dayTempRow || !nightTempRow || !dewPointRow || !humidityRow || !rainfallRow) {
+      return null;
+    }
+
+    const dates = summaryData.dates.map((date) => ({
+      ...date,
+      timestamp: Date.UTC(
+        Number(date.key.slice(0, 4)),
+        Number(date.key.slice(5, 7)) - 1,
+        Number(date.key.slice(8, 10))
+      ),
+    }));
+
+    return {
+      dates,
+      series: [
+        {
+          key: "day_temperature",
+          name: dayTempRow.label || "DayT",
+          color: "#f97316",
+          type: "spline",
+          unit: "°C",
+          yAxis: 0,
+          data: dates.map((date, index) => [date.timestamp, dayTempRow.values[index]?.value ?? null]),
+        },
+        {
+          key: "night_temperature",
+          name: nightTempRow.label || "NightT",
+          color: "#6366f1",
+          type: "spline",
+          unit: "°C",
+          yAxis: 0,
+          data: dates.map((date, index) => [date.timestamp, nightTempRow.values[index]?.value ?? null]),
+        },
+        {
+          key: "dew_point",
+          name: dewPointRow.label || "Dew Point",
+          color: "#ec4899",
+          type: "spline",
+          unit: "°C",
+          yAxis: 0,
+          data: dates.map((date, index) => [date.timestamp, dewPointRow.values[index]?.value ?? null]),
+        },
+        {
+          key: "relative_humidity",
+          name: humidityRow.label || "RH",
+          color: "#8b5cf6",
+          type: "spline",
+          unit: "%",
+          yAxis: 1,
+          data: dates.map((date, index) => [date.timestamp, humidityRow.values[index]?.value ?? null]),
+        },
+        {
+          key: "rainfall",
+          name: rainfallRow.label || "Rainfall",
+          color: "#06b6d4",
+          type: "column",
+          unit: "mm",
+          yAxis: 2,
+          data: dates.map((date, index) => [date.timestamp, rainfallRow.values[index]?.value ?? null]),
+        },
+      ],
+    };
+  })();
+
   const otherCharts = (() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return [];
 
@@ -662,18 +737,31 @@ const ForecastSummary = () => {
         ) : null}
 
         {otherCharts.map((chart) => (
-          <ForecastSummaryChart
-            key={chart.key}
-            title={chart.title}
-            subtitle={`${selectedLabel} | ${chart.subtitleSuffix}`}
-            unit={chart.unit}
-            icon={chart.icon}
-            dates={chart.dates}
-            series={chart.series}
-            csvFilename={`forecast_summary_${chart.fileKey}.csv`}
-            imageFilename={`forecast_summary_${chart.fileKey}`}
-            chartType={chart.chartType}
-          />
+          <Fragment key={chart.key}>
+            <ForecastSummaryChart
+              title={chart.title}
+              subtitle={`${selectedLabel} | ${chart.subtitleSuffix}`}
+              unit={chart.unit}
+              icon={chart.icon}
+              dates={chart.dates}
+              series={chart.series}
+              csvFilename={`forecast_summary_${chart.fileKey}.csv`}
+              imageFilename={`forecast_summary_${chart.fileKey}`}
+              chartType={chart.chartType}
+            />
+
+            {chart.key === "relative_humidity" && combinedChartData ? (
+              <ForecastSummaryCombinedChart
+                title="Combined Weather Overview"
+                subtitle={`${selectedLabel} | DayT, NightT, Dew Point, RH and Rainfall`}
+                icon="🌦️"
+                dates={combinedChartData.dates}
+                series={combinedChartData.series}
+                csvFilename="forecast_summary_combined_overview.csv"
+                imageFilename="forecast_summary_combined_overview"
+              />
+            ) : null}
+          </Fragment>
         ))}
       </div>
     </div>
