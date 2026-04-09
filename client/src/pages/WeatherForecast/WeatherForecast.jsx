@@ -663,19 +663,13 @@ const WeatherForecast = () => {
                 })}
               </div>
 
-              <div className="absolute bottom-4 left-4 right-4 z-400">
-                <div className="mx-auto max-w-[16rem] rounded-xl border border-gray-200/80 bg-white/95 p-2 shadow-xl backdrop-blur-sm sm:max-w-md sm:rounded-2xl sm:p-3">
-                  <div className="mb-1.5 flex items-center gap-1.5 sm:mb-2 sm:gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-teal-600 sm:h-4 sm:w-4" />
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 sm:text-xs">
-                      Select {locationType}
-                    </p>
-                  </div>
+              <div className="absolute right-4 top-4 z-400 w-[min(10rem,calc(100%-5.5rem))] sm:w-[18rem]">
+                <div className="rounded-xl border border-gray-200/80 bg-white/95 p-1.5 shadow-xl backdrop-blur-sm sm:rounded-2xl sm:p-2">
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setLocationDropdownOpen((current) => !current)}
-                      className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-left text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
+                      className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-left text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-sm"
                     >
                       <span className="truncate pr-2">{selectedLabel || `Choose ${locationType}...`}</span>
                       <svg
@@ -696,22 +690,22 @@ const WeatherForecast = () => {
                     </button>
 
                     {locationDropdownOpen ? (
-                      <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-gray-200 bg-white p-1.5 shadow-2xl sm:rounded-2xl sm:p-2">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 rounded-xl border border-gray-200 bg-white p-1 shadow-2xl sm:rounded-2xl sm:p-1.5">
                         <input
                           type="text"
                           value={locationSearch}
                           onChange={(event) => setLocationSearch(event.target.value)}
                           placeholder={`Search ${locationType} name...`}
-                          className="mb-1.5 w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:mb-2 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
+                          className="mb-1.5 w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 outline-none transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:rounded-xl sm:px-2.5 sm:py-1.5 sm:text-sm"
                         />
-                        <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-1 sm:rounded-xl">
+                        <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-0.5 sm:rounded-xl">
                           {filteredLocationOptions.length ? (
                             filteredLocationOptions.map((option) => (
                               <button
                                 key={option.code}
                                 type="button"
                                 onClick={() => handleLocationSelect(option.code)}
-                                className={`flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-xs transition-colors sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm ${
+                                className={`flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs transition-colors sm:rounded-lg sm:px-2.5 sm:py-1.5 sm:text-sm ${
                                   option.code === selectedFeatureCode
                                     ? "bg-teal-50 text-teal-700"
                                     : "text-gray-700 hover:bg-white"
@@ -721,7 +715,7 @@ const WeatherForecast = () => {
                               </button>
                             ))
                           ) : (
-                            <div className="px-2.5 py-1.5 text-xs text-gray-400 sm:px-3 sm:py-2 sm:text-sm">
+                            <div className="px-2 py-1.5 text-xs text-gray-400 sm:px-2.5 sm:py-1.5 sm:text-sm">
                               No matching {locationType} found.
                             </div>
                           )}
