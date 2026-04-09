@@ -16,7 +16,6 @@ import {
   Thermometer,
   Wind,
 } from "lucide-react";
-import L from "leaflet";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
 const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
@@ -139,7 +138,7 @@ const ROW_ICONS = {
 
 const getResponsiveMapZoom = () => {
   if (typeof window === "undefined") return 7;
-  return window.innerWidth >= 768 ? 7 : 6;
+  return window.innerWidth >= 1024 ? 7 : 6;
 };
 
 const getResponsiveMapHeight = () => {
@@ -157,30 +156,6 @@ const MapController = ({ center, zoom }) => {
       map.setView(center, zoom);
     }
   }, [center, zoom, map]);
-
-  return null;
-};
-
-const FitBoundsController = ({ feature }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!feature) return;
-
-    try {
-      const geoLayer = L.geoJSON(feature);
-      const bounds = geoLayer.getBounds();
-
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, {
-          padding: [20, 20],
-          maxZoom: feature.properties.level === "upazila" ? 11 : 9,
-        });
-      }
-    } catch (error) {
-      console.error("Error fitting bounds:", error);
-    }
-  }, [feature, map]);
 
   return null;
 };
@@ -658,7 +633,6 @@ const WeatherForecast = () => {
                   url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
                   opacity={0.4}
                 />
-                {selectedFeature ? <FitBoundsController feature={selectedFeature} /> : null}
                 {mapFeatures.length ? (
                   <GeoJSON
                     key={`weather-forecast-map-${locationType}-${selectedFeatureCode || "none"}`}
