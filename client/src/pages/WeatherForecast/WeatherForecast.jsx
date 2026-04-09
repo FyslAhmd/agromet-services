@@ -54,7 +54,7 @@ const METRIC_CONFIG = {
     color: "text-orange-600",
     bg: "bg-orange-50",
     border: "border-orange-100",
-    rows: ["max_temperature", "min_temperature"],
+    rows: ["max_temperature", "min_temperature", "average_temperature"],
   },
   rf: {
     label: "Rainfall",
@@ -614,7 +614,40 @@ const WeatherForecast = () => {
     if (!summaryData?.dates?.length || !orderedRows.length) return [];
 
     const selectedRows = activeMetricInfo.rows
-      .map((key) => orderedRows.find((row) => row.key === key))
+      .map((key) => {
+        if (key !== "average_temperature") {
+          return orderedRows.find((row) => row.key === key) || null;
+        }
+
+        const maxRow = orderedRows.find((row) => row.key === "max_temperature");
+        const minRow = orderedRows.find((row) => row.key === "min_temperature");
+
+        if (!maxRow || !minRow) return null;
+
+        return {
+          key: "average_temperature",
+          label: "AvgT",
+          unit: maxRow.unit || minRow.unit || "°C",
+          values: summaryData.dates.map((_, index) => {
+            const maxRaw = Number(maxRow.values[index]?.value);
+            const minRaw = Number(minRow.values[index]?.value);
+
+            if (!Number.isFinite(maxRaw) || !Number.isFinite(minRaw)) {
+              return {
+                value: null,
+                displayValue: "—",
+              };
+            }
+
+            const averageValue = (maxRaw + minRaw) / 2;
+
+            return {
+              value: averageValue,
+              displayValue: averageValue.toFixed(1),
+            };
+          }),
+        };
+      })
       .filter(Boolean);
 
     return summaryData.dates.map((dateInfo, index) => ({
