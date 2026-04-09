@@ -643,9 +643,7 @@ const WeatherForecast = () => {
                 ) : null}
               </MapContainer>
 
-              <div
-                className="absolute z-400 flex top-3 right-16 flex-row gap-1 sm:top-22.5 sm:left-2 sm:right-auto sm:flex-col sm:gap-1.5"
-              >
+              <div className="absolute left-2 top-12.5 md:top-25 z-400 flex flex-col gap-1.5">
                 {METRIC_BUTTONS.map(({ key, icon: Icon }) => {
                   const info = METRIC_CONFIG[key];
                   return (
