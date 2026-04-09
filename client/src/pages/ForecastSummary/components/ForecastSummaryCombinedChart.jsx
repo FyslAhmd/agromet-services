@@ -186,15 +186,16 @@ const ForecastSummaryCombinedChart = ({
         },
         {
           title: {
-            text: "Rainfall (mm)",
-            style: { fontSize: "12px", fontWeight: "600", color: "#0891b2" },
+            text: null,
           },
           min: 0,
           max: Math.max(1, rainfallMax * 1.2),
           opposite: true,
           offset: isMobile ? 20 : 34,
           gridLineWidth: 0,
-          labels: { style: { fontSize: "11px", color: "#0891b2" } },
+          labels: { enabled: false },
+          tickLength: 0,
+          lineWidth: 0,
         },
       ],
       tooltip: {
