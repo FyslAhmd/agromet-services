@@ -336,17 +336,8 @@ const ForecastSummary = () => {
 
     const maxTempRow = summaryData.rows.find((row) => row.key === "max_temperature");
     const minTempRow = summaryData.rows.find((row) => row.key === "min_temperature");
-    const dayTempRow = summaryData.rows.find((row) => row.key === "day_temperature");
-    const nightTempRow = summaryData.rows.find((row) => row.key === "night_temperature");
 
-    const temperatureRowConfigs = [
-      { row: maxTempRow, name: "Max Temperature", color: "#ef4444" },
-      { row: minTempRow, name: "Min Temperature", color: "#3b82f6" },
-      { row: dayTempRow, name: "Day Temperature", color: "#f97316" },
-      { row: nightTempRow, name: "Night Temperature", color: "#6366f1" },
-    ].filter((config) => config.row);
-
-    if (!temperatureRowConfigs.length) return null;
+    if (!maxTempRow || !minTempRow) return null;
 
     const dates = summaryData.dates.map((date) => ({
       ...date,
@@ -359,11 +350,18 @@ const ForecastSummary = () => {
 
     return {
       dates,
-      series: temperatureRowConfigs.map((config) => ({
-        name: config.row.label || config.name,
-        color: config.color,
-        data: dates.map((date, index) => [date.timestamp, config.row.values[index]?.value ?? null]),
-      })),
+      series: [
+        {
+          name: maxTempRow.label || "Max Temperature",
+          color: "#ef4444",
+          data: dates.map((date, index) => [date.timestamp, maxTempRow.values[index]?.value ?? null]),
+        },
+        {
+          name: minTempRow.label || "Min Temperature",
+          color: "#3b82f6",
+          data: dates.map((date, index) => [date.timestamp, minTempRow.values[index]?.value ?? null]),
+        },
+      ],
     };
   })();
 
@@ -653,7 +651,7 @@ const ForecastSummary = () => {
         {temperatureChartData ? (
           <ForecastSummaryChart
             title="Temperature Forecast"
-            subtitle={`${selectedLabel} | MaxT, MinT, DayT and NightT`}
+            subtitle={`${selectedLabel} | MaxT and MinT`}
             unit="°C"
             icon="🌡️"
             dates={temperatureChartData.dates}
