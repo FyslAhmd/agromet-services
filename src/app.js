@@ -24,6 +24,7 @@ import feedbackRoutes from "./routes/feedbackRoutes.js";
 import historicalDataRequestRoutes from "./routes/historicalDataRequestRoutes.js";
 import weatherProxyRoutes from "./routes/weatherProxyRoutes.js";
 import forecastSummaryRoutes from "./routes/forecastSummaryRoutes.js";
+import weatherAlertRoutes from "./routes/weatherAlertRoutes.js";
 import { ensureForecastSummaryIndexes } from "./services/forecastSummaryIndexService.js";
 
 // Import models
@@ -92,6 +93,7 @@ app.use("/api/feedbacks", feedbackRoutes);
 app.use("/api/historical-data-requests", historicalDataRequestRoutes);
 app.use("/api/weather", weatherProxyRoutes);
 app.use("/api/forecast-summary", forecastSummaryRoutes);
+app.use("/api/weather-alert", weatherAlertRoutes);
 
 // Health check route
 app.get("/api", (req, res) => {
