@@ -5,7 +5,7 @@ import {
 } from "../services/upazilaGeometryService.js";
 
 const DHAKA_TIME_ZONE = "Asia/Dhaka";
-const MAX_FORECAST_DATE_OFFSET = 10;
+const MAX_FORECAST_DATE_OFFSET = 9;
 const WEATHER_ALERT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const weatherAlertCache = new Map();
