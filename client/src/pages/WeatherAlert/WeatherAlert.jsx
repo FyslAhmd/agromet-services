@@ -597,7 +597,7 @@ const WeatherAlert = () => {
                             style={{ backgroundColor: threshold.color }}
                           />
                           <span className="whitespace-nowrap text-[10px] font-medium text-gray-600">
-                            {threshold.label}
+                            {threshold.label} ({threshold.range} {currentAlertType?.unit || ""})
                           </span>
                         </div>
                       ))}
