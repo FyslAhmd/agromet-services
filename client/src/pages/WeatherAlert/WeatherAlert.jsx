@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./WeatherAlert.css";
@@ -12,6 +12,7 @@ import {
   Thermometer,
   Waves,
   Wind,
+  Download,
 } from "lucide-react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
@@ -109,9 +110,15 @@ const createMergedFeature = (features, properties) => ({
   },
 });
 
-const formatAlertValue = (value) => {
+const parseAlertNumericValue = (value) => {
+  if (value === null || value === undefined || value === "") return null;
   const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue.toFixed(1) : "—";
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
+const formatAlertValue = (value) => {
+  const numericValue = parseAlertNumericValue(value);
+  return numericValue === null ? "—" : numericValue.toFixed(1);
 };
 
 const getResponsiveAlertMapZoom = () => {
@@ -140,6 +147,65 @@ const getDhakaRelativeDate = (dateString, offsetDays) => {
   }).format(baseDate);
 };
 
+const waitForLeafletTiles = (container, timeoutMs = 6000) =>
+  new Promise((resolve) => {
+    if (!container || typeof window === "undefined") {
+      resolve();
+      return;
+    }
+
+    const tiles = Array.from(container.querySelectorAll(".leaflet-tile"));
+    if (!tiles.length) {
+      resolve();
+      return;
+    }
+
+    let settled = false;
+    let loadedCount = 0;
+    let timeoutId = null;
+
+    const cleanup = () => {
+      tiles.forEach((tile) => {
+        tile.removeEventListener("load", onTileDone);
+        tile.removeEventListener("error", onTileDone);
+      });
+
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve();
+    };
+
+    const onTileDone = () => {
+      loadedCount += 1;
+      if (loadedCount >= tiles.length) {
+        finish();
+      }
+    };
+
+    tiles.forEach((tile) => {
+      if (tile.complete && tile.naturalWidth > 0) {
+        loadedCount += 1;
+      } else {
+        tile.addEventListener("load", onTileDone, { once: true });
+        tile.addEventListener("error", onTileDone, { once: true });
+      }
+    });
+
+    if (loadedCount >= tiles.length) {
+      finish();
+      return;
+    }
+
+    timeoutId = window.setTimeout(finish, timeoutMs);
+  });
+
 const TODAY = getDhakaToday();
 const MAX_DATE = getDhakaRelativeDate(TODAY, 9);
 
@@ -153,7 +219,9 @@ const WeatherAlert = () => {
   const [baseGeoJSON, setBaseGeoJSON] = useState(null);
   const [alertRows, setAlertRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloadingMap, setIsDownloadingMap] = useState(false);
   const [selectedSummaryLevel, setSelectedSummaryLevel] = useState(null);
+  const mapExportRef = useRef(null);
 
   useEffect(() => {
     fetch("/amd3.json")
@@ -351,7 +419,7 @@ const WeatherAlert = () => {
           accumulator[row.id] = {
             ...row,
             alert: Number.parseInt(row.alert, 10),
-            value: Number.isFinite(Number(row.value)) ? Number(row.value) : null,
+            value: parseAlertNumericValue(row.value),
           };
         }
         return accumulator;
@@ -446,8 +514,12 @@ const WeatherAlert = () => {
   const summaryLocations = selectedSummaryDetails
     ? alertRows
         .filter((row) => row.alert === selectedSummaryDetails.alert)
-        .map((row) => row.name)
-        .sort((a, b) => a.localeCompare(b))
+        .map((row) => ({
+          id: row.id,
+          name: row.name || "Unknown",
+          value: parseAlertNumericValue(row.value),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
   const levelLabel = LEVEL_OPTIONS.find((option) => option.value === selectedLevel)?.label || "Area";
@@ -468,6 +540,61 @@ const WeatherAlert = () => {
   const handleEndDateChange = (value) => {
     const nextEnd = value < startDate ? startDate : value > MAX_DATE ? MAX_DATE : value;
     setEndDate(nextEnd);
+  };
+
+  const handleMapDownload = async () => {
+    if (isDownloadingMap) return;
+
+    setIsDownloadingMap(true);
+    try {
+      const target = mapExportRef.current;
+      if (!target) {
+        window.alert("Map is not ready to download yet.");
+        return;
+      }
+
+      // Ensure map tiles are loaded before capture to avoid blank patches.
+      await waitForLeafletTiles(target);
+      await new Promise((resolve) =>
+        window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))
+      );
+
+      let fileName = `weather_alert_${selectedAlert}_${selectedLevel}_${startDate}_to_${endDate}.png`;
+      let dataUrl;
+
+      try {
+        const { toPng, toSvg } = await import("html-to-image");
+        dataUrl = await toPng(target, {
+          cacheBust: true,
+          backgroundColor: "#ffffff",
+          pixelRatio: Math.max(2, window.devicePixelRatio || 1),
+          quality: 1,
+          filter: (node) => !(node?.dataset && node.dataset.exportIgnore === "true"),
+        });
+      } catch (primaryError) {
+        console.warn("Primary PNG map export failed, using SVG fallback:", primaryError);
+
+        const { toSvg } = await import("html-to-image");
+        dataUrl = await toSvg(target, {
+          cacheBust: true,
+          backgroundColor: "#ffffff",
+          filter: (node) => !(node?.dataset && node.dataset.exportIgnore === "true"),
+        });
+        fileName = fileName.replace(/\.png$/i, ".svg");
+      }
+
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Map download failed:", error);
+      window.alert("Unable to download the map right now. Please try again.");
+    } finally {
+      setIsDownloadingMap(false);
+    }
   };
 
   return (
@@ -558,9 +685,14 @@ const WeatherAlert = () => {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-8 xl:col-span-9">
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm weather-alert-map">
-            <div className="relative" style={{ height: mapHeight, minHeight: mapHeight }}>
+            <div
+              ref={mapExportRef}
+              data-map-export-root="true"
+              className="relative bg-white"
+              style={{ height: mapHeight, minHeight: mapHeight }}
+            >
               {!baseGeoJSON ? (
-                <div className="flex h-full items-center justify-center bg-gray-50/50">
+                <div className="flex h-full items-center justify-center bg-gray-50">
                   <div className="text-center">
                     <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-teal-200 border-t-teal-600" />
                     <p className="text-sm font-medium text-gray-500">Loading map…</p>
@@ -579,6 +711,7 @@ const WeatherAlert = () => {
                     <TileLayer
                       url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
                       opacity={0.35}
+                      crossOrigin="anonymous"
                     />
                     <GeoJSON
                       key={`${selectedAlert}-${selectedLevel}-${startDate}-${endDate}-${alertDataVersion}`}
@@ -588,8 +721,23 @@ const WeatherAlert = () => {
                     />
                   </MapContainer>
 
+                  <button
+                    type="button"
+                    onClick={handleMapDownload}
+                    disabled={isDownloadingMap}
+                    data-export-ignore="true"
+                    className={`absolute right-3 top-3 z-400 flex h-9 w-9 items-center justify-center rounded-lg bg-green-500 text-white shadow-lg transition-all duration-150 ${
+                      isDownloadingMap
+                        ? "cursor-wait opacity-80"
+                        : "hover:scale-105 hover:bg-green-600"
+                    }`}
+                    title={isDownloadingMap ? "Preparing map download..." : "Download map"}
+                  >
+                    <Download className="h-4.5 w-4.5" />
+                  </button>
+
                   <div className="absolute bottom-3 left-1/2 z-400 -translate-x-1/2">
-                    <div className="flex items-center gap-3 rounded-xl border border-gray-200/60 bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm sm:gap-4">
+                    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg sm:gap-4">
                       {currentThresholds.map((threshold) => (
                         <div key={threshold.level} className="flex items-center gap-1.5">
                           <span
@@ -611,7 +759,7 @@ const WeatherAlert = () => {
                   </div>
 
                   {isLoading ? (
-                    <div className="absolute inset-0 z-500 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                    <div className="absolute inset-0 z-500 flex items-center justify-center bg-white">
                       <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-xl">
                         <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-[3px] border-teal-200 border-t-teal-600" />
                         <p className="text-sm font-semibold text-gray-700">Loading alert data…</p>
@@ -704,7 +852,7 @@ const WeatherAlert = () => {
       </div>
 
       {selectedSummaryDetails ? (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/45 backdrop-blur-sm"
             onClick={() => setSelectedSummaryLevel(null)}
@@ -743,16 +891,21 @@ const WeatherAlert = () => {
             <div className="max-h-[70vh] overflow-y-auto p-4 sm:p-5">
               {summaryLocations.length ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {summaryLocations.map((locationName, index) => (
+                  {summaryLocations.map((location, index) => (
                     <div
-                      key={`${selectedSummaryLevel}-${locationName}-${index}`}
-                      className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3"
+                      key={`${selectedSummaryLevel}-${location.id || location.name}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3.5 py-3"
                     >
-                      <div
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: selectedSummaryDetails.color }}
-                      />
-                      <span className="text-sm font-medium text-gray-700">{locationName}</span>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: selectedSummaryDetails.color }}
+                        />
+                        <span className="truncate text-sm font-medium text-gray-700">{location.name}</span>
+                      </div>
+                      <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-semibold text-gray-700">
+                        {formatAlertValue(location.value)} {currentAlertType?.unit || ""}
+                      </span>
                     </div>
                   ))}
                 </div>
