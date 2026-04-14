@@ -53,7 +53,7 @@ const ALERT_TYPES = [
   { id: "heat", label: "Heat", unit: "°C", icon: Thermometer, disabled: false },
   { id: "cold", label: "Cold", unit: "°C", icon: Snowflake, disabled: false },
   { id: "wind", label: "Wind", unit: "km/h", icon: Wind, disabled: false },
-  { id: "flood", label: "Flood", unit: "wl", icon: Waves, disabled: true },
+  { id: "flood", label: "Flash Flood", unit: "mm", icon: Waves, disabled: false },
 ];
 
 const ALERT_THRESHOLDS = {
@@ -83,7 +83,11 @@ const ALERT_THRESHOLDS = {
     { level: "severe", color: "#f97316", label: "Severe", icon: AlertCircle, alert: 3, range: "60 - 80" },
     { level: "extreme", color: "#dc2626", label: "Extreme", icon: Flame, alert: 4, range: "80+" },
   ],
-  flood: [],
+  flood: [
+    { level: "no-alert", color: "#84cc16", label: "No Alert", icon: CheckCircle, alert: 1, range: "< 121.6" },
+    { level: "moderate", color: "#eab308", label: "Moderate", icon: AlertTriangle, alert: 2, range: "121.6 - 152" },
+    { level: "heavy", color: "#f97316", label: "Heavy", icon: AlertCircle, alert: 3, range: "> 152" },
+  ],
 };
 
 const normalizeName = (value = "") =>
@@ -208,6 +212,7 @@ const waitForLeafletTiles = (container, timeoutMs = 6000) =>
 
 const TODAY = getDhakaToday();
 const MAX_DATE = getDhakaRelativeDate(TODAY, 9);
+const FLOOD_MAX_DATE = getDhakaRelativeDate(TODAY, 2);
 
 const WeatherAlert = () => {
   const [selectedLevel, setSelectedLevel] = useState(DEFAULT_LEVEL);
@@ -242,8 +247,6 @@ const WeatherAlert = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedAlert === "flood") return;
-
     const fetchAlerts = async () => {
       setIsLoading(true);
       try {
@@ -274,6 +277,21 @@ const WeatherAlert = () => {
 
     fetchAlerts();
   }, [endDate, selectedAlert, selectedLevel, startDate]);
+
+  useEffect(() => {
+    const maxDate = selectedAlert === "flood" ? FLOOD_MAX_DATE : MAX_DATE;
+    const nextStartDate = startDate > maxDate ? maxDate : startDate;
+    const nextEndDateBase = endDate > maxDate ? maxDate : endDate;
+    const nextEndDate = nextEndDateBase < nextStartDate ? nextStartDate : nextEndDateBase;
+
+    if (nextStartDate !== startDate) {
+      setStartDate(nextStartDate);
+    }
+
+    if (nextEndDate !== endDate) {
+      setEndDate(nextEndDate);
+    }
+  }, [selectedAlert]);
 
   const mapFeatures = useMemo(() => {
     if (!baseGeoJSON?.features?.length) return [];
@@ -523,6 +541,7 @@ const WeatherAlert = () => {
     : [];
 
   const levelLabel = LEVEL_OPTIONS.find((option) => option.value === selectedLevel)?.label || "Area";
+  const currentMaxDate = selectedAlert === "flood" ? FLOOD_MAX_DATE : MAX_DATE;
 
   const totalLocationsWithAlerts = alertRows.filter((row) => {
     const level = getAlertLevel(row.alert);
@@ -530,7 +549,7 @@ const WeatherAlert = () => {
   }).length;
 
   const handleStartDateChange = (value) => {
-    const nextStart = value < TODAY ? TODAY : value > MAX_DATE ? MAX_DATE : value;
+    const nextStart = value < TODAY ? TODAY : value > currentMaxDate ? currentMaxDate : value;
     setStartDate(nextStart);
     if (endDate < nextStart) {
       setEndDate(nextStart);
@@ -538,7 +557,7 @@ const WeatherAlert = () => {
   };
 
   const handleEndDateChange = (value) => {
-    const nextEnd = value < startDate ? startDate : value > MAX_DATE ? MAX_DATE : value;
+    const nextEnd = value < startDate ? startDate : value > currentMaxDate ? currentMaxDate : value;
     setEndDate(nextEnd);
   };
 
@@ -633,7 +652,7 @@ const WeatherAlert = () => {
             type="date"
             value={startDate}
             min={TODAY}
-            max={MAX_DATE}
+            max={currentMaxDate}
             onChange={(event) => handleStartDateChange(event.target.value)}
             className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           />
@@ -647,7 +666,7 @@ const WeatherAlert = () => {
             type="date"
             value={endDate}
             min={startDate}
-            max={MAX_DATE}
+            max={currentMaxDate}
             onChange={(event) => handleEndDateChange(event.target.value)}
             className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
           />

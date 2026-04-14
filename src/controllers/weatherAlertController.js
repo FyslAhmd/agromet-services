@@ -6,6 +6,7 @@ import {
 
 const DHAKA_TIME_ZONE = "Asia/Dhaka";
 const MAX_FORECAST_DATE_OFFSET = 9;
+const FLOOD_FORECAST_DATE_OFFSET = 2;
 const WEATHER_ALERT_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const weatherAlertCache = new Map();
@@ -44,6 +45,13 @@ const ALERT_CONFIG = {
       { min: 40, max: 60, alert: 2 },
       { min: 60, max: 80, alert: 3 },
       { min: 80, max: Infinity, alert: 4 },
+    ],
+  },
+  flood: {
+    thresholds: [
+      { min: -Infinity, max: 121.6, alert: 1 },
+      { min: 121.6, max: 152, alert: 2 },
+      { min: 152, max: Infinity, alert: 3 },
     ],
   },
 };
@@ -92,8 +100,15 @@ const getAlertFromValue = (alertType, value) => {
     return null;
   }
 
-  const thresholds = ALERT_CONFIG[alertType]?.thresholds || [];
   const numericValue = Number(value);
+
+  if (alertType === "flood") {
+    if (numericValue < 121.6) return 1;
+    if (numericValue <= 152) return 2;
+    return 3;
+  }
+
+  const thresholds = ALERT_CONFIG[alertType]?.thresholds || [];
 
   const matchedThreshold = thresholds.find(
     (threshold) => numericValue >= threshold.min && numericValue < threshold.max
@@ -391,7 +406,9 @@ export const getLocalWeatherAlert = async (req, res) => {
     const level = (req.query.level || "district").trim().toLowerCase();
     const alertType = (req.query.alertType || "rainfall").trim().toLowerCase();
     const todayDhaka = getDhakaToday();
-    const maxSelectableDate = getDhakaRelativeDate(todayDhaka, MAX_FORECAST_DATE_OFFSET);
+    const maxForecastDateOffset =
+      alertType === "flood" ? FLOOD_FORECAST_DATE_OFFSET : MAX_FORECAST_DATE_OFFSET;
+    const maxSelectableDate = getDhakaRelativeDate(todayDhaka, maxForecastDateOffset);
 
     let startDate = req.query.startDate?.trim() || todayDhaka;
     let endDate = req.query.endDate?.trim() || startDate;
@@ -407,13 +424,6 @@ export const getLocalWeatherAlert = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Unsupported alert type",
-      });
-    }
-
-    if (alertType === "flood") {
-      return res.status(400).json({
-        success: false,
-        message: "Flood alerts are not available yet",
       });
     }
 
@@ -608,7 +618,7 @@ export const getLocalWeatherAlert = async (req, res) => {
 
       const currentAreaValue = areaMetrics.get(areaDayMetric.id);
 
-      if (alertType === "rainfall") {
+      if (alertType === "rainfall" || alertType === "flood") {
         areaMetrics.set(
           areaDayMetric.id,
           (currentAreaValue || 0) + (rainfallValue || 0)
