@@ -210,6 +210,64 @@ const waitForLeafletTiles = (container, timeoutMs = 6000) =>
     timeoutId = window.setTimeout(finish, timeoutMs);
   });
 
+const addDownloadTitleBanner = (sourceDataUrl, titleText) =>
+  new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      resolve(sourceDataUrl);
+      return;
+    }
+
+    const image = new Image();
+    image.decoding = "async";
+
+    image.onload = () => {
+      const bannerHeight = Math.max(56, Math.round(image.height * 0.1));
+      const canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height + bannerHeight;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        resolve(sourceDataUrl);
+        return;
+      }
+
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.fillStyle = "#0d4a4a";
+      context.fillRect(0, 0, canvas.width, bannerHeight);
+
+      const normalizedTitle = (titleText || "Weather Alert Map").replace(/\s+/g, " ").trim();
+      const maxTitleWidth = canvas.width - 40;
+      let fontSize = Math.max(14, Math.round(canvas.width * 0.024));
+
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+
+      while (fontSize > 12) {
+        context.font = `700 ${fontSize}px "Segoe UI", Arial, sans-serif`;
+        if (context.measureText(normalizedTitle).width <= maxTitleWidth) {
+          break;
+        }
+        fontSize -= 1;
+      }
+
+      context.fillStyle = "#ffffff";
+      context.fillText(normalizedTitle, canvas.width / 2, bannerHeight / 2);
+
+      context.drawImage(image, 0, bannerHeight);
+
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    image.onerror = () => {
+      reject(new Error("Unable to render exported map image"));
+    };
+
+    image.src = sourceDataUrl;
+  });
+
 const TODAY = getDhakaToday();
 const MAX_DATE = getDhakaRelativeDate(TODAY, 9);
 const FLOOD_MAX_DATE = getDhakaRelativeDate(TODAY, 2);
@@ -599,8 +657,10 @@ const WeatherAlert = () => {
           backgroundColor: "#ffffff",
           filter: (node) => !(node?.dataset && node.dataset.exportIgnore === "true"),
         });
-        fileName = fileName.replace(/\.png$/i, ".svg");
       }
+
+      const exportTitle = `${levelLabel} Wise ${currentAlertType?.label || "Weather Alert"} from ${startDate} to ${endDate}`;
+      dataUrl = await addDownloadTitleBanner(dataUrl, exportTitle);
 
       const link = document.createElement("a");
       link.download = fileName;
