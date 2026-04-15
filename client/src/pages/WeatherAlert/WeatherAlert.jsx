@@ -656,6 +656,7 @@ const WeatherAlert = () => {
 
   const levelLabel = LEVEL_OPTIONS.find((option) => option.value === selectedLevel)?.label || "Area";
   const currentMaxDate = selectedAlert === "flood" ? FLOOD_MAX_DATE : MAX_DATE;
+  const shouldUseTwoLineMobileLegend = currentThresholds.length + 1 > 3;
 
   const totalLocationsWithAlerts = alertRows.filter((row) => {
     const level = getAlertLevel(row.alert);
@@ -760,32 +761,34 @@ const WeatherAlert = () => {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            From
-          </label>
-          <input
-            type="date"
-            value={startDate}
-            min={TODAY}
-            max={currentMaxDate}
-            onChange={(event) => handleStartDateChange(event.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              From
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              min={TODAY}
+              max={currentMaxDate}
+              onChange={(event) => handleStartDateChange(event.target.value)}
+              className="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500 sm:w-auto sm:px-3 sm:text-sm"
+            />
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            To
-          </label>
-          <input
-            type="date"
-            value={endDate}
-            min={startDate}
-            max={currentMaxDate}
-            onChange={(event) => handleEndDateChange(event.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500"
-          />
+          <div className="flex min-w-0 items-center gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              To
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              max={currentMaxDate}
+              onChange={(event) => handleEndDateChange(event.target.value)}
+              className="w-full min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs shadow-sm transition-all focus:border-teal-500 focus:ring-2 focus:ring-teal-500 sm:w-auto sm:px-3 sm:text-sm"
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5 sm:ml-auto">
@@ -871,22 +874,45 @@ const WeatherAlert = () => {
                     <Download className="h-4.5 w-4.5" />
                   </button>
 
-                  <div className="absolute bottom-3 left-1/2 z-400 -translate-x-1/2">
-                    <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg sm:gap-4">
+                  <div className="absolute bottom-3 left-1/2 z-400 w-[calc(100%-1rem)] -translate-x-1/2 sm:w-auto">
+                    <div
+                      className={`rounded-xl border border-gray-200 bg-white px-2 py-2 shadow-lg sm:px-3 ${
+                        shouldUseTwoLineMobileLegend
+                          ? "grid grid-cols-2 gap-x-2 gap-y-1 sm:flex sm:items-center sm:gap-4"
+                          : "flex items-center gap-2 sm:gap-4"
+                      }`}
+                    >
                       {currentThresholds.map((threshold) => (
-                        <div key={threshold.level} className="flex items-center gap-1.5">
+                        <div
+                          key={threshold.level}
+                          className={`flex min-w-0 items-center justify-center gap-1 ${
+                            shouldUseTwoLineMobileLegend ? "sm:justify-start sm:gap-1.5" : "gap-1.5"
+                          }`}
+                        >
                           <span
                             className="h-3 w-3 shrink-0 rounded-sm"
                             style={{ backgroundColor: threshold.color }}
                           />
-                          <span className="whitespace-nowrap text-[10px] font-medium text-gray-600">
+                          <span
+                            className={`text-[9px] font-medium leading-tight text-gray-600 sm:text-[10px] ${
+                              shouldUseTwoLineMobileLegend ? "whitespace-normal text-center sm:whitespace-nowrap sm:text-left" : "whitespace-nowrap"
+                            }`}
+                          >
                             {threshold.label} ({threshold.range} {currentAlertType?.unit || ""})
                           </span>
                         </div>
                       ))}
-                      <div className="flex items-center gap-1.5">
+                      <div
+                        className={`flex min-w-0 items-center justify-center gap-1 ${
+                          shouldUseTwoLineMobileLegend ? "sm:justify-start sm:gap-1.5" : "gap-1.5"
+                        }`}
+                      >
                         <span className="h-3 w-3 shrink-0 rounded-sm bg-gray-200" />
-                        <span className="whitespace-nowrap text-[10px] font-medium text-gray-400">
+                        <span
+                          className={`text-[9px] font-medium leading-tight text-gray-400 sm:text-[10px] ${
+                            shouldUseTwoLineMobileLegend ? "whitespace-normal text-center sm:whitespace-nowrap sm:text-left" : "whitespace-nowrap"
+                          }`}
+                        >
                           No Data
                         </span>
                       </div>
@@ -982,7 +1008,7 @@ const WeatherAlert = () => {
 
       <div className="pb-2 text-center">
         <p className="text-[11px] text-gray-400">
-          Data source: Local WRF forecast database · Updated by latest import batch
+          Data source: BMD and BWDB
         </p>
       </div>
 
