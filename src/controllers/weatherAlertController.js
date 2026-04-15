@@ -56,6 +56,12 @@ const ALERT_CONFIG = {
   },
 };
 
+const FLOOD_THRESHOLDS_BY_DAY_COUNT = {
+  1: { noAlertUpperBound: 121.6, moderateUpperBound: 152 },
+  2: { noAlertUpperBound: 168, moderateUpperBound: 210 },
+  3: { noAlertUpperBound: 211.2, moderateUpperBound: 268 },
+};
+
 const normalizeNumber = (value) => {
   const numericValue = Number(value);
   return Number.isNaN(numericValue) ? null : numericValue;
@@ -73,6 +79,35 @@ const getDhakaRelativeDate = (dateString, offsetDays) => {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: DHAKA_TIME_ZONE,
   }).format(baseDate);
+};
+
+const getInclusiveDayCount = (startDate, endDate) => {
+  const start = new Date(`${startDate}T12:00:00+06:00`);
+  const end = new Date(`${endDate}T12:00:00+06:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return 1;
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const dayDifference = Math.floor((end.getTime() - start.getTime()) / millisecondsPerDay);
+
+  return Math.max(1, dayDifference + 1);
+};
+
+const getFloodThresholdForRange = (startDate, endDate) => {
+  const dayCount = Math.min(
+    FLOOD_FORECAST_DATE_OFFSET + 1,
+    Math.max(1, getInclusiveDayCount(startDate, endDate))
+  );
+
+  const floodThreshold =
+    FLOOD_THRESHOLDS_BY_DAY_COUNT[dayCount] || FLOOD_THRESHOLDS_BY_DAY_COUNT[1];
+
+  return {
+    dayCount,
+    ...floodThreshold,
+  };
 };
 
 const toDateKey = (value) => new Date(value).toISOString().slice(0, 10);
@@ -95,7 +130,7 @@ const getSpatialWeight = (latitude) => {
   return Math.cos((numericLatitude * Math.PI) / 180);
 };
 
-const getAlertFromValue = (alertType, value) => {
+const getAlertFromValue = (alertType, value, options = {}) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return null;
   }
@@ -103,8 +138,10 @@ const getAlertFromValue = (alertType, value) => {
   const numericValue = Number(value);
 
   if (alertType === "flood") {
-    if (numericValue < 121.6) return 1;
-    if (numericValue <= 152) return 2;
+    const floodThreshold = options.floodThreshold || FLOOD_THRESHOLDS_BY_DAY_COUNT[1];
+
+    if (numericValue < floodThreshold.noAlertUpperBound) return 1;
+    if (numericValue <= floodThreshold.moderateUpperBound) return 2;
     return 3;
   }
 
@@ -371,10 +408,13 @@ const buildAlertResponseRows = ({
   level,
   alertType,
   areaMetrics,
+  floodThreshold,
 }) => {
   const responseRows = getLevelOptions(level).map((option) => {
     const metricValue = areaMetrics.get(option.code) ?? null;
-    const alert = getAlertFromValue(alertType, metricValue);
+    const alert = getAlertFromValue(alertType, metricValue, {
+      floodThreshold,
+    });
     const keyPrefix = `${level}_`;
 
     return {
@@ -431,6 +471,9 @@ export const getLocalWeatherAlert = async (req, res) => {
     if (endDate < startDate) endDate = startDate;
     if (startDate > maxSelectableDate) startDate = maxSelectableDate;
     if (endDate > maxSelectableDate) endDate = maxSelectableDate;
+
+    const floodThreshold =
+      alertType === "flood" ? getFloodThresholdForRange(startDate, endDate) : null;
 
     const cacheKey = getWeatherAlertCacheKey({
       level,
@@ -495,6 +538,15 @@ export const getLocalWeatherAlert = async (req, res) => {
           todayFilterDate: todayDhaka,
           effectiveImportDate: batchInfo.value,
           fallbackUsed: batchInfo.value === yesterdayDhaka,
+          ...(alertType === "flood" && floodThreshold
+            ? {
+                floodThresholds: {
+                  dayCount: floodThreshold.dayCount,
+                  noAlertLessThan: floodThreshold.noAlertUpperBound,
+                  moderateUpperBound: floodThreshold.moderateUpperBound,
+                },
+              }
+            : {}),
         },
       };
 
@@ -647,6 +699,7 @@ export const getLocalWeatherAlert = async (req, res) => {
         level,
         alertType,
         areaMetrics,
+        floodThreshold,
       }),
       meta: {
         level,
@@ -656,6 +709,15 @@ export const getLocalWeatherAlert = async (req, res) => {
         todayFilterDate: todayDhaka,
         effectiveImportDate: batchInfo.value,
         fallbackUsed: batchInfo.value === yesterdayDhaka,
+        ...(alertType === "flood" && floodThreshold
+          ? {
+              floodThresholds: {
+                dayCount: floodThreshold.dayCount,
+                noAlertLessThan: floodThreshold.noAlertUpperBound,
+                moderateUpperBound: floodThreshold.moderateUpperBound,
+              },
+            }
+          : {}),
       },
     };
 

@@ -83,11 +83,12 @@ const ALERT_THRESHOLDS = {
     { level: "severe", color: "#f97316", label: "Severe", icon: AlertCircle, alert: 3, range: "60 - 80" },
     { level: "extreme", color: "#dc2626", label: "Extreme", icon: Flame, alert: 4, range: "80+" },
   ],
-  flood: [
-    { level: "no-alert", color: "#84cc16", label: "No Alert", icon: CheckCircle, alert: 1, range: "< 121.6" },
-    { level: "moderate", color: "#eab308", label: "Moderate", icon: AlertTriangle, alert: 2, range: "121.6 - 152" },
-    { level: "heavy", color: "#f97316", label: "Heavy", icon: AlertCircle, alert: 3, range: "> 152" },
-  ],
+};
+
+const FLOOD_THRESHOLDS_BY_DAY_COUNT = {
+  1: { noAlertUpperBound: 121.6, moderateUpperBound: 152 },
+  2: { noAlertUpperBound: 168, moderateUpperBound: 210 },
+  3: { noAlertUpperBound: 211.2, moderateUpperBound: 268 },
 };
 
 const normalizeName = (value = "") =>
@@ -149,6 +150,55 @@ const getDhakaRelativeDate = (dateString, offsetDays) => {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Dhaka",
   }).format(baseDate);
+};
+
+const getInclusiveDayCount = (startDate, endDate) => {
+  const start = new Date(`${startDate}T12:00:00+06:00`);
+  const end = new Date(`${endDate}T12:00:00+06:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return 1;
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const dayDifference = Math.floor((end.getTime() - start.getTime()) / millisecondsPerDay);
+
+  return Math.max(1, dayDifference + 1);
+};
+
+const formatThresholdNumber = (value) => String(Number(value));
+
+const getFloodThresholdsForRange = (startDate, endDate) => {
+  const dayCount = Math.min(3, Math.max(1, getInclusiveDayCount(startDate, endDate)));
+  const threshold =
+    FLOOD_THRESHOLDS_BY_DAY_COUNT[dayCount] || FLOOD_THRESHOLDS_BY_DAY_COUNT[1];
+
+  return [
+    {
+      level: "no-alert",
+      color: "#84cc16",
+      label: "No Alert",
+      icon: CheckCircle,
+      alert: 1,
+      range: `< ${formatThresholdNumber(threshold.noAlertUpperBound)}`,
+    },
+    {
+      level: "moderate",
+      color: "#eab308",
+      label: "Moderate",
+      icon: AlertTriangle,
+      alert: 2,
+      range: `${formatThresholdNumber(threshold.noAlertUpperBound)} - ${formatThresholdNumber(threshold.moderateUpperBound)}`,
+    },
+    {
+      level: "heavy",
+      color: "#f97316",
+      label: "Heavy",
+      icon: AlertCircle,
+      alert: 3,
+      range: `> ${formatThresholdNumber(threshold.moderateUpperBound)}`,
+    },
+  ];
 };
 
 const waitForLeafletTiles = (container, timeoutMs = 6000) =>
@@ -486,7 +536,13 @@ const WeatherAlert = () => {
   }, [baseGeoJSON, selectedLevel]);
 
   const currentAlertType = ALERT_TYPES.find((type) => type.id === selectedAlert);
-  const currentThresholds = ALERT_THRESHOLDS[selectedAlert] || [];
+  const currentThresholds = useMemo(() => {
+    if (selectedAlert === "flood") {
+      return getFloodThresholdsForRange(startDate, endDate);
+    }
+
+    return ALERT_THRESHOLDS[selectedAlert] || [];
+  }, [selectedAlert, startDate, endDate]);
 
   const alertDataById = useMemo(
     () =>
