@@ -135,6 +135,12 @@ const ForecastSummaryCombinedChart = ({
     const leftPadding = leftRange * 0.12;
 
     const rainfallMax = rainfallValues.length ? Math.max(...rainfallValues) : 0;
+    const leftAxisColor =
+      chartSeries.find((item) => item.yAxis === 0)?.color || "#f97316";
+    const humidityAxisColor =
+      chartSeries.find((item) => item.yAxis === 1)?.color || "#8b5cf6";
+    const rainfallAxisColor =
+      chartSeries.find((item) => item.yAxis === 2)?.color || "#06b6d4";
 
     return {
       chart: {
@@ -144,7 +150,7 @@ const ForecastSummaryCombinedChart = ({
         height: chartHeight,
         animation: { duration: 700 },
         spacingTop: 16,
-        spacingBottom: 22,
+        spacingBottom: isMobile ? 36 : 40,
         spacingLeft: 10,
         spacingRight: isMobile ? 12 : 42,
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
@@ -160,29 +166,34 @@ const ForecastSummaryCombinedChart = ({
           format: "{value:%d %b}",
         },
         lineColor: "#E5E7EB",
+        title: {
+          text: "Rainfall (mm)",
+          style: { fontSize: "12px", fontWeight: "600", color: rainfallAxisColor },
+          margin: isMobile ? 12 : 16,
+        },
       },
       yAxis: [
         {
           title: {
             text: "Temperature / Dew Point (°C)",
-            style: { fontSize: "12px", fontWeight: "600", color: "#374151" },
+            style: { fontSize: "12px", fontWeight: "600", color: leftAxisColor },
           },
           gridLineColor: "rgba(0, 0, 0, 0.08)",
           gridLineDashStyle: "Dash",
           min: leftMin !== null ? leftMin - leftPadding : undefined,
           max: leftMax !== null ? leftMax + leftPadding : undefined,
-          labels: { style: { fontSize: "11px", color: "#6B7280" } },
+          labels: { style: { fontSize: "11px", color: leftAxisColor } },
         },
         {
           title: {
             text: "Relative Humidity (%)",
-            style: { fontSize: "12px", fontWeight: "600", color: "#6B7280" },
+            style: { fontSize: "12px", fontWeight: "600", color: humidityAxisColor },
           },
           min: 0,
           max: 100,
           opposite: true,
           gridLineWidth: 0,
-          labels: { style: { fontSize: "11px", color: "#6B7280" } },
+          labels: { style: { fontSize: "11px", color: humidityAxisColor } },
         },
         {
           title: {
@@ -323,7 +334,7 @@ const ForecastSummaryCombinedChart = ({
         animation: false,
         spacingTop: 30,
         spacingRight: 26,
-        spacingBottom: 24,
+        spacingBottom: 40,
         spacingLeft: 24,
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
       },

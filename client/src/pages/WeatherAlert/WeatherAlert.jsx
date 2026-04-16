@@ -886,7 +886,7 @@ const WeatherAlert = () => {
                         <div
                           key={threshold.level}
                           className={`flex min-w-0 items-center justify-center gap-1 ${
-                            shouldUseTwoLineMobileLegend ? "sm:justify-start sm:gap-1.5" : "gap-1.5"
+                            shouldUseTwoLineMobileLegend ? "justify-start gap-1.5" : "gap-1.5"
                           }`}
                         >
                           <span
@@ -895,7 +895,7 @@ const WeatherAlert = () => {
                           />
                           <span
                             className={`text-[9px] font-medium leading-tight text-gray-600 sm:text-[10px] ${
-                              shouldUseTwoLineMobileLegend ? "whitespace-normal text-center sm:whitespace-nowrap sm:text-left" : "whitespace-nowrap"
+                              shouldUseTwoLineMobileLegend ? "whitespace-normal text-left sm:whitespace-nowrap" : "whitespace-nowrap"
                             }`}
                           >
                             {threshold.label} ({threshold.range} {currentAlertType?.unit || ""})
@@ -904,13 +904,13 @@ const WeatherAlert = () => {
                       ))}
                       <div
                         className={`flex min-w-0 items-center justify-center gap-1 ${
-                          shouldUseTwoLineMobileLegend ? "sm:justify-start sm:gap-1.5" : "gap-1.5"
+                          shouldUseTwoLineMobileLegend ? "justify-start gap-1.5" : "gap-1.5"
                         }`}
                       >
                         <span className="h-3 w-3 shrink-0 rounded-sm bg-gray-200" />
                         <span
                           className={`text-[9px] font-medium leading-tight text-gray-400 sm:text-[10px] ${
-                            shouldUseTwoLineMobileLegend ? "whitespace-normal text-center sm:whitespace-nowrap sm:text-left" : "whitespace-nowrap"
+                            shouldUseTwoLineMobileLegend ? "whitespace-normal text-left sm:whitespace-nowrap" : "whitespace-nowrap"
                           }`}
                         >
                           No Data
