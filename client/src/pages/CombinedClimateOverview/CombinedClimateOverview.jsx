@@ -3,10 +3,12 @@ import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryCombinedChart from "../ForecastSummary/components/ForecastSummaryCombinedChart";
 
 const DEFAULT_DISTRICT = "Gazipur";
+const DAY_OPTIONS = [3, 5, 7, 10];
 
 const CombinedClimateOverview = () => {
   const [districts, setDistricts] = useState([]);
   const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
+  const [selectedDays, setSelectedDays] = useState(10);
   const [summaryData, setSummaryData] = useState(null);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -58,7 +60,7 @@ const CombinedClimateOverview = () => {
 
       try {
         const params = new URLSearchParams({
-          days: "10",
+          days: String(selectedDays),
           selectionType: "district",
           selectionCode: selectedDistrictCode,
         });
@@ -83,7 +85,7 @@ const CombinedClimateOverview = () => {
     };
 
     fetchSummary();
-  }, [selectedDistrictCode]);
+  }, [selectedDays, selectedDistrictCode]);
 
   const selectedDistrictLabel =
     districts.find((district) => district.code === selectedDistrictCode)?.label ||
@@ -164,6 +166,25 @@ const CombinedClimateOverview = () => {
     };
   }, [summaryData]);
 
+  const daySelector = (
+    <div className="inline-grid grid-cols-4 overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm sm:rounded-lg">
+      {DAY_OPTIONS.map((day) => (
+        <button
+          key={day}
+          type="button"
+          onClick={() => setSelectedDays(day)}
+          className={`px-2 py-1 text-[10px] font-semibold transition-colors sm:px-3 sm:py-1.5 sm:text-xs ${
+            selectedDays === day
+              ? "bg-teal-600 text-white"
+              : "text-gray-600 hover:bg-gray-50"
+          }`}
+        >
+          {day}D
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="w-full min-h-full space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -209,13 +230,14 @@ const CombinedClimateOverview = () => {
         </div>
       ) : combinedChartData ? (
         <ForecastSummaryCombinedChart
-          title="Combined Weather Overview"
+          title="Combined Weather Forecast Overview"
           subtitle={`${selectedDistrictLabel} | DayT, NightT, Dew Point, RH and Rainfall`}
           icon="🌦️"
           dates={combinedChartData.dates}
           series={combinedChartData.series}
           csvFilename="combined_climate_overview.csv"
           imageFilename="combined_climate_overview"
+          headerActions={daySelector}
         />
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">

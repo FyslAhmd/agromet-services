@@ -25,6 +25,7 @@ const ForecastSummaryCombinedChart = ({
   series,
   csvFilename,
   imageFilename,
+  headerActions = null,
 }) => {
   const [HC, setHC] = useState(null);
   const [HCReact, setHCReact] = useState(null);
@@ -412,6 +413,7 @@ const ForecastSummaryCombinedChart = ({
 
           {hasData && (
             <div className="flex gap-1.5 self-start sm:self-auto">
+              {headerActions}
               <button
                 onClick={handleImageDownload}
                 className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-md transition-colors shadow-sm sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs sm:rounded-lg"
