@@ -1,9 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryCombinedChart from "../ForecastSummary/components/ForecastSummaryCombinedChart";
+import CombinedRealTimeWeatherChart from "./components/CombinedRealTimeWeatherChart";
 
 const DEFAULT_DISTRICT = "Gazipur";
 const DAY_OPTIONS = [3, 5, 7, 10];
+const DISTRICT_STATION_MAP = {
+  habiganj: { stationId: "42", stationLabel: "BRRI R/S Habiganj" },
+  faridpur: { stationId: "98", stationLabel: "BRRI R/S Faridpur" },
+  gopalganj: { stationId: "122", stationLabel: "BRRI R/S Gopalganj" },
+  gopalgonj: { stationId: "122", stationLabel: "BRRI R/S Gopalganj" },
+  kushtia: { stationId: "124", stationLabel: "BRRI R/S Kushtia" },
+  rajshahi: { stationId: "126", stationLabel: "BRRI R/S Rajshahi" },
+  cumilla: { stationId: "137", stationLabel: "BRRI R/S Cumilla" },
+  comilla: { stationId: "137", stationLabel: "BRRI R/S Cumilla" },
+  rangpur: { stationId: "147", stationLabel: "BRRI R/S Rangpur" },
+  sirajganj: { stationId: "310", stationLabel: "BRRI R/S Sirajganj" },
+  barishal: { stationId: "352", stationLabel: "BRRI R/S Barishal" },
+  barisal: { stationId: "352", stationLabel: "BRRI R/S Barishal" },
+  satkhira: { stationId: "375", stationLabel: "BRRI R/S Satkhira" },
+  sonagazi: { stationId: "383", stationLabel: "BRRI R/S Sonagazi" },
+  feni: { stationId: "383", stationLabel: "BRRI R/S Sonagazi" },
+  gazipur: { stationId: "415", stationLabel: "BRRI HQ Gazipur" },
+};
+
+const normalizeName = (value = "") =>
+  value.trim().toLowerCase().replace(/\s+/g, " ");
 
 const CombinedClimateOverview = () => {
   const [districts, setDistricts] = useState([]);
@@ -91,6 +113,8 @@ const CombinedClimateOverview = () => {
     districts.find((district) => district.code === selectedDistrictCode)?.label ||
     districts.find((district) => district.code === selectedDistrictCode)?.name ||
     "Selected District";
+
+  const realTimeStation = DISTRICT_STATION_MAP[normalizeName(selectedDistrictLabel)] || null;
 
   const combinedChartData = useMemo(() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
@@ -229,16 +253,25 @@ const CombinedClimateOverview = () => {
           <p className="mt-1 text-xs text-gray-400">Preparing district forecast chart</p>
         </div>
       ) : combinedChartData ? (
-        <ForecastSummaryCombinedChart
-          title="Combined Weather Forecast Overview"
-          subtitle={`${selectedDistrictLabel} | DayT, NightT, Dew Point, RH and Rainfall`}
-          icon="🌦️"
-          dates={combinedChartData.dates}
-          series={combinedChartData.series}
-          csvFilename="combined_climate_overview.csv"
-          imageFilename="combined_climate_overview"
-          headerActions={daySelector}
-        />
+        <div className="space-y-5">
+          <ForecastSummaryCombinedChart
+            title="Combined Weather Forecast Overview"
+            subtitle={`${selectedDistrictLabel} | DayT, NightT, Dew Point, RH and Rainfall`}
+            icon="🌦️"
+            dates={combinedChartData.dates}
+            series={combinedChartData.series}
+            csvFilename="combined_climate_overview.csv"
+            imageFilename="combined_climate_overview"
+            headerActions={daySelector}
+          />
+
+          {realTimeStation ? (
+            <CombinedRealTimeWeatherChart
+              stationId={realTimeStation.stationId}
+              districtLabel={selectedDistrictLabel}
+            />
+          ) : null}
+        </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">
           <p className="text-sm font-semibold text-gray-700">
