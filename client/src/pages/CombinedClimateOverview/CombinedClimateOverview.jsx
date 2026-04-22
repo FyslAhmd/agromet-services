@@ -2,26 +2,91 @@ import { useEffect, useMemo, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryCombinedChart from "../ForecastSummary/components/ForecastSummaryCombinedChart";
 import CombinedRealTimeWeatherChart from "./components/CombinedRealTimeWeatherChart";
+import CombinedHistoricalWeatherChart from "./components/CombinedHistoricalWeatherChart";
 
 const DEFAULT_DISTRICT = "Gazipur";
 const DAY_OPTIONS = [3, 5, 7, 10];
 const DISTRICT_STATION_MAP = {
-  habiganj: { stationId: "42", stationLabel: "BRRI R/S Habiganj" },
-  faridpur: { stationId: "98", stationLabel: "BRRI R/S Faridpur" },
-  gopalganj: { stationId: "122", stationLabel: "BRRI R/S Gopalganj" },
-  gopalgonj: { stationId: "122", stationLabel: "BRRI R/S Gopalganj" },
-  kushtia: { stationId: "124", stationLabel: "BRRI R/S Kushtia" },
-  rajshahi: { stationId: "126", stationLabel: "BRRI R/S Rajshahi" },
-  cumilla: { stationId: "137", stationLabel: "BRRI R/S Cumilla" },
-  comilla: { stationId: "137", stationLabel: "BRRI R/S Cumilla" },
-  rangpur: { stationId: "147", stationLabel: "BRRI R/S Rangpur" },
-  sirajganj: { stationId: "310", stationLabel: "BRRI R/S Sirajganj" },
-  barishal: { stationId: "352", stationLabel: "BRRI R/S Barishal" },
-  barisal: { stationId: "352", stationLabel: "BRRI R/S Barishal" },
-  satkhira: { stationId: "375", stationLabel: "BRRI R/S Satkhira" },
-  sonagazi: { stationId: "383", stationLabel: "BRRI R/S Sonagazi" },
-  feni: { stationId: "383", stationLabel: "BRRI R/S Sonagazi" },
-  gazipur: { stationId: "415", stationLabel: "BRRI HQ Gazipur" },
+  habiganj: {
+    stationId: "42",
+    stationLabel: "BRRI R/S Habiganj",
+    historicalCandidates: ["Habiganj"],
+  },
+  faridpur: {
+    stationId: "98",
+    stationLabel: "BRRI R/S Faridpur",
+    historicalCandidates: ["Faridpur"],
+  },
+  gopalganj: {
+    stationId: "122",
+    stationLabel: "BRRI R/S Gopalganj",
+    historicalCandidates: ["Gopalganj", "Gopalgonj"],
+  },
+  gopalgonj: {
+    stationId: "122",
+    stationLabel: "BRRI R/S Gopalganj",
+    historicalCandidates: ["Gopalganj", "Gopalgonj"],
+  },
+  kushtia: {
+    stationId: "124",
+    stationLabel: "BRRI R/S Kushtia",
+    historicalCandidates: ["Kushtia"],
+  },
+  rajshahi: {
+    stationId: "126",
+    stationLabel: "BRRI R/S Rajshahi",
+    historicalCandidates: ["Rajshahi"],
+  },
+  cumilla: {
+    stationId: "137",
+    stationLabel: "BRRI R/S Cumilla",
+    historicalCandidates: ["Cumilla", "Comilla"],
+  },
+  comilla: {
+    stationId: "137",
+    stationLabel: "BRRI R/S Cumilla",
+    historicalCandidates: ["Cumilla", "Comilla"],
+  },
+  rangpur: {
+    stationId: "147",
+    stationLabel: "BRRI R/S Rangpur",
+    historicalCandidates: ["Rangpur"],
+  },
+  sirajganj: {
+    stationId: "310",
+    stationLabel: "BRRI R/S Sirajganj",
+    historicalCandidates: ["Sirajganj"],
+  },
+  barishal: {
+    stationId: "352",
+    stationLabel: "BRRI R/S Barishal",
+    historicalCandidates: ["Barishal", "Barisal"],
+  },
+  barisal: {
+    stationId: "352",
+    stationLabel: "BRRI R/S Barishal",
+    historicalCandidates: ["Barishal", "Barisal"],
+  },
+  satkhira: {
+    stationId: "375",
+    stationLabel: "BRRI R/S Satkhira",
+    historicalCandidates: ["Satkhira"],
+  },
+  sonagazi: {
+    stationId: "383",
+    stationLabel: "BRRI R/S Sonagazi",
+    historicalCandidates: ["Sonagazi", "Feni"],
+  },
+  feni: {
+    stationId: "383",
+    stationLabel: "BRRI R/S Sonagazi",
+    historicalCandidates: ["Sonagazi", "Feni"],
+  },
+  gazipur: {
+    stationId: "415",
+    stationLabel: "BRRI HQ Gazipur",
+    historicalCandidates: ["Gazipur"],
+  },
 };
 
 const normalizeName = (value = "") =>
@@ -114,7 +179,7 @@ const CombinedClimateOverview = () => {
     districts.find((district) => district.code === selectedDistrictCode)?.name ||
     "Selected District";
 
-  const realTimeStation = DISTRICT_STATION_MAP[normalizeName(selectedDistrictLabel)] || null;
+  const districtStationConfig = DISTRICT_STATION_MAP[normalizeName(selectedDistrictLabel)] || null;
 
   const combinedChartData = useMemo(() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
@@ -265,12 +330,17 @@ const CombinedClimateOverview = () => {
             headerActions={daySelector}
           />
 
-          {realTimeStation ? (
+          {districtStationConfig ? (
             <CombinedRealTimeWeatherChart
-              stationId={realTimeStation.stationId}
+              stationId={districtStationConfig.stationId}
               districtLabel={selectedDistrictLabel}
             />
           ) : null}
+
+          <CombinedHistoricalWeatherChart
+            districtLabel={selectedDistrictLabel}
+            stationCandidates={districtStationConfig?.historicalCandidates || []}
+          />
         </div>
       ) : (
         <div className="rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">
