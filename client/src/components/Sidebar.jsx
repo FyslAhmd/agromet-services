@@ -133,6 +133,11 @@ const Sidebar = () => {
           label="Forecast Summary"
         />
         <SidebarLink
+          to="/combined-climate-overview"
+          icon={CircleStackIcon}
+          label="Combined Climate Overview"
+        />
+        <SidebarLink
           to="/weather-alert"
           icon={AlertTriangle}
           label="Weather Alert"
