@@ -359,6 +359,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
     () => [
       {
         name: "Max Temperature",
+        legendLabel: "Max Temp",
         color: "#ef4444",
         type: "spline",
         unit: PARAMETER_CONFIG.temperature.unit,
@@ -367,6 +368,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
       },
       {
         name: "Min Temperature",
+        legendLabel: "Min Temp",
         color: "#3b82f6",
         type: "spline",
         unit: PARAMETER_CONFIG.temperature.unit,
@@ -375,6 +377,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
       },
       {
         name: "Air Humidity",
+        legendLabel: "Humidity",
         color: "#8b5cf6",
         type: "spline",
         unit: PARAMETER_CONFIG.humidity.unit,
@@ -383,6 +386,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
       },
       {
         name: "Accumulated Rain 1h",
+        legendLabel: "Rain 1h",
         color: "#06b6d4",
         type: "column",
         unit: PARAMETER_CONFIG.rainfall.unit,
@@ -430,10 +434,10 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
         backgroundColor: "#ffffff",
         height: chartHeight,
         animation: { duration: 700 },
-        spacingTop: 16,
-        spacingBottom: isMobile ? 36 : 40,
-        spacingLeft: 10,
-        spacingRight: isMobile ? 12 : 42,
+        spacingTop: isMobile ? 10 : 16,
+        spacingBottom: isMobile ? 28 : 40,
+        spacingLeft: isMobile ? 4 : 10,
+        spacingRight: isMobile ? 6 : 42,
         style: { fontFamily: '"Montserrat", "Segoe UI", Roboto, sans-serif' },
       },
       title: { text: null },
@@ -447,6 +451,11 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
           format: "{value:%d %b}",
         },
         lineColor: "#E5E7EB",
+        title: {
+          text: "Rainfall (mm)",
+          style: { fontSize: "12px", fontWeight: "600", color: "#06b6d4" },
+          margin: isMobile ? 10 : 16,
+        },
       },
       yAxis: [
         {
@@ -473,15 +482,16 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
         },
         {
           title: {
-            text: "Rainfall (mm)",
-            style: { fontSize: "12px", fontWeight: "600", color: "#06b6d4" },
+            text: null,
           },
           min: 0,
           max: Math.max(1, rainfallMax * 1.2),
           opposite: true,
-          offset: isMobile ? 20 : 34,
+          offset: isMobile ? 14 : 34,
           gridLineWidth: 0,
-          labels: { style: { fontSize: "11px", color: "#06b6d4" } },
+          labels: { enabled: false },
+          tickLength: 0,
+          lineWidth: 0,
         },
       ],
       tooltip: {
@@ -522,11 +532,19 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
         align: "center",
         verticalAlign: "bottom",
         layout: "horizontal",
-        margin: isMobile ? 10 : 16,
+        margin: isMobile ? 8 : 16,
         itemMarginTop: 4,
         itemMarginBottom: 4,
-        itemStyle: { fontSize: "12px", fontWeight: "500", color: "#374151" },
+        itemStyle: {
+          fontSize: isMobile ? "11px" : "12px",
+          fontWeight: "500",
+          color: "#374151",
+        },
+        itemWidth: isMobile ? 120 : undefined,
         symbolRadius: 6,
+        labelFormatter: function () {
+          return this.userOptions.legendLabel || this.name;
+        },
       },
       plotOptions: {
         spline: {
@@ -692,7 +710,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm sm:rounded-2xl">
-      <div className="p-2 sm:p-5">
+      <div className="p-1.5 sm:p-5">
         <div className="mb-2 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="flex items-start gap-1.5 sm:items-center sm:gap-2.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-[#0a3d3d] to-[#0d5555] shadow-sm sm:h-10 sm:w-10 sm:rounded-xl">
@@ -841,7 +859,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
             <p className="text-center text-xs text-gray-500">{error}</p>
           </div>
         ) : hasData && hcReady && chartOptions ? (
-          <div className="overflow-hidden rounded-lg border border-gray-100 bg-white p-0.5 sm:rounded-xl sm:p-2">
+          <div className="overflow-hidden rounded-lg border border-gray-100 bg-white p-0 sm:rounded-xl sm:p-2">
             <div style={{ height: `${chartHeight}px` }}>
               <ChartRenderer
                 HC={HC}
