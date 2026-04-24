@@ -22,6 +22,7 @@ import WeatherAlert from "../pages/WeatherAlert/WeatherAlert";
 import Profile from "../pages/Profile/Profile";
 import ForecastSummary from "../pages/ForecastSummary/ForecastSummary";
 import CombinedClimateOverview from "../pages/CombinedClimateOverview/CombinedClimateOverview";
+import ForecastValidation from "../pages/ForecastValidation/ForecastValidation";
 
 const router = createBrowserRouter([
   {
@@ -119,6 +120,10 @@ const router = createBrowserRouter([
       {
         path: "forecast-summary",
         element: <ForecastSummary />,
+      },
+      {
+        path: "forecast-validation",
+        element: <ForecastValidation />,
       },
       {
         path: "combined-climate-overview",

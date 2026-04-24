@@ -25,7 +25,9 @@ import historicalDataRequestRoutes from "./routes/historicalDataRequestRoutes.js
 import weatherProxyRoutes from "./routes/weatherProxyRoutes.js";
 import forecastSummaryRoutes from "./routes/forecastSummaryRoutes.js";
 import weatherAlertRoutes from "./routes/weatherAlertRoutes.js";
+import forecastValidationRoutes from "./routes/forecastValidationRoutes.js";
 import { ensureForecastSummaryIndexes } from "./services/forecastSummaryIndexService.js";
+import { startForecastValidationScheduler } from "./services/forecastValidationService.js";
 
 // Import models
 import User from "./models/User.js";
@@ -42,6 +44,8 @@ import SolarRadiation from "./models/SolarRadiation.js";
 import EvapoTranspiration from "./models/EvapoTranspiration.js";
 import Feedback from "./models/Feedback.js";
 import HistoricalDataRequest from "./models/HistoricalDataRequest.js";
+import ForecastValidationRun from "./models/ForecastValidationRun.js";
+import ForecastValidationRecord from "./models/ForecastValidationRecord.js";
 import bcrypt from "bcrypt";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,6 +98,7 @@ app.use("/api/historical-data-requests", historicalDataRequestRoutes);
 app.use("/api/weather", weatherProxyRoutes);
 app.use("/api/forecast-summary", forecastSummaryRoutes);
 app.use("/api/weather-alert", weatherAlertRoutes);
+app.use("/api/forecast-validation", forecastValidationRoutes);
 
 // Health check route
 app.get("/api", (req, res) => {
@@ -173,6 +178,7 @@ async function initializeDatabase() {
 
     app.listen(PORT, () => {
       console.log(`🚀 Server listening on http://localhost:${PORT}`);
+      startForecastValidationScheduler();
     });
   } catch (error) {
     console.error("❌ Unable to connect to the database:", error.message);

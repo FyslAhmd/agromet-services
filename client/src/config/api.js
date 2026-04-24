@@ -31,6 +31,8 @@ export const API_ENDPOINTS = {
   forecastSummaryLocations: `${API_BASE_URL}/forecast-summary/locations`,
   forecastSummaryUpazilas: `${API_BASE_URL}/forecast-summary/upazilas`,
   forecastSummary: `${API_BASE_URL}/forecast-summary`,
+  forecastValidation: `${API_BASE_URL}/forecast-validation`,
+  forecastValidationRun: `${API_BASE_URL}/forecast-validation/run`,
   weatherAlertLocations: `${API_BASE_URL}/weather-alert/locations`,
   weatherAlert: `${API_BASE_URL}/weather-alert`,
 

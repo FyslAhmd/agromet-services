@@ -15,6 +15,7 @@ import {
   ChevronDownIcon,
   Cog6ToothIcon,
   UserCircleIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import { AlertTriangle } from "lucide-react";
 import { CiCloudRainbow, CiCloudSun } from "react-icons/ci";
@@ -32,7 +33,9 @@ const SidebarLink = ({ to, icon: Icon, label, onClick, isButton }) => {
         onClick={onClick}
         className={`${baseClasses} w-full text-teal-100/80 hover:text-white hover:bg-white/10`}
       >
-        <Icon className="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+        {React.createElement(Icon, {
+          className: "w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110",
+        })}
         <span>{label}</span>
       </button>
     );
@@ -54,11 +57,11 @@ const SidebarLink = ({ to, icon: Icon, label, onClick, isButton }) => {
           {isActive && (
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald-400 rounded-r-full" />
           )}
-          <Icon
-            className={`w-5 h-5 shrink-0 transition-all duration-200 ${
+          {React.createElement(Icon, {
+            className: `w-5 h-5 shrink-0 transition-all duration-200 ${
               isActive ? "text-emerald-400" : "group-hover:scale-110"
-            }`}
-          />
+            }`,
+          })}
           <span>{label}</span>
         </>
       )}
@@ -131,6 +134,11 @@ const Sidebar = () => {
           to="/forecast-summary"
           icon={CiCloudSun}
           label="Forecast Summary"
+        />
+        <SidebarLink
+          to="/forecast-validation"
+          icon={ClipboardDocumentCheckIcon}
+          label="Forecast Validation"
         />
         <SidebarLink
           to="/combined-climate-overview"
