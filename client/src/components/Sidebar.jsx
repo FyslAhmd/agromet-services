@@ -143,7 +143,7 @@ const Sidebar = () => {
         <SidebarLink
           to="/combined-climate-overview"
           icon={CircleStackIcon}
-          label="Combined Climate Overview"
+          label="Climate Overview"
         />
         <SidebarLink
           to="/weather-alert"

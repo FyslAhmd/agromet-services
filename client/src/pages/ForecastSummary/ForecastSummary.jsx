@@ -1,7 +1,6 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import ForecastSummaryChart from "./components/ForecastSummaryChart";
-import ForecastSummaryCombinedChart from "./components/ForecastSummaryCombinedChart";
 
 const DAY_OPTIONS = [3, 5, 7, 10];
 const SCOPE_OPTIONS = [
@@ -126,7 +125,7 @@ const ForecastSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     setLoadingLocations(true);
 
     try {
@@ -171,9 +170,9 @@ const ForecastSummary = () => {
     } finally {
       setLoadingLocations(false);
     }
-  };
+  }, []);
 
-  const fetchSummary = async (
+  const fetchSummary = useCallback(async (
     days = selectedDays,
     selectionType = selectedScope,
     selectionCode = ""
@@ -209,22 +208,22 @@ const ForecastSummary = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDays, selectedScope]);
 
   useEffect(() => {
     fetchLocations();
-  }, []);
+  }, [fetchLocations]);
 
-  const regionOptions = locations.regions || [];
-  const divisionOptions = locations.divisions || [];
-  const districtOptions = locations.districts || [];
-  const upazilaOptions = locations.upazilas || [];
+  const regionOptions = useMemo(() => locations.regions || [], [locations.regions]);
+  const divisionOptions = useMemo(() => locations.divisions || [], [locations.divisions]);
+  const districtOptions = useMemo(() => locations.districts || [], [locations.districts]);
+  const upazilaOptions = useMemo(() => locations.upazilas || [], [locations.upazilas]);
 
-  const activeDivisionCodeFromDistrict =
-    districtOptions.find((district) => district.code === selectedDistrictCode)?.divisionCode || "";
-
-  const filteredUpazilas = upazilaOptions.filter(
-    (upazila) => !selectedDistrictCode || upazila.districtCode === selectedDistrictCode
+  const filteredUpazilas = useMemo(() => 
+    upazilaOptions.filter(
+      (upazila) => !selectedDistrictCode || upazila.districtCode === selectedDistrictCode
+    ),
+    [upazilaOptions, selectedDistrictCode]
   );
 
   useEffect(() => {
@@ -327,12 +326,13 @@ const ForecastSummary = () => {
     selectedDivisionCode,
     selectedDistrictCode,
     selectedUpazilaCode,
+    fetchSummary,
   ]);
 
   const hasRows = Boolean(summaryData?.rows?.length && summaryData?.dates?.length);
   const selectedLabel = summaryData?.meta?.selectedSelection?.label || "Selected Area";
 
-  const temperatureChartData = (() => {
+  const temperatureChartData = useMemo(() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
 
     const maxTempRow = summaryData.rows.find((row) => row.key === "max_temperature");
@@ -364,83 +364,9 @@ const ForecastSummary = () => {
         },
       ],
     };
-  })();
+  }, [summaryData]);
 
-  const combinedChartData = (() => {
-    if (!summaryData?.dates?.length || !summaryData?.rows?.length) return null;
-
-    const dayTempRow = summaryData.rows.find((row) => row.key === "day_temperature");
-    const nightTempRow = summaryData.rows.find((row) => row.key === "night_temperature");
-    const dewPointRow = summaryData.rows.find((row) => row.key === "dew_point");
-    const humidityRow = summaryData.rows.find((row) => row.key === "relative_humidity");
-    const rainfallRow = summaryData.rows.find((row) => row.key === "rainfall");
-
-    if (!dayTempRow || !nightTempRow || !dewPointRow || !humidityRow || !rainfallRow) {
-      return null;
-    }
-
-    const dates = summaryData.dates.map((date) => ({
-      ...date,
-      timestamp: Date.UTC(
-        Number(date.key.slice(0, 4)),
-        Number(date.key.slice(5, 7)) - 1,
-        Number(date.key.slice(8, 10))
-      ),
-    }));
-
-    return {
-      dates,
-      series: [
-        {
-          key: "day_temperature",
-          name: dayTempRow.label || "DayT",
-          color: "#f97316",
-          type: "spline",
-          unit: "°C",
-          yAxis: 0,
-          data: dates.map((date, index) => [date.timestamp, dayTempRow.values[index]?.value ?? null]),
-        },
-        {
-          key: "night_temperature",
-          name: nightTempRow.label || "NightT",
-          color: "#6366f1",
-          type: "spline",
-          unit: "°C",
-          yAxis: 0,
-          data: dates.map((date, index) => [date.timestamp, nightTempRow.values[index]?.value ?? null]),
-        },
-        {
-          key: "dew_point",
-          name: dewPointRow.label || "Dew Point",
-          color: "#ec4899",
-          type: "spline",
-          unit: "°C",
-          yAxis: 0,
-          data: dates.map((date, index) => [date.timestamp, dewPointRow.values[index]?.value ?? null]),
-        },
-        {
-          key: "relative_humidity",
-          name: humidityRow.label || "RH",
-          color: "#8b5cf6",
-          type: "spline",
-          unit: "%",
-          yAxis: 1,
-          data: dates.map((date, index) => [date.timestamp, humidityRow.values[index]?.value ?? null]),
-        },
-        {
-          key: "rainfall",
-          name: rainfallRow.label || "Rainfall",
-          color: "#06b6d4",
-          type: "column",
-          unit: "mm",
-          yAxis: 2,
-          data: dates.map((date, index) => [date.timestamp, rainfallRow.values[index]?.value ?? null]),
-        },
-      ],
-    };
-  })();
-
-  const otherCharts = (() => {
+  const otherCharts = useMemo(() => {
     if (!summaryData?.dates?.length || !summaryData?.rows?.length) return [];
 
     const dates = summaryData.dates.map((date) => ({
@@ -469,7 +395,7 @@ const ForecastSummary = () => {
         ],
       };
     }).filter(Boolean);
-  })();
+  }, [summaryData]);
 
   return (
     <div className="min-h-full sm:px-3 sm:py-3 lg:p-6">
@@ -484,7 +410,18 @@ const ForecastSummary = () => {
                 <h1 className="mt-1.5 text-xl font-bold tracking-tight sm:mt-2 sm:text-3xl">
                   Forecast Summary
                 </h1>
-                <p className="mt-1.5 text-xs leading-5 text-teal-100/80 sm:mt-2 sm:text-base sm:leading-6">
+                {summaryData?.meta?.batchLabel && (
+                  <div className="mt-3 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-teal-100 backdrop-blur-sm sm:mt-4 sm:text-xs">
+                    <span className="mr-1.5 opacity-70">🕒</span>
+                    {summaryData.meta.batchLabel}
+                    {summaryData.meta.fallbackUsed && (
+                      <span className="ml-2 rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-200">
+                        Fallback
+                      </span>
+                    )}
+                  </div>
+                )}
+                <p className="mt-3 text-xs leading-5 text-teal-100/80 sm:mt-4 sm:text-base sm:leading-6">
                   View spatially averaged forecast values for a region, division, district, or upazila.
                 </p>
               </div>
@@ -664,7 +601,7 @@ const ForecastSummary = () => {
                   No forecast summary data is available right now.
                 </p>
                 <p className="mt-2 text-xs text-gray-500 sm:text-sm">
-                  Once rows are imported today for the selected geography, the summary table will appear here.
+                  We couldn't find any forecast records for the selected area in our database. Please check again later.
                 </p>
               </div>
             </div>
@@ -749,18 +686,6 @@ const ForecastSummary = () => {
               imageFilename={`forecast_summary_${chart.fileKey}`}
               chartType={chart.chartType}
             />
-
-            {chart.key === "relative_humidity" && combinedChartData ? (
-              <ForecastSummaryCombinedChart
-                title="Combined Weather Overview"
-                subtitle={`${selectedLabel} | DayT, NightT, Dew Point, RH and Rainfall`}
-                icon="🌦️"
-                dates={combinedChartData.dates}
-                series={combinedChartData.series}
-                csvFilename="forecast_summary_combined_overview.csv"
-                imageFilename="forecast_summary_combined_overview"
-              />
-            ) : null}
           </Fragment>
         ))}
       </div>
