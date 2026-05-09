@@ -399,7 +399,7 @@ const WeatherAlert = () => {
     if (nextEndDate !== endDate) {
       setEndDate(nextEndDate);
     }
-  }, [selectedAlert]);
+  }, [selectedAlert,startDate, endDate]);
 
   const mapFeatures = useMemo(() => {
     if (!baseGeoJSON?.features?.length) return [];
@@ -697,7 +697,7 @@ const WeatherAlert = () => {
       let dataUrl;
 
       try {
-        const { toPng, toSvg } = await import("html-to-image");
+        const { toPng } = await import("html-to-image");
         dataUrl = await toPng(target, {
           cacheBust: true,
           backgroundColor: "#ffffff",
@@ -731,6 +731,29 @@ const WeatherAlert = () => {
     } finally {
       setIsDownloadingMap(false);
     }
+  };
+
+  const handleDownloadCSV = () => {
+    if (!selectedSummaryDetails || !summaryLocations.length) return;
+
+    const headers = ["Name", `Value (${currentAlertType?.unit || ""})`];
+    const csvContent = [
+      headers.join(","),
+      ...summaryLocations.map((loc) => `"${loc.name}","${formatAlertValue(loc.value)}"`),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `weather_alert_${selectedAlert}_${selectedLevel}_${selectedSummaryDetails.label}_${startDate}_to_${endDate}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -1039,13 +1062,23 @@ const WeatherAlert = () => {
                     {currentAlertType?.label?.toLowerCase()} alert
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSummaryLevel(null)}
-                  className="rounded-xl bg-white/12 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadCSV}
+                    disabled={!summaryLocations.length}
+                    className="rounded-xl bg-white/12 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSummaryLevel(null)}
+                    className="rounded-xl bg-white/12 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
 
