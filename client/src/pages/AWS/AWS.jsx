@@ -94,39 +94,38 @@ const AWS = () => {
     },
   ];
 
-  // Fetch stations from API
-  const fetchStations = async () => {
-    try {
-      const response = await fetch(
-        "https://saads.brri.gov.bd/api/research-measures/stations",
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch stations");
-      }
-      const stationsData = await response.json();
-      setStations(stationsData);
-
-      if (stationsData.length > 0 && !location) {
-        const gazipurStation = stationsData.find(
-          (station) =>
-            station.station_name?.toLowerCase().includes("gazipur") ||
-            station.station_name?.toLowerCase().includes("dae-brri gazipur"),
-        );
-
-        if (gazipurStation) {
-          setLocation(gazipurStation.station_id);
-        } else {
-          setLocation(stationsData[0].station_id);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching stations:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const response = await fetch(
+          "https://saads.brri.gov.bd/api/research-measures/stations",
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch stations");
+        }
+        const stationsData = await response.json();
+        setStations(stationsData);
+
+        if (stationsData.length > 0 && !location) {
+          const gazipurStation = stationsData.find(
+            (station) =>
+              station.station_name?.toLowerCase().includes("gazipur") ||
+              station.station_name?.toLowerCase().includes("dae-brri gazipur"),
+          );
+
+          if (gazipurStation) {
+            setLocation(gazipurStation.station_id);
+          } else {
+            setLocation(stationsData[0].station_id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+      }
+    };
+
     fetchStations();
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -296,8 +295,6 @@ const AWS = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
-
       Swal.fire({
         icon: "success",
         title: "Request Submitted Successfully!",
@@ -417,7 +414,7 @@ const AWS = () => {
       {location && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-5">
-            {weatherParameters.map((param, index) => (
+            {weatherParameters.map((param) => (
               <WeatherChart
                 key={`${location}-${param.parameter}`}
                 stationId={location}

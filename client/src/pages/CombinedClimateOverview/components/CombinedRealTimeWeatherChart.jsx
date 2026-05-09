@@ -726,7 +726,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
             </div>
           </div>
 
-          {hasData && (
+          {/* {hasData && (
             <div className="flex gap-1.5 self-start sm:self-auto">
               <button
                 onClick={handleImageDownload}
@@ -747,7 +747,7 @@ const CombinedRealTimeWeatherChart = ({ stationId, districtLabel }) => {
                 CSV
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
         {hasData && (

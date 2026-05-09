@@ -411,7 +411,7 @@ const ForecastSummaryCombinedChart = ({
             </div>
           </div>
 
-          {hasData && (
+          {/* {hasData && (
             <div className="flex gap-1.5 self-start sm:self-auto">
               {headerActions}
               <button
@@ -433,7 +433,7 @@ const ForecastSummaryCombinedChart = ({
                 CSV
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
         {hcReady && chartOptions ? (

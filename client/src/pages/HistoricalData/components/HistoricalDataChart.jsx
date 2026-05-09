@@ -27,7 +27,7 @@ const ChartRenderer = React.memo(({ HC, HCReact, chartOptions, chartRef }) => {
 
 ChartRenderer.displayName = "ChartRenderer";
 
-const HistoricalDataChart = ({ stations, parameter, title, unit, icon, color }) => {
+const HistoricalDataChart = ({ stations, parameter, title, unit, icon }) => {
   // Highcharts dynamic loader states
   const [HC, setHC] = useState(null);
   const [HCReact, setHCReact] = useState(null);
@@ -46,7 +46,6 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon, color }) 
     endDate: "",
     enabled: false,
   });
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   const chartRef = useRef(null);
 
@@ -141,19 +140,6 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon, color }) 
   // Aggregate data by interval (for Data Average feature)
   const aggregateDataByInterval = (data, interval) => {
     if (!data || data.length === 0 || interval === "none") return data;
-
-    // Define interval in days/months for precise calculation
-    const intervalDays = {
-      "1W": 7,
-      "1M": null, // handled as months
-      "3M": null,
-      "6M": null,
-      "1Y": null,
-      "5Y": null,
-      "10Y": null,
-      "20Y": null,
-      "30Y": null,
-    };
 
     const intervalMonths = {
       "1M": 1,
@@ -627,7 +613,7 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon, color }) 
             </div>
           </div>
 
-          {hasData && (
+          {/* {hasData && (
             <div className="flex gap-1.5 self-start sm:self-auto">
               <button
                 onClick={handleImageDownload}
@@ -648,7 +634,7 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon, color }) 
                 CSV
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Filter Controls */}

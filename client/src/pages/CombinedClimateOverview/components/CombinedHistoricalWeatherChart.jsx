@@ -829,7 +829,7 @@ const CombinedHistoricalWeatherChart = ({ districtLabel, stationCandidates = [] 
             </div>
           </div>
 
-          {hasData ? (
+          {/* {hasData ? (
             <div className="flex gap-1.5 self-start sm:self-auto">
               <button
                 onClick={handleImageDownload}
@@ -850,7 +850,7 @@ const CombinedHistoricalWeatherChart = ({ districtLabel, stationCandidates = [] 
                 CSV
               </button>
             </div>
-          ) : null}
+          ) : null} */}
         </div>
 
         <div className="mb-4 overflow-hidden rounded-xl border border-gray-100">

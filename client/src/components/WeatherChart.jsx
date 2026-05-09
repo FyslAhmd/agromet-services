@@ -787,7 +787,7 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
               </p>
             </div>
           </div>
-          {data.length > 0 && (
+          {/* {data.length > 0 && (
             <button
               onClick={() => setShowDownloadModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0d4a4a] hover:bg-[#0a3d3d] rounded-lg transition-colors shadow-sm"
@@ -798,7 +798,7 @@ const WeatherChart = ({ stationId, parameter, title, unit, icon }) => {
               </svg>
               <span className="hidden sm:inline">Download</span>
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Filter Controls */}
