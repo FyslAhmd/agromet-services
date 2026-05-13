@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 import { useAuthContext } from "../../components/context/AuthProvider";
+import ForecastValidationGraphView from "./components/ForecastValidationGraphView";
 
 const DEFAULT_STATION_ID = "415";
 const PARAMETER_ORDER = [
@@ -49,6 +50,7 @@ const ForecastValidation = () => {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("table");
 
   const fetchValidationData = useCallback(async ({ stationId = DEFAULT_STATION_ID, runId = "" } = {}) => {
     setLoading(true);
@@ -253,76 +255,120 @@ const ForecastValidation = () => {
           </section>
         ) : null}
 
-        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm sm:rounded-3xl">
-          <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
-            <h2 className="text-base font-bold text-gray-900 sm:text-lg">Validation Table</h2>
-          </div>
-
-          {loading ? (
-            <div className="flex min-h-64 items-center justify-center px-4 py-10">
-              <div className="text-center">
-                <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
-                <p className="mt-3 text-sm font-medium text-gray-500">Loading validation data...</p>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="p-4 sm:p-6">
-              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-              </div>
-            </div>
-          ) : !sortedRecords.length ? (
-            <div className="p-4 sm:p-6">
-              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-8 text-center">
-                <p className="text-sm font-semibold text-gray-700">No validation data is available yet.</p>
-                <p className="mt-2 text-xs text-gray-500">
-                  A scheduled or manual run will populate this table.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-230 border-collapse text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-left">
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Date</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Parameter</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Forecast</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Observed</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Difference</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Absolute Error</th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Percent Error</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedRecords.map((record, index) => (
-                    <tr key={record.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
-                      <td className="border-t border-gray-100 px-4 py-3 font-medium text-gray-800">
-                        {formatDate(record.date)}
-                      </td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-700">{record.parameter}</td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-900">
-                        {formatNumber(record.forecast_value, record.unit)}
-                      </td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-900">
-                        {formatNumber(record.observed_value, record.unit)}
-                      </td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
-                        {formatNumber(record.difference, record.unit)}
-                      </td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
-                        {formatNumber(record.absolute_error, record.unit)}
-                      </td>
-                      <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
-                        {formatNumber(record.percent_error, "%")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <section className="flex space-x-2 border-b border-gray-200 mt-6 mb-2">
+          <button
+            onClick={() => setActiveTab("table")}
+            className={`px-6 py-3 text-sm font-semibold transition-colors rounded-t-lg ${
+              activeTab === "table"
+                ? "border-b-2 border-teal-600 text-teal-700 bg-teal-50/50"
+                : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50/50"
+            }`}
+          >
+            Tabular View
+          </button>
+          <button
+            onClick={() => setActiveTab("graph")}
+            className={`px-6 py-3 text-sm font-semibold transition-colors rounded-t-lg ${
+              activeTab === "graph"
+                ? "border-b-2 border-teal-600 text-teal-700 bg-teal-50/50"
+                : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50/50"
+            }`}
+          >
+            Graphical View
+          </button>
         </section>
+
+        {activeTab === "table" ? (
+          <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm sm:rounded-3xl">
+            <div className="border-b border-gray-100 px-4 py-4 sm:px-6">
+              <h2 className="text-base font-bold text-gray-900 sm:text-lg">Validation Table</h2>
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-64 items-center justify-center px-4 py-10">
+                <div className="text-center">
+                  <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
+                  <p className="mt-3 text-sm font-medium text-gray-500">Loading validation data...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="p-4 sm:p-6">
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              </div>
+            ) : !sortedRecords.length ? (
+              <div className="p-4 sm:p-6">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-8 text-center">
+                  <p className="text-sm font-semibold text-gray-700">No validation data is available yet.</p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    A scheduled or manual run will populate this table.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-230 border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 text-left">
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Date</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Parameter</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Forecast</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Observed</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Difference</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Absolute Error</th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-500">Percent Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRecords.map((record, index) => (
+                      <tr key={record.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                        <td className="border-t border-gray-100 px-4 py-3 font-medium text-gray-800">
+                          {formatDate(record.date)}
+                        </td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-700">{record.parameter}</td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-900">
+                          {formatNumber(record.forecast_value, record.unit)}
+                        </td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-900">
+                          {formatNumber(record.observed_value, record.unit)}
+                        </td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
+                          {formatNumber(record.difference, record.unit)}
+                        </td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
+                          {formatNumber(record.absolute_error, record.unit)}
+                        </td>
+                        <td className="border-t border-gray-100 px-4 py-3 text-gray-700">
+                          {formatNumber(record.percent_error, "%")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        ) : (
+          <section>
+            {loading ? (
+              <div className="flex min-h-64 items-center justify-center px-4 py-10">
+                <div className="text-center">
+                  <div className="mx-auto h-9 w-9 animate-spin rounded-full border-3 border-teal-500 border-t-transparent" />
+                  <p className="mt-3 text-sm font-medium text-gray-500">Loading validation data...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="p-4 sm:p-6">
+                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              </div>
+            ) : (
+              <ForecastValidationGraphView records={sortedRecords} />
+            )}
+          </section>
+        )}
       </div>
     </div>
   );
