@@ -123,7 +123,11 @@ const router = createBrowserRouter([
       },
       {
         path: "forecast-validation",
-        element: <ForecastValidation />,
+        element:
+          <AdminRoute>
+            <ForecastValidation />
+          </AdminRoute> 
+        ,
       },
       {
         path: "combined-climate-overview",

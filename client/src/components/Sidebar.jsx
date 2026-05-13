@@ -91,6 +91,7 @@ const Sidebar = () => {
     "/dcrs-view-data",
     "/user-management",
     "/feedback-management",
+    "/forecast-validation",
   ];
   const isAdminRouteActive = adminRoutes.some((r) =>
     location.pathname.startsWith(r),
@@ -135,11 +136,15 @@ const Sidebar = () => {
           icon={CiCloudSun}
           label="Forecast Summary"
         />
-        <SidebarLink
-          to="/forecast-validation"
-          icon={ClipboardDocumentCheckIcon}
-          label="Forecast Validation"
-        />
+        {
+          isAdmin && (
+            <SidebarLink
+              to="/forecast-validation"
+              icon={ClipboardDocumentCheckIcon}
+              label="Forecast Validation"
+            />
+          )
+        }
         <SidebarLink
           to="/combined-climate-overview"
           icon={CircleStackIcon}
