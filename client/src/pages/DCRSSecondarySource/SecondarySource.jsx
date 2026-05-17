@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import SeasonalRiceChart from "./SeasonalRiceChart";
+import CombinedSeasonalRiceChart from "./CombinedSeasonalRiceChart";
 import ExportImportChart from "./ExportImportChart";
 import CroppingIntensityChart from "./CroppingIntensityChart";
 import DistrictWiseChart from "./DistrictWiseChart";
@@ -103,6 +104,26 @@ const SecondarySource = () => {
         </svg>
       ),
       description: "Aman, Aus, Boro seasonal data analysis",
+    },
+    {
+      id: "combined-seasonal-rice",
+      title: "Combined Seasonal Rice Area, Production and Yield",
+      icon: (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+          />
+        </svg>
+      ),
+      description: "Compare Aus, Aman, and Boro together",
     },
     {
       id: "varietal-rice",
@@ -226,14 +247,6 @@ const SecondarySource = () => {
     },
   ];
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   // Handle data source change
   const handleDataSourceChange = (value) => {
     // If empty value selected, just reset
@@ -282,8 +295,8 @@ const SecondarySource = () => {
       setIsAdoptionModalOpen(true);
     } else if (value === "cropping-intensity") {
       setIsCroppingModalOpen(true);
-    } else if (value === "faostat" || value === "export-import") {
-      // For FAOStat and export-import, show graphs directly without modal
+    } else if (value === "faostat" || value === "export-import" || value === "combined-seasonal-rice") {
+      // For FAOStat, export-import, and combined seasonal data, show graphs directly without modal
       setShowGraphs(true);
     } else {
       // For other data sources, show graphs directly
@@ -441,6 +454,7 @@ const SecondarySource = () => {
             {selectedDataSource === "seasonal-rice" && (
               <SeasonalRiceChart selectedSeason={seasonalFilter.selectedSeason} />
             )}
+            {selectedDataSource === "combined-seasonal-rice" && <CombinedSeasonalRiceChart />}
             {selectedDataSource === "export-import" && <ExportImportChart />}
             {selectedDataSource === "cropping-intensity" && (
               <CroppingIntensityChart selectedDataType={croppingFilter.selectedDataType} />
