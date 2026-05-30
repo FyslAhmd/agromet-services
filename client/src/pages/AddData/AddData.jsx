@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   CloudArrowUpIcon,
   ArrowUpTrayIcon,
@@ -12,7 +12,7 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { API_BASE_URL } from "../../config/api";
+import { API_BASE_URL, getAuthHeaders } from "../../config/api";
 
 const AddData = () => {
   const [selectedDataType, setSelectedDataType] = useState("");
@@ -181,7 +181,8 @@ const AddData = () => {
         {
           data: parsedData,
           filename: uploadedFile.name,
-        }
+        },
+        { headers: getAuthHeaders() }
       );
 
       setUploadProgress(100);

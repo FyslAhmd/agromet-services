@@ -115,8 +115,8 @@ const Feedback = () => {
               <div className="relative z-10 mt-6 sm:mt-8 lg:mt-0">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4">
                   <p className="text-[10px] sm:text-xs text-teal-200/50 font-medium uppercase tracking-wider mb-1.5">Submitting as</p>
-                  <p className="text-sm sm:text-base font-semibold text-white truncate">{authUser?.name}</p>
-                  <p className="text-xs sm:text-sm text-teal-200/70 truncate">{authUser?.email}</p>
+                  <p className="text-sm sm:text-base font-semibold text-white truncate">{authUser?.name || "Guest Visitor"}</p>
+                  <p className="text-xs sm:text-sm text-teal-200/70 truncate">{authUser?.email || "No email"}</p>
                 </div>
               </div>
             </div>

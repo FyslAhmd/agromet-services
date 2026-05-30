@@ -6,6 +6,7 @@ import Login from "../pages/Login/Login";
 import Registration from "../pages/Registration/Registration";
 import PrivateRoute from "../components/PrivateRoute";
 import AdminRoute from "../components/AdminRoute";
+import RoleRoute from "../components/RoleRoute";
 import CISTable from "../components/CISTable";
 import AddData from "../pages/AddData/AddData";
 import ViewData from "../pages/ViewData/ViewData";
@@ -23,6 +24,7 @@ import Profile from "../pages/Profile/Profile";
 import ForecastSummary from "../pages/ForecastSummary/ForecastSummary";
 import CombinedClimateOverview from "../pages/CombinedClimateOverview/CombinedClimateOverview";
 import ForecastValidation from "../pages/ForecastValidation/ForecastValidation";
+import ClimateProjection from "../pages/ClimateProjection/ClimateProjection";
 
 const router = createBrowserRouter([
   {
@@ -47,35 +49,67 @@ const router = createBrowserRouter([
       },
       {
         path: "aws",
-        element: <AWS />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <AWS />
+          </RoleRoute>
+        ),
       },
       {
         path: "historical-data",
-        element: <HistoricalData />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <HistoricalData />
+          </RoleRoute>
+        ),
       },
       {
         path: "secondary-source",
-        element: <DCRSSecondarySource />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <DCRSSecondarySource />
+          </RoleRoute>
+        ),
       },
       {
         path: "cis",
-        element: <CISTable />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <CISTable />
+          </RoleRoute>
+        ),
       },
       {
         path: "add-data",
-        element: <AddData />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <AddData />
+          </RoleRoute>
+        ),
       },
       {
         path: "view-data",
-        element: <ViewData />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <ViewData />
+          </RoleRoute>
+        ),
       },
       {
         path: "dcrs-add-data",
-        element: <DCRSAddData />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <DCRSAddData />
+          </RoleRoute>
+        ),
       },
       {
         path: "dcrs-view-data",
-        element: <DCRSViewData />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <DCRSViewData />
+          </RoleRoute>
+        ),
       },
       {
         path: "user-management",
@@ -107,11 +141,19 @@ const router = createBrowserRouter([
       },
       {
         path: "profile",
-        element: <Profile />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <Profile />
+          </RoleRoute>
+        ),
       },
       {
         path: "about",
         element: <About />,
+      },
+      {
+        path: "climate-projection",
+        element: <ClimateProjection />,
       },
       {
         path: "weather-forecast",
@@ -131,7 +173,11 @@ const router = createBrowserRouter([
       },
       {
         path: "combined-climate-overview",
-        element: <CombinedClimateOverview />,
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <CombinedClimateOverview />
+          </RoleRoute>
+        ),
       },
       {
         path: "weather-alert",

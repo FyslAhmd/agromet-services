@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../../../config/api";
+import { API_BASE_URL, getAuthHeaders } from "../../../config/api";
 
 const PARAMETER_CONFIG = [
   {
@@ -334,7 +334,9 @@ const CombinedHistoricalWeatherChart = ({ districtLabel, stationCandidates = [] 
       setStationLookupReady(false);
 
       try {
-        const response = await axios.get(`${API_BASE_URL}/maximum-temp/stations`);
+        const response = await axios.get(`${API_BASE_URL}/maximum-temp/stations`, {
+          headers: getAuthHeaders(),
+        });
         const stationList = response.data?.success ? response.data.data || [] : [];
 
         const normalizedStationMap = new Map(
@@ -398,7 +400,8 @@ const CombinedHistoricalWeatherChart = ({ districtLabel, stationCandidates = [] 
         const responses = await Promise.all(
           PARAMETER_CONFIG.map((parameter) =>
             axios.get(
-              `${API_BASE_URL}/${parameter.key}?station=${encodeURIComponent(resolvedStation)}&limit=10000`
+              `${API_BASE_URL}/${parameter.key}?station=${encodeURIComponent(resolvedStation)}&limit=10000`,
+              { headers: getAuthHeaders() }
             )
           )
         );
@@ -703,109 +706,6 @@ const CombinedHistoricalWeatherChart = ({ districtLabel, stationCandidates = [] 
     setDataAverage("none");
   };
 
-  const handleImageDownload = () => {
-    if (!HC || !chartOptions || !hasData) return;
-
-    const exportContainer = document.createElement("div");
-    exportContainer.style.position = "fixed";
-    exportContainer.style.left = "-99999px";
-    exportContainer.style.top = "0";
-    exportContainer.style.width = "1800px";
-    exportContainer.style.height = "860px";
-    exportContainer.style.pointerEvents = "none";
-    exportContainer.style.opacity = "0";
-    document.body.appendChild(exportContainer);
-
-    const exportChart = HC.chart(exportContainer, {
-      ...chartOptions,
-      chart: {
-        ...chartOptions.chart,
-        renderTo: exportContainer,
-        width: 1800,
-        height: 860,
-        backgroundColor: "#ffffff",
-        animation: false,
-        spacingTop: 28,
-        spacingRight: 26,
-        spacingBottom: 40,
-        spacingLeft: 24,
-      },
-      title: {
-        text: "Combined Historical Weather Overview",
-        align: "left",
-        margin: 18,
-        style: { fontSize: "28px", fontWeight: "700", color: "#1f2937" },
-      },
-      subtitle: {
-        text: `${districtLabel} | Maximum Temperature, Minimum Temperature, Rainfall and Relative Humidity`,
-        align: "left",
-        style: { fontSize: "16px", color: "#6b7280" },
-      },
-      legend: {
-        ...chartOptions.legend,
-        itemWidth: undefined,
-        itemStyle: { fontSize: "14px", fontWeight: "500", color: "#374151" },
-      },
-    });
-
-    const exportMethod = exportChart.exportChartLocal || exportChart.exportChart;
-    exportMethod.call(exportChart, {
-      type: "image/png",
-      filename: `combined_historical_weather_overview_${districtLabel.toLowerCase().replace(/\s+/g, "_")}`,
-      sourceWidth: 1800,
-      sourceHeight: 860,
-      scale: 2,
-    });
-
-    window.setTimeout(() => {
-      exportChart.destroy();
-      exportContainer.remove();
-    }, 1500);
-  };
-
-  const handleCSVDownload = () => {
-    const maxTempSeries = filteredParameterData["maximum-temp"] || [];
-    const minTempSeries = filteredParameterData["minimum-temp"] || [];
-    const rainfallSeries = filteredParameterData.rainfall || [];
-    const humiditySeries = filteredParameterData["relative-humidity"] || [];
-
-    const timestamps = new Set();
-    [maxTempSeries, minTempSeries, rainfallSeries, humiditySeries].forEach((series) => {
-      series.forEach((point) => timestamps.add(point[0]));
-    });
-
-    const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b);
-    const csvRows = [
-      "Date,Maximum Temperature (°C),Minimum Temperature (°C),Rainfall (mm),Relative Humidity (%)",
-    ];
-
-    const getValueAtTimestamp = (series, timestamp) => {
-      const point = series.find((item) => item[0] === timestamp);
-      return point ? point[1].toFixed(2) : "";
-    };
-
-    sortedTimestamps.forEach((timestamp) => {
-      csvRows.push(
-        [
-          new Date(timestamp).toLocaleDateString(),
-          getValueAtTimestamp(maxTempSeries, timestamp),
-          getValueAtTimestamp(minTempSeries, timestamp),
-          getValueAtTimestamp(rainfallSeries, timestamp),
-          getValueAtTimestamp(humiditySeries, timestamp),
-        ].join(",")
-      );
-    });
-
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `combined_historical_weather_overview_${districtLabel.toLowerCase().replace(/\s+/g, "_")}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   if (stationLookupReady && !resolvedStation) {
     return null;

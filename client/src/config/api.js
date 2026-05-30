@@ -19,6 +19,7 @@ export const DCRS_API_URL = EXTERNAL_API_URLS.dcrs;
 
 export const API_ENDPOINTS = {
   login: `${API_BASE_URL}/users/login`,
+  guestLogin: `${API_BASE_URL}/users/guest-login`,
   register: `${API_BASE_URL}/users/register`,
   currentUser: `${API_BASE_URL}/users/current`,
   users: `${API_BASE_URL}/users`,

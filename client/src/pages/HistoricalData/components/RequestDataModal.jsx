@@ -234,7 +234,12 @@ const RequestDataModal = ({ isOpen, onClose, availableStations }) => {
 
       const response = await axios.post(
         `${API_BASE_URL}/historical-data-requests`,
-        requestData
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
 
       if (response.data.success) {

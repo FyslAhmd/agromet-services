@@ -82,6 +82,7 @@ const Sidebar = () => {
   };
 
   const isAdmin = authUser && authUser.role === "admin";
+  const isGuest = authUser?.role === "guest" || authUser?.isGuest;
 
   const adminRoutes = [
     "/cis",
@@ -145,31 +146,37 @@ const Sidebar = () => {
             />
           )
         }
-        <SidebarLink
-          to="/combined-climate-overview"
-          icon={CircleStackIcon}
-          label="Climate Overview"
-        />
+        {!isGuest && (
+          <SidebarLink
+            to="/combined-climate-overview"
+            icon={CircleStackIcon}
+            label="Climate Overview"
+          />
+        )}
         <SidebarLink
           to="/weather-alert"
           icon={AlertTriangle}
           label="Weather Alert"
         />
-        <SidebarLink
-          to="/aws"
-          icon={ClockIcon}
-          label="Real time Weather Data"
-        />
-        <SidebarLink
-          to="/historical-data"
-          icon={TableCellsIcon}
-          label="Historical Weather Data"
-        />
-        <SidebarLink
-          to="/secondary-source"
-          icon={ShareIcon}
-          label="Rice & Rice Related Data"
-        />
+        {!isGuest && (
+          <>
+            <SidebarLink
+              to="/aws"
+              icon={ClockIcon}
+              label="Real time Weather Data"
+            />
+            <SidebarLink
+              to="/historical-data"
+              icon={TableCellsIcon}
+              label="Historical Weather Data"
+            />
+            <SidebarLink
+              to="/secondary-source"
+              icon={ShareIcon}
+              label="Rice & Rice Related Data"
+            />
+          </>
+        )}
         <SidebarLink
           to="/feedback"
           icon={ChatBubbleLeftRightIcon}
@@ -249,7 +256,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Farmer Service Image Section - Only for non-admin users */}
-      {authUser && authUser.role !== "admin" && (
+      {authUser && authUser.role !== "admin" && !isGuest && (
         <div className="px-6 py-4 flex justify-center">
           <img
             src="/farmerService2.png"
@@ -263,49 +270,68 @@ const Sidebar = () => {
       <div className="mt-auto border-t border-white/8">
         {authUser && (
           <div className="px-4 py-4">
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `flex items-center gap-3 mb-2 px-2 py-2 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? "bg-white/15 shadow-lg shadow-black/10 backdrop-blur-sm border border-white/10"
-                    : "hover:bg-white/8"
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="w-9 h-9 rounded-full overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0">
-                    {authUser.profilePicture ? (
-                      <img
-                        src={`${UPLOADS_BASE_URL}/${authUser.profilePicture}`}
-                        alt={authUser.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-sm font-bold text-white">
-                        {authUser.name?.charAt(0)?.toUpperCase() || "U"}
-                      </div>
-                    )}
+            {isGuest ? (
+              <div className="flex items-center gap-3 mb-2 px-2 py-2 rounded-xl bg-white/8">
+                <div className="w-9 h-9 rounded-full overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0">
+                  <div className="w-full h-full bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-sm font-bold text-white">
+                    G
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {authUser.name || "User"}
-                    </p>
-                    <p className="text-[11px] text-teal-300/50 truncate">
-                      {authUser.role === "admin" ? "Administrator" : "User"}
-                    </p>
-                  </div>
-                  <UserCircleIcon
-                    className={`w-4.5 h-4.5 shrink-0 transition-all duration-200 ${
-                      isActive
-                        ? "text-emerald-400"
-                        : "text-teal-300/40 group-hover:text-teal-200/70"
-                    }`}
-                  />
-                </>
-              )}
-            </NavLink>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white truncate">
+                    Guest Visitor
+                  </p>
+                  <p className="text-[11px] text-teal-300/50 truncate">
+                    Public access
+                  </p>
+                </div>
+                <UserCircleIcon className="w-4.5 h-4.5 shrink-0 text-teal-300/40" />
+              </div>
+            ) : (
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 mb-2 px-2 py-2 rounded-xl transition-all duration-200 group ${
+                    isActive
+                      ? "bg-white/15 shadow-lg shadow-black/10 backdrop-blur-sm border border-white/10"
+                      : "hover:bg-white/8"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className="w-9 h-9 rounded-full overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0">
+                      {authUser.profilePicture ? (
+                        <img
+                          src={`${UPLOADS_BASE_URL}/${authUser.profilePicture}`}
+                          alt={authUser.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-sm font-bold text-white">
+                          {authUser.name?.charAt(0)?.toUpperCase() || "U"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {authUser.name || "User"}
+                      </p>
+                      <p className="text-[11px] text-teal-300/50 truncate">
+                        {authUser.role === "admin" ? "Administrator" : "User"}
+                      </p>
+                    </div>
+                    <UserCircleIcon
+                      className={`w-4.5 h-4.5 shrink-0 transition-all duration-200 ${
+                        isActive
+                          ? "text-emerald-400"
+                          : "text-teal-300/40 group-hover:text-teal-200/70"
+                      }`}
+                    />
+                  </>
+                )}
+              </NavLink>
+            )}
 
             <button
               onClick={handleLogout}

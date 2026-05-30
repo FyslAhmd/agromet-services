@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../../../config/api";
+import { API_BASE_URL, getAuthHeaders } from "../../../config/api";
 
 // Color palette for multiple stations
 const STATION_COLORS = [
@@ -286,7 +286,7 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon }) => {
     // Filter options: average interval must be less than or equal to half the time range
     // to have at least 2 data points
     return Object.entries(dataAverageMonths)
-      .filter(([key, months]) => months <= selectedRangeMonths / 2)
+      .filter(([ months]) => months <= selectedRangeMonths / 2)
       .map(([key]) => key);
   };
 
@@ -300,7 +300,9 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon }) => {
 
       try {
         const promises = stations.map((station) =>
-          axios.get(`${API_BASE_URL}/${parameter}?station=${encodeURIComponent(station)}&limit=10000`)
+          axios.get(`${API_BASE_URL}/${parameter}?station=${encodeURIComponent(station)}&limit=10000`, {
+            headers: getAuthHeaders(),
+          })
         );
 
         const responses = await Promise.all(promises);
@@ -538,47 +540,6 @@ const HistoricalDataChart = ({ stations, parameter, title, unit, icon }) => {
     setDataAverage("none");
   };
 
-  // Handle image download
-  const handleImageDownload = () => {
-    if (chartRef.current?.chart) {
-      const filename = `${title.replace(/\s+/g, "_")}_${stations.join("_")}_${new Date().toISOString().split("T")[0]}`;
-      chartRef.current.chart.exportChart({ type: "image/png", filename, width: 1400, height: 700, scale: 2 });
-    }
-  };
-
-  // Handle CSV download
-  const handleCSVDownload = () => {
-    const csvRows = ["Date," + stations.join(",")];
-    
-    // Get all unique timestamps
-    const allTimestamps = new Set();
-    Object.values(filteredStationData).forEach(data => {
-      data.forEach(point => allTimestamps.add(point[0]));
-    });
-
-    // Sort timestamps
-    const sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b);
-
-    // Build CSV rows
-    sortedTimestamps.forEach(timestamp => {
-      const date = new Date(timestamp).toLocaleDateString();
-      const values = stations.map(station => {
-        const point = filteredStationData[station]?.find(p => p[0] === timestamp);
-        return point ? point[1].toFixed(2) : "";
-      });
-      csvRows.push(`${date},${values.join(",")}`);
-    });
-
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title.replace(/\s+/g, "_")}_data.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   // Calculate statistics for display
   const getStationStats = (station) => {

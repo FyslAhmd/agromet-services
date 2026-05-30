@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../../config/api";
+import { API_BASE_URL, getAuthHeaders } from "../../config/api";
 import HistoricalDataChart from "./components/HistoricalDataChart";
 import DistrictModal from "./components/DistrictModal";
 import RequestDataModal from "./components/RequestDataModal";
@@ -35,7 +35,8 @@ const HistoricalData = () => {
       if (selectedParameter) {
         try {
           const response = await axios.get(
-            `${API_BASE_URL}/${selectedParameter}/stations`
+            `${API_BASE_URL}/${selectedParameter}/stations`,
+            { headers: getAuthHeaders() }
           );
           if (response.data.success) {
             setAvailableStations(response.data.data);
@@ -66,7 +67,8 @@ const HistoricalData = () => {
       try {
         // Fetch stations from a common parameter to get the list
         const response = await axios.get(
-          `${API_BASE_URL}/maximum-temp/stations`
+          `${API_BASE_URL}/maximum-temp/stations`,
+          { headers: getAuthHeaders() }
         );
         if (response.data.success) {
           setAllStations(response.data.data);

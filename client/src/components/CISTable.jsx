@@ -27,7 +27,6 @@ const CISTable = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processingId, setProcessingId] = useState(null);
 
   // Fetch CIS requests from API (AgWS)
   const fetchCISRequests = async () => {
@@ -68,7 +67,10 @@ const CISTable = () => {
       setError(null);
 
       console.log("Fetching Historical Data requests from API...");
-      const response = await axios.get(`${API_BASE_URL}/historical-data-requests`);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_BASE_URL}/historical-data-requests`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       console.log("Historical API Response:", response.data);
 
@@ -250,7 +252,8 @@ const CISTable = () => {
             {
               status: "Approved",
               remarks: "Request approved for processing",
-            }
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
           );
         } else if (dataType === "secondary") {
           // Make API call to update Secondary Data status
@@ -355,7 +358,8 @@ const CISTable = () => {
             {
               status: "Rejected",
               remarks: remarks,
-            }
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
           );
         } else if (dataType === "secondary") {
           // Make API call to update Secondary Data status
@@ -421,7 +425,6 @@ const CISTable = () => {
 
     if (result.isConfirmed) {
       try {
-        setProcessingId(requestId);
         const token = localStorage.getItem("token");
         const response = await axios.patch(
           `${API_BASE_URL}/dcrs-proxy/secondary-data-requests/${requestId}/accept`,
@@ -445,13 +448,13 @@ const CISTable = () => {
           text: error.response?.data?.message || "Failed to accept request",
           confirmButtonColor: "#ef4444",
         });
-      } finally {
-        setProcessingId(null);
+        } finally {
+          //setProcessingId(null);
       }
     }
   };
 
-  const handleRejectSecondaryRequest = async (requestId, requestName) => {
+  const handleRejectSecondaryRequest = async (requestId) => {
     const result = await Swal.fire({
       title: "Reject Secondary Data Request",
       text: "Please provide a reason for rejecting this request:",
@@ -474,7 +477,6 @@ const CISTable = () => {
 
     if (result.isConfirmed) {
       try {
-        setProcessingId(requestId);
         const token = localStorage.getItem("token");
         const response = await axios.patch(
           `${API_BASE_URL}/dcrs-proxy/secondary-data-requests/${requestId}/reject`,
@@ -499,7 +501,7 @@ const CISTable = () => {
           confirmButtonColor: "#ef4444",
         });
       } finally {
-        setProcessingId(null);
+        //setProcessingId(null);
       }
     }
   };

@@ -94,6 +94,8 @@ const FeedbackManagement = () => {
     setShowModal(true);
   };
 
+  const displayEmail = (email) => email || "No email";
+
   const closeModal = () => {
     setShowModal(false);
     setSelectedFeedback(null);
@@ -104,12 +106,6 @@ const FeedbackManagement = () => {
     feedbacks.length > 0
       ? (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1)
       : 0;
-
-  // Count by rating
-  const ratingCounts = feedbacks.reduce((acc, f) => {
-    acc[f.rating] = (acc[f.rating] || 0) + 1;
-    return acc;
-  }, {});
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-3 sm:p-4 md:p-6">
@@ -204,7 +200,7 @@ const FeedbackManagement = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-gray-900 truncate">{fb.userName}</p>
-                        <p className="text-xs text-gray-400 truncate">{fb.userEmail}</p>
+                        <p className="text-xs text-gray-400 truncate">{displayEmail(fb.userEmail)}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button onClick={() => handleView(fb)} className="p-1.5 text-gray-400 hover:text-[#0d4a4a] hover:bg-teal-50 rounded-lg transition-colors">
@@ -244,7 +240,7 @@ const FeedbackManagement = () => {
                       <tr key={fb.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-5 py-3.5">
                           <p className="text-sm font-medium text-gray-900">{fb.userName}</p>
-                          <p className="text-xs text-gray-400">{fb.userEmail}</p>
+                          <p className="text-xs text-gray-400">{displayEmail(fb.userEmail)}</p>
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-2">
@@ -349,7 +345,7 @@ const FeedbackManagement = () => {
               <div className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">
                 <p className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wide">User</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1">{selectedFeedback.userName}</p>
-                <p className="text-xs text-gray-500">{selectedFeedback.userEmail}</p>
+                <p className="text-xs text-gray-500">{displayEmail(selectedFeedback.userEmail)}</p>
               </div>
 
               <div className="bg-gray-50/80 rounded-xl p-3 sm:p-4 border border-gray-100">

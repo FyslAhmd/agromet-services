@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { API_BASE_URL } from "../../config/api";
+import { API_BASE_URL, getAuthHeaders } from "../../config/api";
 
 const ViewData = () => {
   const [data, setData] = useState([]);
@@ -77,8 +76,8 @@ const ViewData = () => {
   const fetchFilters = async () => {
     try {
       const [stationsRes, yearsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/${selectedDataType}/stations`),
-        axios.get(`${API_BASE_URL}/${selectedDataType}/years`),
+        axios.get(`${API_BASE_URL}/${selectedDataType}/stations`, { headers: getAuthHeaders() }),
+        axios.get(`${API_BASE_URL}/${selectedDataType}/years`, { headers: getAuthHeaders() }),
       ]);
 
       if (stationsRes.data.success) setStations(stationsRes.data.data);
@@ -99,7 +98,8 @@ const ViewData = () => {
       if (selectedMonth) params.append("month", selectedMonth);
 
       const response = await axios.get(
-        `${API_BASE_URL}/${selectedDataType}?${params.toString()}`
+        `${API_BASE_URL}/${selectedDataType}?${params.toString()}`,
+        { headers: getAuthHeaders() }
       );
 
       if (response.data.success) {
@@ -133,7 +133,9 @@ const ViewData = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${API_BASE_URL}/${selectedDataType}/${id}`);
+        await axios.delete(`${API_BASE_URL}/${selectedDataType}/${id}`, {
+          headers: getAuthHeaders(),
+        });
         Swal.fire("Deleted!", "Record has been deleted.", "success");
         fetchData();
       } catch (error) {
@@ -173,7 +175,8 @@ const ViewData = () => {
     try {
       const response = await axios.put(
         `${API_BASE_URL}/${selectedDataType}/${editingRecord.id}`,
-        editFormData
+        editFormData,
+        { headers: getAuthHeaders() }
       );
 
       if (response.data.success) {
@@ -230,7 +233,8 @@ const ViewData = () => {
   const checkDuplicateRecord = async (station, year, month) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/${selectedDataType}?station=${station}&year=${year}&month=${month}`
+        `${API_BASE_URL}/${selectedDataType}?station=${station}&year=${year}&month=${month}`,
+        { headers: getAuthHeaders() }
       );
       return response.data.data && response.data.data.length > 0;
     } catch (error) {
@@ -269,7 +273,8 @@ const ViewData = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/${selectedDataType}`,
-        addFormData
+        addFormData,
+        { headers: getAuthHeaders() }
       );
 
       if (response.data.success) {

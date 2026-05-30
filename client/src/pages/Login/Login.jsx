@@ -13,6 +13,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -71,6 +72,37 @@ function Login() {
       setError(error.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setError("");
+    setIsGuestLoading(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.guestLogin, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Guest login failed. Please try again.");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.user.id);
+      setAuthUser(data.user);
+      toast.success("Continuing as Guest Visitor");
+      navigate("/weather-forecast", { replace: true });
+    } catch (error) {
+      toast.error(error.message || "Guest login failed. Please try again.");
+      setError(error.message);
+    } finally {
+      setIsGuestLoading(false);
     }
   };
 
@@ -242,7 +274,7 @@ function Login() {
                   className={`w-full bg-linear-to-r from-[#026666] to-[#024444] text-white py-3 px-4 rounded-xl font-semibold text-lg shadow-lg hover:from-[#035555] hover:to-[#026666] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04cccc] transition duration-300 transform hover:scale-[1.02] border border-[#04cccc]/20 ${
                     isLoading ? "opacity-50 cursor-not-allowed" : ""
                   }`}
-                  disabled={isLoading}
+                  disabled={isLoading || isGuestLoading}
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
@@ -272,6 +304,23 @@ function Login() {
                   )}
                 </button>
               </form>
+
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  or
+                </span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGuestLogin}
+                disabled={isLoading || isGuestLoading}
+                className="w-full border-2 border-[#026666]/20 bg-white text-[#026666] py-3 px-4 rounded-xl font-semibold text-base hover:bg-[#026666]/5 hover:border-[#026666]/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#04cccc] transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGuestLoading ? "Opening guest access..." : "Continue as Guest"}
+              </button>
 
               {/* Footer */}
               <div className="mt-6 text-center">
