@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware, guestOrUserMiddleware } from "../middleware/authMiddleware.js";
 import {
   getLocalWeatherAlert,
   getLocalWeatherAlertLocations,
@@ -7,7 +7,7 @@ import {
 
 const router = express.Router();
 
-router.get("/locations", authMiddleware, getLocalWeatherAlertLocations);
-router.get("/", authMiddleware, getLocalWeatherAlert);
+router.get("/locations", authMiddleware, guestOrUserMiddleware, getLocalWeatherAlertLocations);
+router.get("/", authMiddleware, guestOrUserMiddleware, getLocalWeatherAlert);
 
 export default router;

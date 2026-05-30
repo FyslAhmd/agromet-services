@@ -9,31 +9,32 @@ import {
   updateMinimumTempData,
   deleteMinimumTempData,
 } from "../controllers/minimumTempController.js";
+import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Upload minimum temperature data from CSV/XLSX
-router.post("/upload", uploadMinimumTempData);
+router.post("/upload", authMiddleware, adminMiddleware, uploadMinimumTempData);
 
 // Get all minimum temperature data with pagination
-router.get("/", getAllMinimumTempData);
+router.get("/", authMiddleware, registeredUserMiddleware, getAllMinimumTempData);
 
 // Get unique stations
-router.get("/stations", getStations);
+router.get("/stations", authMiddleware, registeredUserMiddleware, getStations);
 
 // Get unique years
-router.get("/years", getYears);
+router.get("/years", authMiddleware, registeredUserMiddleware, getYears);
 
 // Get minimum temperature data by ID
-router.get("/:id", getMinimumTempDataById);
+router.get("/:id", authMiddleware, registeredUserMiddleware, getMinimumTempDataById);
 
 // Create a single minimum temperature record
-router.post("/", createMinimumTempData);
+router.post("/", authMiddleware, adminMiddleware, createMinimumTempData);
 
 // Update minimum temperature data
-router.put("/:id", updateMinimumTempData);
+router.put("/:id", authMiddleware, adminMiddleware, updateMinimumTempData);
 
 // Delete minimum temperature data
-router.delete("/:id", deleteMinimumTempData);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteMinimumTempData);
 
 export default router;

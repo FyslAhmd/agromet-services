@@ -13,6 +13,15 @@ const __dirname = dirname(__filename);
 
 const APP_NAME = "BRRI Agromet Services";
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "agromet@brri.gov.bd";
+const GUEST_USER_RESPONSE = {
+  id: "guest",
+  username: "guest",
+  name: "Guest Visitor",
+  email: null,
+  role: "guest",
+  status: "approved",
+  isGuest: true,
+};
 
 const createEmailTransporter = () => {
   return nodemailer.createTransport({
@@ -239,9 +248,37 @@ export const loginUser = async (req, res) => {
   }
 };
 
+export const guestLoginUser = async (req, res) => {
+  try {
+    const token = jwt.sign(
+      {
+        id: "guest",
+        username: "guest",
+        role: "guest",
+        isGuest: true,
+      },
+      process.env.SECRET_KEY || 'agromet-secret-key-2026',
+      { expiresIn: process.env.GUEST_TOKEN_EXPIRES_IN || "24h" }
+    );
+
+    res.json({
+      message: "Guest login successful",
+      token,
+      user: GUEST_USER_RESPONSE,
+    });
+  } catch (error) {
+    console.error("Guest login error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get current user
 export const getCurrentUser = async (req, res) => {
   try {
+    if (req.user?.isGuest) {
+      return res.json(GUEST_USER_RESPONSE);
+    }
+
     const user = await User.findByPk(req.userId, {
       attributes: { exclude: ['password'] }
     });
@@ -260,6 +297,11 @@ export const getCurrentUser = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (req.user.role !== "admin" && String(req.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const user = await User.findByPk(userId, {
       attributes: { exclude: ['password'] }
     });
@@ -316,6 +358,11 @@ export const updateUser = async (req, res) => {
     const { userId } = req.params;
     const { name, username, email, mobileNumber, designation, organization, address, role, status } = req.body;
 
+    const isAdmin = req.user?.role === "admin";
+    if (!isAdmin && String(req.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const user = await User.findByPk(userId);
 
     if (!user) {
@@ -350,8 +397,8 @@ export const updateUser = async (req, res) => {
       designation: designation || user.designation,
       organization: organization || user.organization,
       address: address !== undefined ? address : user.address,
-      role: role || user.role,
-      status: status || user.status
+      role: isAdmin ? (role || user.role) : user.role,
+      status: isAdmin ? (status || user.status) : user.status
     });
 
     res.json({
@@ -380,6 +427,10 @@ export const changePassword = async (req, res) => {
   try {
     const { userId } = req.params;
     const { currentPassword, newPassword } = req.body;
+
+    if (req.user.role !== "admin" && String(req.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const user = await User.findByPk(userId);
 
@@ -493,6 +544,10 @@ export const uploadProfilePicture = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    if (req.user.role !== "admin" && String(req.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     if (!req.file) {
       return res.status(400).json({ message: 'No image file provided' });
     }
@@ -527,6 +582,10 @@ export const uploadProfilePicture = async (req, res) => {
 export const removeProfilePicture = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    if (req.user.role !== "admin" && String(req.userId) !== String(userId)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const user = await User.findByPk(userId);
     if (!user) {

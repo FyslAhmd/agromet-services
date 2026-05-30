@@ -9,31 +9,32 @@ import {
   updateMaximumTempData,
   deleteMaximumTempData,
 } from "../controllers/maximumTempController.js";
+import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Upload maximum temperature data from CSV/XLSX
-router.post("/upload", uploadMaximumTempData);
+router.post("/upload", authMiddleware, adminMiddleware, uploadMaximumTempData);
 
 // Get all maximum temperature data with pagination
-router.get("/", getAllMaximumTempData);
+router.get("/", authMiddleware, registeredUserMiddleware, getAllMaximumTempData);
 
 // Get unique stations
-router.get("/stations", getStations);
+router.get("/stations", authMiddleware, registeredUserMiddleware, getStations);
 
 // Get unique years
-router.get("/years", getYears);
+router.get("/years", authMiddleware, registeredUserMiddleware, getYears);
 
 // Get maximum temperature data by ID
-router.get("/:id", getMaximumTempDataById);
+router.get("/:id", authMiddleware, registeredUserMiddleware, getMaximumTempDataById);
 
 // Create a single maximum temperature record
-router.post("/", createMaximumTempData);
+router.post("/", authMiddleware, adminMiddleware, createMaximumTempData);
 
 // Update maximum temperature data
-router.put("/:id", updateMaximumTempData);
+router.put("/:id", authMiddleware, adminMiddleware, updateMaximumTempData);
 
 // Delete maximum temperature data
-router.delete("/:id", deleteMaximumTempData);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteMaximumTempData);
 
 export default router;

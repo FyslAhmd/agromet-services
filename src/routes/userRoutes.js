@@ -11,9 +11,10 @@ import {
   getCurrentUser,
   changePassword,
   uploadProfilePicture,
-  removeProfilePicture
+  removeProfilePicture,
+  guestLoginUser
 } from "../controllers/userController.js";
-import { authMiddleware, adminMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 import { profilePictureUpload } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
@@ -21,14 +22,15 @@ const router = Router();
 // Public routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/guest-login", guestLoginUser);
 
 // Protected routes (require authentication)
 router.get("/current", authMiddleware, getCurrentUser);
-router.get("/:userId", authMiddleware, getUserById);
-router.put("/:userId", authMiddleware, updateUser);
-router.put("/:userId/password", authMiddleware, changePassword);
-router.post("/:userId/profile-picture", authMiddleware, profilePictureUpload.single("profilePicture"), uploadProfilePicture);
-router.delete("/:userId/profile-picture", authMiddleware, removeProfilePicture);
+router.get("/:userId", authMiddleware, registeredUserMiddleware, getUserById);
+router.put("/:userId", authMiddleware, registeredUserMiddleware, updateUser);
+router.put("/:userId/password", authMiddleware, registeredUserMiddleware, changePassword);
+router.post("/:userId/profile-picture", authMiddleware, registeredUserMiddleware, profilePictureUpload.single("profilePicture"), uploadProfilePicture);
+router.delete("/:userId/profile-picture", authMiddleware, registeredUserMiddleware, removeProfilePicture);
 
 // Admin only routes
 router.get("/", authMiddleware, adminMiddleware, getUsers);

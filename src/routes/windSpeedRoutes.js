@@ -9,31 +9,32 @@ import {
   updateWindSpeedData,
   deleteWindSpeedData,
 } from "../controllers/windSpeedController.js";
+import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Upload wind speed data from CSV/XLSX
-router.post("/upload", uploadWindSpeedData);
+router.post("/upload", authMiddleware, adminMiddleware, uploadWindSpeedData);
 
 // Get all wind speed data with pagination
-router.get("/", getAllWindSpeedData);
+router.get("/", authMiddleware, registeredUserMiddleware, getAllWindSpeedData);
 
 // Get unique stations
-router.get("/stations", getStations);
+router.get("/stations", authMiddleware, registeredUserMiddleware, getStations);
 
 // Get unique years
-router.get("/years", getYears);
+router.get("/years", authMiddleware, registeredUserMiddleware, getYears);
 
 // Get wind speed data by ID
-router.get("/:id", getWindSpeedDataById);
+router.get("/:id", authMiddleware, registeredUserMiddleware, getWindSpeedDataById);
 
 // Create a single wind speed record
-router.post("/", createWindSpeedData);
+router.post("/", authMiddleware, adminMiddleware, createWindSpeedData);
 
 // Update wind speed data
-router.put("/:id", updateWindSpeedData);
+router.put("/:id", authMiddleware, adminMiddleware, updateWindSpeedData);
 
 // Delete wind speed data
-router.delete("/:id", deleteWindSpeedData);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteWindSpeedData);
 
 export default router;

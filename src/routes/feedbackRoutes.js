@@ -5,13 +5,13 @@ import {
   getMyFeedbacks,
   deleteFeedback,
 } from "../controllers/feedbackController.js";
-import { authMiddleware, adminMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware, adminMiddleware, guestOrUserMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // User routes
-router.post("/", authMiddleware, createFeedback);
-router.get("/my-feedbacks", authMiddleware, getMyFeedbacks);
+router.post("/", authMiddleware, guestOrUserMiddleware, createFeedback);
+router.get("/my-feedbacks", authMiddleware, registeredUserMiddleware, getMyFeedbacks);
 
 // Admin routes
 router.get("/", authMiddleware, adminMiddleware, getAllFeedbacks);

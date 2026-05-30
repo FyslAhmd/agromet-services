@@ -1,6 +1,16 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+export const GUEST_USER = {
+  id: "guest",
+  username: "guest",
+  name: "Guest Visitor",
+  email: null,
+  role: "guest",
+  status: "approved",
+  isGuest: true,
+};
+
 // Authentication middleware
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -13,6 +23,12 @@ export const authMiddleware = async (req, res, next) => {
     
     // Verify token
     const decoded = jwt.verify(token, process.env.SECRET_KEY || 'agromet-secret-key-2024');
+
+    if (decoded?.isGuest && decoded?.role === "guest") {
+      req.user = { ...GUEST_USER };
+      req.userId = GUEST_USER.id;
+      return next();
+    }
     
     // Find user
     const user = await User.findByPk(decoded.id);
@@ -42,5 +58,21 @@ export const adminMiddleware = (req, res, next) => {
     next();
   } else {
     res.status(403).json({ message: 'Admin access required' });
+  }
+};
+
+export const guestOrUserMiddleware = (req, res, next) => {
+  if (req.user && ["guest", "user", "admin"].includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied" });
+  }
+};
+
+export const registeredUserMiddleware = (req, res, next) => {
+  if (req.user && ["user", "admin"].includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ message: "Registered account required" });
   }
 };

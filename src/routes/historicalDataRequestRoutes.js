@@ -6,18 +6,19 @@ import {
   getHistoricalDataRequestStats,
   getHistoricalDataRequestById
 } from "../controllers/historicalDataRequestController.js";
+import { adminMiddleware, authMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET Routes
-router.get("/", getAllHistoricalDataRequests);
-router.get("/stats", getHistoricalDataRequestStats);
-router.get("/:id", getHistoricalDataRequestById);
+router.get("/", authMiddleware, adminMiddleware, getAllHistoricalDataRequests);
+router.get("/stats", authMiddleware, adminMiddleware, getHistoricalDataRequestStats);
+router.get("/:id", authMiddleware, adminMiddleware, getHistoricalDataRequestById);
 
 // POST Routes
-router.post("/", createHistoricalDataRequest);
+router.post("/", authMiddleware, registeredUserMiddleware, createHistoricalDataRequest);
 
 // PUT Routes
-router.put("/:id/status", updateHistoricalDataRequestStatus);
+router.put("/:id/status", authMiddleware, adminMiddleware, updateHistoricalDataRequestStatus);
 
 export default router;

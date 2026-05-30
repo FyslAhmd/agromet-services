@@ -11,7 +11,7 @@ const Feedback = sequelize.define(
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     userName: {
       type: DataTypes.STRING(255),
@@ -19,7 +19,7 @@ const Feedback = sequelize.define(
     },
     userEmail: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     feedback: {
       type: DataTypes.TEXT,

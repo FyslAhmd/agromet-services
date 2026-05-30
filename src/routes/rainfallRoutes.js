@@ -9,31 +9,32 @@ import {
   updateRainfallData,
   deleteRainfallData,
 } from "../controllers/rainfallController.js";
+import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Upload rainfall data from CSV/XLSX
-router.post("/upload", uploadRainfallData);
+router.post("/upload", authMiddleware, adminMiddleware, uploadRainfallData);
 
 // Get all rainfall data with pagination
-router.get("/", getAllRainfallData);
+router.get("/", authMiddleware, registeredUserMiddleware, getAllRainfallData);
 
 // Get unique stations
-router.get("/stations", getStations);
+router.get("/stations", authMiddleware, registeredUserMiddleware, getStations);
 
 // Get unique years
-router.get("/years", getYears);
+router.get("/years", authMiddleware, registeredUserMiddleware, getYears);
 
 // Get rainfall data by ID
-router.get("/:id", getRainfallDataById);
+router.get("/:id", authMiddleware, registeredUserMiddleware, getRainfallDataById);
 
 // Create a single rainfall record
-router.post("/", createRainfallData);
+router.post("/", authMiddleware, adminMiddleware, createRainfallData);
 
 // Update rainfall data
-router.put("/:id", updateRainfallData);
+router.put("/:id", authMiddleware, adminMiddleware, updateRainfallData);
 
 // Delete rainfall data
-router.delete("/:id", deleteRainfallData);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteRainfallData);
 
 export default router;

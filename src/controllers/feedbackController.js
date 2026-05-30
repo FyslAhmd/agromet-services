@@ -5,7 +5,7 @@ import User from "../models/User.js";
 export const createFeedback = async (req, res) => {
   try {
     const { feedback, rating } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.isGuest ? null : req.user.id;
 
     // Validate rating
     if (!rating || rating < 1 || rating > 5) {
@@ -22,19 +22,26 @@ export const createFeedback = async (req, res) => {
       });
     }
 
-    // Get user details
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+    let userName = "Guest Visitor";
+    let userEmail = null;
+
+    if (!req.user.isGuest) {
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      userName = user.name;
+      userEmail = user.email;
     }
 
     const newFeedback = await Feedback.create({
       userId,
-      userName: user.name,
-      userEmail: user.email,
+      userName,
+      userEmail,
       feedback: feedback.trim(),
       rating,
     });

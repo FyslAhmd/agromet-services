@@ -7,7 +7,7 @@ import { adminMiddleware, authMiddleware } from "../middleware/authMiddleware.js
 
 const router = express.Router();
 
-router.get("/", authMiddleware, getForecastValidation);
+router.get("/", authMiddleware, adminMiddleware, getForecastValidation);
 router.post("/run", authMiddleware, adminMiddleware, triggerForecastValidationRun);
 
 export default router;
