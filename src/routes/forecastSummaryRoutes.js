@@ -4,12 +4,12 @@ import {
   getForecastSummary,
   getForecastUpazilas,
 } from "../controllers/forecastSummaryController.js";
-import { authMiddleware, guestOrUserMiddleware } from "../middleware/authMiddleware.js";
+import { dualAuthMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/upazilas", authMiddleware, guestOrUserMiddleware, getForecastUpazilas);
-router.get("/locations", authMiddleware, guestOrUserMiddleware, getForecastLocations);
-router.get("/", authMiddleware, guestOrUserMiddleware, getForecastSummary);
+router.get("/upazilas", dualAuthMiddleware, getForecastUpazilas);
+router.get("/locations", dualAuthMiddleware, getForecastLocations);
+router.get("/", dualAuthMiddleware, getForecastSummary);
 
 export default router;
