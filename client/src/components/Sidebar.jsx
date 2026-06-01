@@ -246,6 +246,11 @@ const Sidebar = () => {
                 label="User Management"
               />
               <SidebarLink
+                to="/guest-logs"
+                icon={UserCircleIcon}
+                label="Guest Logs"
+              />
+              <SidebarLink
                 to="/feedback-management"
                 icon={ChatBubbleLeftRightIcon}
                 label="Feedback Management"

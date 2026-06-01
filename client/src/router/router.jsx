@@ -25,6 +25,7 @@ import ForecastSummary from "../pages/ForecastSummary/ForecastSummary";
 import CombinedClimateOverview from "../pages/CombinedClimateOverview/CombinedClimateOverview";
 import ForecastValidation from "../pages/ForecastValidation/ForecastValidation";
 import ClimateProjection from "../pages/ClimateProjection/ClimateProjection";
+import GuestLogs from "../pages/GuestLogs/GuestLogs";
 
 const router = createBrowserRouter([
   {
@@ -116,6 +117,14 @@ const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <UserManagement />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "guest-logs",
+        element: (
+          <AdminRoute>
+            <GuestLogs />
           </AdminRoute>
         ),
       },
