@@ -12,7 +12,8 @@ import {
   changePassword,
   uploadProfilePicture,
   removeProfilePicture,
-  guestLoginUser
+  guestLoginUser,
+  getGuestLogs
 } from "../controllers/userController.js";
 import { authMiddleware, adminMiddleware, registeredUserMiddleware } from "../middleware/authMiddleware.js";
 import { profilePictureUpload } from "../middleware/uploadMiddleware.js";
@@ -26,6 +27,7 @@ router.post("/guest-login", guestLoginUser);
 
 // Protected routes (require authentication)
 router.get("/current", authMiddleware, getCurrentUser);
+router.get("/guest-logs", authMiddleware, adminMiddleware, getGuestLogs);
 router.get("/:userId", authMiddleware, registeredUserMiddleware, getUserById);
 router.put("/:userId", authMiddleware, registeredUserMiddleware, updateUser);
 router.put("/:userId/password", authMiddleware, registeredUserMiddleware, changePassword);

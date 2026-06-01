@@ -1,5 +1,6 @@
 import { Op } from "sequelize";
 import User from "../models/User.js";
+import GuestLoginLog from "../models/GuestLoginLog.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
@@ -250,6 +251,15 @@ export const loginUser = async (req, res) => {
 
 export const guestLoginUser = async (req, res) => {
   try {
+    // Log the guest login
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+    const userAgent = req.headers['user-agent'];
+
+    await GuestLoginLog.create({
+      ipAddress: ipAddress ? String(ipAddress) : null,
+      userAgent: userAgent ? String(userAgent) : null
+    });
+
     const token = jwt.sign(
       {
         id: "guest",
@@ -268,6 +278,31 @@ export const guestLoginUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Guest login error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get guest login logs (Admin only)
+export const getGuestLogs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await GuestLoginLog.findAndCountAll({
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    res.json({
+      total: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      logs: rows
+    });
+  } catch (error) {
+    console.error("Fetch guest logs error:", error);
     res.status(500).json({ message: error.message });
   }
 };

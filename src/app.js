@@ -46,6 +46,7 @@ import Feedback from "./models/Feedback.js";
 import HistoricalDataRequest from "./models/HistoricalDataRequest.js";
 import ForecastValidationRun from "./models/ForecastValidationRun.js";
 import ForecastValidationRecord from "./models/ForecastValidationRecord.js";
+import GuestLoginLog from "./models/GuestLoginLog.js";
 import bcrypt from "bcrypt";
 
 const __filename = fileURLToPath(import.meta.url);
