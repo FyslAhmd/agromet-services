@@ -76,3 +76,22 @@ export const registeredUserMiddleware = (req, res, next) => {
     res.status(403).json({ message: "Registered account required" });
   }
 };
+
+// Dual Authentication for API Keys (External Sites) OR JWT Users
+export const dualAuthMiddleware = async (req, res, next) => {
+  // 1. Check for API Key first (for external backend-to-backend communication)
+  const apiKey = req.header('x-api-key');
+  
+  if (apiKey && apiKey === process.env.EXTERNAL_SITE_API_KEY) {
+    // Inject a mock system user so controllers don't break
+    req.user = { id: 'system', role: 'external_service', isGuest: false };
+    req.userId = 'system';
+    return next();
+  }
+
+  // 2. Fall back to standard JWT User/Guest logic
+  return authMiddleware(req, res, () => {
+    // Once JWT is verified, also enforce the guestOrUser role check
+    guestOrUserMiddleware(req, res, next);
+  });
+};
