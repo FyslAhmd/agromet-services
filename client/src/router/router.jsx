@@ -26,6 +26,7 @@ import CombinedClimateOverview from "../pages/CombinedClimateOverview/CombinedCl
 import ForecastValidation from "../pages/ForecastValidation/ForecastValidation";
 import ClimateProjection from "../pages/ClimateProjection/ClimateProjection";
 import GuestLogs from "../pages/GuestLogs/GuestLogs";
+import AddProjectionData from "../pages/AddProjectionData/AddProjectionData";
 
 const router = createBrowserRouter([
   {
