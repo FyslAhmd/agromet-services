@@ -246,6 +246,11 @@ const Sidebar = () => {
                 label="Add Projection Data"
               />
               <SidebarLink
+                to="/view-projection-data"
+                icon={TableCellsIcon}
+                label="View Projection Data"
+              />
+              <SidebarLink
                 to="/user-management"
                 icon={UserGroupIcon}
                 label="User Management"

@@ -27,6 +27,7 @@ import ForecastValidation from "../pages/ForecastValidation/ForecastValidation";
 import ClimateProjection from "../pages/ClimateProjection/ClimateProjection";
 import GuestLogs from "../pages/GuestLogs/GuestLogs";
 import AddProjectionData from "../pages/AddProjectionData/AddProjectionData";
+import ViewProjectionData from "../pages/ViewProjectionData/ViewProjectionData";
 
 const router = createBrowserRouter([
   {
@@ -119,6 +120,14 @@ const router = createBrowserRouter([
           <AdminRoute>
             <AddProjectionData />
           </AdminRoute>
+        ),
+      },
+      {
+        path: "view-projection-data",
+        element: (
+          <RoleRoute allowedRoles={["user", "admin"]}>
+            <ViewProjectionData />
+          </RoleRoute>
         ),
       },
       {

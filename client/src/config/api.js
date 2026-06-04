@@ -37,6 +37,7 @@ export const API_ENDPOINTS = {
   forecastValidationRun: `${API_BASE_URL}/forecast-validation/run`,
   projectionsUpload: `${API_BASE_URL}/projections/upload`,
   projectionsStatus: (jobId) => `${API_BASE_URL}/projections/status/${jobId}`,
+  projectionsData: `${API_BASE_URL}/projections/data`,
   weatherAlertLocations: `${API_BASE_URL}/weather-alert/locations`,
   weatherAlert: `${API_BASE_URL}/weather-alert`,
 

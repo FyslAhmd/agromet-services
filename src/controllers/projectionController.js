@@ -221,3 +221,61 @@ export const getJobStatus = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getProjectionData = async (req, res) => {
+  try {
+    const { dataType, page = 1, limit = 20, district, model, scenario, startDate, endDate } = req.query;
+
+    if (!dataType) {
+      return res.status(400).json({ message: "dataType is required" });
+    }
+
+    let Model;
+    switch (dataType) {
+      case "minimum-temperature":
+        Model = ProjectionMinTemp;
+        break;
+      case "maximum-temperature":
+        Model = ProjectionMaxTemp;
+        break;
+      case "precipitation":
+        Model = ProjectionPrecipitation;
+        break;
+      case "relative-humidity":
+        Model = ProjectionRelativeHumidity;
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid data type" });
+    }
+
+    const where = {};
+    if (district) where.district = { [Op.like]: `%${district}%` };
+    if (model) where.model = { [Op.like]: `%${model}%` };
+    if (scenario) where.scenario = { [Op.like]: `%${scenario}%` };
+
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate) where.date[Op.gte] = startDate;
+      if (endDate) where.date[Op.lte] = endDate;
+    }
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const { count, rows } = await Model.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset,
+      order: [['date', 'ASC'], ['district', 'ASC']],
+    });
+
+    return res.json({
+      total: count,
+      totalPages: Math.ceil(count / parseInt(limit)),
+      currentPage: parseInt(page),
+      data: rows,
+    });
+  } catch (error) {
+    console.error("Error fetching projection data:", error);
+    return res.status(500).json({ message: "Server error fetching projection data" });
+  }
+};
