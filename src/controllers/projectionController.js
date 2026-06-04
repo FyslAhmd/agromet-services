@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import csv from "csv-parser";
 import crypto from "crypto";
+import { Op } from "sequelize";
 import DataUploadJob from "../models/DataUploadJob.js";
 import ProjectionMinTemp from "../models/ProjectionMinTemp.js";
 import ProjectionMaxTemp from "../models/ProjectionMaxTemp.js";
