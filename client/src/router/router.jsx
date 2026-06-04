@@ -113,6 +113,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "add-projection-data",
+        element: (
+          <AdminRoute>
+            <AddProjectionData />
+          </AdminRoute>
+        ),
+      },
+      {
         path: "user-management",
         element: (
           <AdminRoute>

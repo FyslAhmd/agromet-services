@@ -241,6 +241,11 @@ const Sidebar = () => {
                 label="View Rice Data"
               />
               <SidebarLink
+                to="/add-projection-data"
+                icon={CloudIcon}
+                label="Add Projection Data"
+              />
+              <SidebarLink
                 to="/user-management"
                 icon={UserGroupIcon}
                 label="User Management"

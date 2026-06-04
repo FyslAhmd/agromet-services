@@ -26,6 +26,7 @@ import weatherProxyRoutes from "./routes/weatherProxyRoutes.js";
 import forecastSummaryRoutes from "./routes/forecastSummaryRoutes.js";
 import weatherAlertRoutes from "./routes/weatherAlertRoutes.js";
 import forecastValidationRoutes from "./routes/forecastValidationRoutes.js";
+import projectionRoutes from "./routes/projectionRoutes.js";
 import { ensureForecastSummaryIndexes } from "./services/forecastSummaryIndexService.js";
 import { startForecastValidationScheduler } from "./services/forecastValidationService.js";
 
@@ -47,6 +48,11 @@ import HistoricalDataRequest from "./models/HistoricalDataRequest.js";
 import ForecastValidationRun from "./models/ForecastValidationRun.js";
 import ForecastValidationRecord from "./models/ForecastValidationRecord.js";
 import GuestLoginLog from "./models/GuestLoginLog.js";
+import DataUploadJob from "./models/DataUploadJob.js";
+import ProjectionMinTemp from "./models/ProjectionMinTemp.js";
+import ProjectionMaxTemp from "./models/ProjectionMaxTemp.js";
+import ProjectionPrecipitation from "./models/ProjectionPrecipitation.js";
+import ProjectionRelativeHumidity from "./models/ProjectionRelativeHumidity.js";
 import bcrypt from "bcrypt";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -100,6 +106,7 @@ app.use("/api/weather", weatherProxyRoutes);
 app.use("/api/forecast-summary", forecastSummaryRoutes);
 app.use("/api/weather-alert", weatherAlertRoutes);
 app.use("/api/forecast-validation", forecastValidationRoutes);
+app.use("/api/projections", projectionRoutes);
 
 // Health check route
 app.get("/api", (req, res) => {

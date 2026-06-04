@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CloudArrowUpIcon,
@@ -8,32 +9,29 @@ import {
   TableCellsIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
-import Papa from "papaparse";
-import * as XLSX from "xlsx";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { API_BASE_URL, getAuthHeaders } from "../../config/api";
+import { API_ENDPOINTS, getAuthHeaders } from "../../config/api";
 
-const AddData = () => {
+const AddProjectionData = () => {
   const [selectedDataType, setSelectedDataType] = useState("");
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Job Tracking State
+  const [jobId, setJobId] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null); // 'pending', 'processing', 'completed', 'failed'
+  const [totalRows, setTotalRows] = useState(0);
+  const [processedRows, setProcessedRows] = useState(0);
+  const [errorLog, setErrorLog] = useState("");
+
   const fileInputRef = useRef(null);
 
   const dataTypeOptions = [
-    { value: "maximum-temp", label: "Maximum Temperature (°C)" },
-    { value: "minimum-temp", label: "Minimum Temperature (°C)" },
-    { value: "rainfall", label: "Rainfall (mm)" },
-    { value: "relative-humidity", label: "Relative Humidity (%)" },
-    { value: "sunshine", label: "Sunshine (hrs)" },
-    { value: "wind-speed", label: "Wind Speed (km/h)" },
-    { value: "soil-moisture", label: "Soil Moisture (%)" },
-    { value: "soil-temperature", label: "Soil Temperature (°C)" },
-    { value: "average-temperature", label: "Average Temperature (°C)" },
-    { value: "solar-radiation", label: "Solar Radiation (W/m²)" },
-    { value: "evapo-transpiration", label: "Evapo Transpiration (mm)" },
+    { value: "minimum-temperature", label: "Minimum Temperature" },
+    { value: "maximum-temperature", label: "Maximum Temperature" },
+    { value: "precipitation", label: "Precipitation" },
+    { value: "relative-humidity", label: "Relative Humidity" },
   ];
 
   const handleDataTypeChange = (e) => {
@@ -45,17 +43,12 @@ const AddData = () => {
   };
 
   const handleFileSelect = (file) => {
-    const validTypes = [
-      "text/csv",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ];
-
-    if (!file || !validTypes.includes(file.type)) {
+    // CSV is preferred for large data streaming
+    if (!file || file.name.split('.').pop().toLowerCase() !== 'csv') {
       Swal.fire({
         icon: "error",
         title: "Invalid File",
-        text: "Please upload a valid CSV or XLSX file",
+        text: "Please upload a valid CSV file for projection data",
       });
       setUploadedFile(null);
       return;
@@ -114,135 +107,116 @@ const AddData = () => {
     }
   };
 
-  const parseCSV = (file) => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          resolve(results.data);
-        },
-        error: (error) => {
-          reject(error);
-        },
-      });
-    });
-  };
-
-  const parseXLSX = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          resolve(jsonData);
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = (error) => reject(error);
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
+  // The actual form upload
   const handleUpload = async () => {
     if (!uploadedFile || !selectedDataType) {
       Swal.fire({
         icon: "warning",
         title: "Missing Information",
-        text: "Please select a data type and upload a file",
+        text: "Please select a data type and upload a CSV file",
       });
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+    formData.append("dataType", selectedDataType);
 
     try {
-      setUploadProgress(20);
+      setJobStatus("pending");
+      setTotalRows(0);
+      setProcessedRows(0);
 
-      let parsedData;
-      if (uploadedFile.type === "text/csv") {
-        parsedData = await parseCSV(uploadedFile);
-      } else {
-        parsedData = await parseXLSX(uploadedFile);
-      }
-
-      setUploadProgress(50);
+      const headers = getAuthHeaders();
+      // Remove content-type to allow browser to automatically set multipart/form-data with boundary
+      delete headers["Content-Type"]; 
 
       const response = await axios.post(
-        `${API_BASE_URL}/${selectedDataType}/upload`,
-        {
-          data: parsedData,
-          filename: uploadedFile.name,
-        },
-        { headers: getAuthHeaders() }
+        API_ENDPOINTS.projectionsUpload,
+        formData,
+        { headers }
       );
 
-      setUploadProgress(100);
-
-      const result = response.data.results || response.data;
-      const total = result.total || 0;
-      const successful = result.successful || 0;
-      const failed = result.failed || 0;
-      const updated = result.updated || 0;
-      const details = result.details || {};
-
-      let resultHtml = `
-        <div style="text-align: left;">
-          <p><strong>Total Rows:</strong> ${total}</p>
-          <p style="color: green;"><strong>Successfully Created:</strong> ${successful}</p>
-          <p style="color: orange;"><strong>Updated:</strong> ${updated}</p>
-          <p style="color: red;"><strong>Failed:</strong> ${failed}</p>
-        </div>
-      `;
-
-      if (details.failed && details.failed.length > 0) {
-        resultHtml += `
-          <div style="text-align: left; margin-top: 15px; max-height: 200px; overflow-y: auto;">
-            <strong>Failed Rows:</strong>
-            <ul style="margin-top: 5px;">
-              ${details.failed.map((f) => `<li>Row ${f.row}: ${f.error}</li>`).join("")}
-            </ul>
-          </div>
-        `;
-      }
-
-      Swal.fire({
-        icon: failed === total ? "error" : "success",
-        title: failed === total ? "Upload Failed" : "Upload Complete",
-        html: resultHtml,
-        width: 600,
-      });
-
-      if (successful > 0 || updated > 0) {
-        setUploadedFile(null);
-        setSelectedDataType("");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
+      const newJobId = response.data.jobId;
+      setJobId(newJobId);
+      
     } catch (error) {
       console.error("Upload error:", error);
+      setJobStatus(null);
       Swal.fire({
         icon: "error",
         title: "Upload Failed",
-        text: error.response?.data?.message || error.message || "Failed to upload file",
+        text: error.response?.data?.message || error.message || "Failed to initiate file upload",
       });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
+  // Polling Effect
+  useEffect(() => {
+    let intervalId;
+
+    const checkJobStatus = async () => {
+      try {
+        const response = await axios.get(API_ENDPOINTS.projectionsStatus(jobId), {
+          headers: getAuthHeaders()
+        });
+
+        const data = response.data;
+        setJobStatus(data.status);
+        setTotalRows(data.totalRows || 0);
+        setProcessedRows(data.processedRows || 0);
+        setErrorLog(data.errorLog || "");
+
+        if (data.status === "completed" || data.status === "failed") {
+          clearInterval(intervalId);
+          
+          if (data.status === "completed") {
+            Swal.fire({
+              icon: "success",
+              title: "Upload Complete",
+              text: `Successfully processed ${data.totalRows} rows.`,
+            }).then(() => {
+               // Reset state after success
+               setJobId(null);
+               setJobStatus(null);
+               handleRemoveFile();
+               setSelectedDataType("");
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Processing Failed",
+              text: data.errorLog || "An error occurred during backend processing.",
+            }).then(() => {
+               setJobId(null);
+               setJobStatus(null);
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking job status:", error);
+      }
+    };
+
+    if (jobId && (jobStatus === "pending" || jobStatus === "processing")) {
+      // Check immediately
+      checkJobStatus();
+      // Then poll every 2 seconds
+      intervalId = setInterval(checkJobStatus, 2000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [jobId, jobStatus]);
+
+  // Calculate progress percentage
+  const progressPercentage = totalRows > 0 ? Math.round((processedRows / totalRows) * 100) : 0;
+  // If we don't know totalRows yet but are processing, show a generic loading or pseudo progress
+  const displayPercentage = totalRows > 0 ? progressPercentage : (jobStatus === 'processing' ? Math.min(Math.round((processedRows / 100000) * 10), 99) : 0);
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-blue-50 to-gray-100 p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-teal-50 to-gray-100 p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -251,29 +225,29 @@ const AddData = () => {
           className="text-center mb-6 sm:mb-8"
         >
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-2 sm:mb-3 px-2">
-            Upload Climate Data
+            Upload Projection Data
           </h1>
           <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-            Select a data type and upload your CSV or XLSX file to add data to the system
+            Upload large CSV projection models. The file will be streamed to the database in the background.
           </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.2 }}
           className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6"
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-4">
-            <div className="bg-blue-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-              <TableCellsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            <div className="bg-teal-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+              <TableCellsIcon className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                Select Data Type
+                Select Model Type
               </h2>
               <p className="text-xs sm:text-sm text-gray-600">
-                Choose the type of climate data you want to upload
+                Choose the type of projection data you are uploading
               </p>
             </div>
           </div>
@@ -281,7 +255,8 @@ const AddData = () => {
           <select
             value={selectedDataType}
             onChange={handleDataTypeChange}
-            className="w-full px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            disabled={jobId !== null}
+            className="w-full px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all disabled:opacity-50 disabled:bg-gray-100"
           >
             <option value="">-- Select a data type --</option>
             {dataTypeOptions.map((option) => (
@@ -295,19 +270,66 @@ const AddData = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg"
+              className="mt-3 sm:mt-4 p-3 sm:p-4 bg-teal-50 border-l-4 border-teal-500 rounded-lg"
             >
-              <p className="text-xs sm:text-sm text-blue-800">
+              <p className="text-xs sm:text-sm text-teal-800">
                 <span className="font-bold">Selected:</span>{" "}
                 {dataTypeOptions.find((opt) => opt.value === selectedDataType)?.label}
+              </p>
+              <p className="text-xs text-teal-700 mt-1">
+                CSV Must contain columns: <span className="font-mono bg-teal-100 px-1 rounded">District, date, model, scenario</span> plus data columns.
               </p>
             </motion.div>
           )}
         </motion.div>
 
-        <AnimatePresence>
-          {selectedDataType && (
+        <AnimatePresence mode="wait">
+          {jobId ? (
+            /* PROGRESS VIEW */
             <motion.div
+              key="progress-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-2xl shadow-xl p-8 sm:p-12 text-center"
+            >
+               <div className="flex flex-col items-center justify-center">
+                  <ArrowPathIcon className="w-16 h-16 text-teal-600 animate-spin mb-4" />
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                    {jobStatus === "pending" ? "Initializing Upload..." : "Processing Data..."}
+                  </h3>
+                  <p className="text-gray-600 mb-8">
+                    Please wait while your data is safely streamed to the database. You can leave this page open.
+                  </p>
+
+                  {/* Progress Bar Container */}
+                  <div className="w-full max-w-2xl bg-gray-200 rounded-full h-6 mb-4 overflow-hidden relative">
+                    <motion.div 
+                      className="bg-linear-to-r from-teal-500 to-emerald-400 h-6 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${displayPercentage}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800 drop-shadow-xs mix-blend-overlay">
+                      {displayPercentage}%
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between w-full max-w-2xl text-sm font-semibold text-gray-600">
+                    <span>{processedRows.toLocaleString()} rows processed</span>
+                    {totalRows > 0 && <span>{totalRows.toLocaleString()} total rows</span>}
+                  </div>
+                  {errorLog && (
+                    <div className="mt-4 text-xs text-red-500 max-w-2xl text-left bg-red-50 p-2 rounded">
+                      <strong>Recent Errors:</strong> {errorLog.substring(0, 100)}...
+                    </div>
+                  )}
+               </div>
+            </motion.div>
+          ) : selectedDataType && (
+            /* UPLOAD VIEW */
+            <motion.div
+              key="upload-view"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -326,17 +348,17 @@ const AddData = () => {
                   ${!uploadedFile ? "cursor-pointer" : ""}
                   ${
                     isDragging
-                      ? "border-blue-500 bg-blue-50 scale-[0.98]"
+                      ? "border-teal-500 bg-teal-50 scale-[0.98]"
                       : uploadedFile
-                      ? "border-green-300 bg-green-50"
-                      : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50"
+                      ? "border-emerald-300 bg-emerald-50"
+                      : "border-gray-300 bg-gray-50 hover:border-teal-400 hover:bg-teal-50"
                   }
                 `}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.xlsx,.xls"
+                  accept=".csv"
                   onChange={handleFileInputChange}
                   className="hidden"
                 />
@@ -358,20 +380,20 @@ const AddData = () => {
                         <div
                           className={`
                           p-4 sm:p-5 md:p-6 rounded-full transition-all duration-300
-                          ${isDragging ? "bg-blue-100 scale-110" : "bg-gray-100"}
+                          ${isDragging ? "bg-teal-100 scale-110" : "bg-gray-100"}
                         `}
                         >
                           <ArrowUpTrayIcon
                             className={`
                             w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 transition-colors duration-300
-                            ${isDragging ? "text-blue-600" : "text-gray-400"}
+                            ${isDragging ? "text-teal-600" : "text-gray-400"}
                           `}
                           />
                         </div>
                       </motion.div>
 
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 sm:mb-3 px-2">
-                        {isDragging ? "Drop your file here" : "Drag and drop your file"}
+                        {isDragging ? "Drop your CSV here" : "Drag and drop your CSV file"}
                       </h3>
 
                       <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">or</p>
@@ -380,8 +402,8 @@ const AddData = () => {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="
-                          bg-linear-to-r from-blue-600 to-blue-700
-                          hover:from-blue-700 hover:to-blue-800
+                          bg-linear-to-r from-teal-600 to-teal-700
+                          hover:from-teal-700 hover:to-teal-800
                           text-white font-semibold text-sm sm:text-base md:text-lg
                           px-6 sm:px-7 md:px-8 py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl
                           shadow-lg hover:shadow-xl
@@ -395,7 +417,7 @@ const AddData = () => {
                       </button>
 
                       <p className="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6 px-2">
-                        Supported formats: CSV, XLSX • Maximum file size: 10MB
+                        Supported format: CSV strictly • Handled asynchronously
                       </p>
                     </motion.div>
                   ) : (
@@ -407,8 +429,8 @@ const AddData = () => {
                       className="text-center"
                     >
                       <div className="flex justify-center mb-4 sm:mb-6">
-                        <div className="bg-green-100 p-4 sm:p-5 md:p-6 rounded-full">
-                          <DocumentTextIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-green-600" />
+                        <div className="bg-emerald-100 p-4 sm:p-5 md:p-6 rounded-full">
+                          <DocumentTextIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-emerald-600" />
                         </div>
                       </div>
 
@@ -423,9 +445,9 @@ const AddData = () => {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-green-100 border border-green-300 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 mx-2"
+                        className="bg-emerald-100 border border-emerald-300 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 mx-2"
                       >
-                        <p className="text-green-800 font-semibold text-sm sm:text-base">
+                        <p className="text-emerald-800 font-semibold text-sm sm:text-base">
                           ✓ File selected successfully!
                         </p>
                       </motion.div>
@@ -436,34 +458,19 @@ const AddData = () => {
                             e.stopPropagation();
                             handleUpload();
                           }}
-                          disabled={isUploading}
                           className="
-                            bg-linear-to-r from-blue-600 to-blue-700
-                            hover:from-blue-700 hover:to-blue-800
-                            disabled:from-gray-400 disabled:to-gray-500
+                            bg-linear-to-r from-teal-600 to-teal-700
+                            hover:from-teal-700 hover:to-teal-800
                             text-white font-semibold text-sm sm:text-base
                             px-6 sm:px-8 py-3 rounded-lg
                             shadow-lg hover:shadow-xl
                             transition-all duration-300
                             flex items-center gap-2 justify-center
-                            disabled:cursor-not-allowed
                             w-full sm:w-auto
                           "
                         >
-                          {isUploading ? (
-                            <>
-                              <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                              <span className="hidden sm:inline">
-                                Uploading... {uploadProgress}%
-                              </span>
-                              <span className="sm:hidden">Uploading...</span>
-                            </>
-                          ) : (
-                            <>
-                              <CloudArrowUpIcon className="w-5 h-5" />
-                              Upload Data
-                            </>
-                          )}
+                          <CloudArrowUpIcon className="w-5 h-5" />
+                          Stream & Upload Data
                         </button>
 
                         <button
@@ -471,7 +478,6 @@ const AddData = () => {
                             e.stopPropagation();
                             handleRemoveFile();
                           }}
-                          disabled={isUploading}
                           className="
                             bg-red-50 hover:bg-red-100
                             text-red-600 font-semibold text-sm sm:text-base
@@ -479,7 +485,6 @@ const AddData = () => {
                             border-2 border-red-200 hover:border-red-300
                             transition-all duration-300
                             flex items-center gap-2 justify-center
-                            disabled:opacity-50 disabled:cursor-not-allowed
                             w-full sm:w-auto
                           "
                         >
@@ -499,10 +504,10 @@ const AddData = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6 text-center"
+            transition={{ delay: 0.4 }}
+            className="bg-teal-50 border-l-4 border-teal-500 rounded-lg p-4 sm:p-6 text-center"
           >
-            <p className="text-blue-800 text-sm sm:text-base md:text-lg px-2">
+            <p className="text-teal-800 text-sm sm:text-base md:text-lg px-2">
               👆 Please select a data type above to begin uploading your file
             </p>
           </motion.div>
@@ -512,4 +517,4 @@ const AddData = () => {
   );
 };
 
-export default AddData;
+export default AddProjectionData;
