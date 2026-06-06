@@ -12,12 +12,19 @@ import sequelize from "../config/database.js";
 
 const BATCH_SIZE = 5000;
 
-// Helper to format date strings from M/D/YYYY to YYYY-MM-DD
+// Helper to format date strings from M/D/YYYY to YYYY-MM-DD safely without timezone shifts
 const parseDate = (dateString) => {
   if (!dateString) return null;
+  
+  // Create date and extract local parts instead of using toISOString() which shifts to UTC
   const dateObj = new Date(dateString);
   if (isNaN(dateObj.getTime())) return null;
-  return dateObj.toISOString().split("T")[0];
+  
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 };
 
 const parseNumeric = (val) => {
