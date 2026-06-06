@@ -132,31 +132,31 @@ const ViewProjectionData = () => {
         return (
           <>
             {commonCells}
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.min_kelvin !== null ? row.min_kelvin.toFixed(4) : '-'}</td>
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.min_celcius !== null ? row.min_celcius.toFixed(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.min_kelvin === 'number' ? row.min_kelvin.toFixed(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.min_celcius === 'number' ? row.min_celcius.toFixed(4) : '-'}</td>
           </>
         );
       case "maximum-temperature":
         return (
           <>
             {commonCells}
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.max_kelvin !== null ? row.max_kelvin.toFixed(4) : '-'}</td>
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.max_celcius !== null ? row.max_celcius.toFixed(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.max_kelvin === 'number' ? row.max_kelvin.toFixed(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.max_celcius === 'number' ? row.max_celcius.toFixed(4) : '-'}</td>
           </>
         );
       case "precipitation":
         return (
           <>
             {commonCells}
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.precipitation_flux !== null ? row.precipitation_flux.toExponential(4) : '-'}</td>
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.precipitation_mm !== null ? row.precipitation_mm.toFixed(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.precipitation_flux === 'number' ? row.precipitation_flux.toExponential(4) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.precipitation_mm === 'number' ? row.precipitation_mm.toFixed(4) : '-'}</td>
           </>
         );
       case "relative-humidity":
         return (
           <>
             {commonCells}
-            <td className="px-4 py-3 text-sm text-right text-gray-900">{row.rh_percentage !== null ? row.rh_percentage.toFixed(2) : '-'}</td>
+            <td className="px-4 py-3 text-sm text-right text-gray-900">{typeof row.rh_percentage === 'number' ? row.rh_percentage.toFixed(2) : '-'}</td>
           </>
         );
       default:
