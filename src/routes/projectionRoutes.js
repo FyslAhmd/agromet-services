@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { uploadProjectionFile, getJobStatus, getProjectionData } from "../controllers/projectionController.js";
+import { uploadProjectionFile, getJobStatus, getProjectionData, getProjectionFilters } from "../controllers/projectionController.js";
 import { authMiddleware, adminMiddleware, guestOrUserMiddleware } from "../middleware/authMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +35,9 @@ router.post("/upload", authMiddleware, adminMiddleware, upload.single('file'), u
 
 // Check job status
 router.get("/status/:jobId", authMiddleware, adminMiddleware, getJobStatus);
+
+// View projection filters
+router.get("/filters", authMiddleware, guestOrUserMiddleware, getProjectionFilters);
 
 // View projection data
 router.get("/data", authMiddleware, guestOrUserMiddleware, getProjectionData);

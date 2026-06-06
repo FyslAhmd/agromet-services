@@ -293,3 +293,47 @@ export const getProjectionData = async (req, res) => {
     return res.status(500).json({ message: "Server error fetching projection data" });
   }
 };
+
+export const getProjectionFilters = async (req, res) => {
+  try {
+    const { dataType } = req.query;
+
+    if (!dataType) {
+      return res.status(400).json({ message: "dataType is required" });
+    }
+
+    let Model;
+    switch (dataType) {
+      case "minimum-temperature":
+        Model = ProjectionMinTemp;
+        break;
+      case "maximum-temperature":
+        Model = ProjectionMaxTemp;
+        break;
+      case "precipitation":
+        Model = ProjectionPrecipitation;
+        break;
+      case "relative-humidity":
+        Model = ProjectionRelativeHumidity;
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid data type" });
+    }
+
+    // Use group by to get unique values. Using raw: true for better performance.
+    const [districts, models, scenarios] = await Promise.all([
+      Model.findAll({ attributes: ['district'], group: ['district'], order: [['district', 'ASC']], raw: true }),
+      Model.findAll({ attributes: ['model'], group: ['model'], order: [['model', 'ASC']], raw: true }),
+      Model.findAll({ attributes: ['scenario'], group: ['scenario'], order: [['scenario', 'ASC']], raw: true })
+    ]);
+
+    return res.json({
+      districts: districts.map(d => d.district).filter(Boolean),
+      models: models.map(m => m.model).filter(Boolean),
+      scenarios: scenarios.map(s => s.scenario).filter(Boolean),
+    });
+  } catch (error) {
+    console.error("Error fetching projection filters:", error);
+    return res.status(500).json({ message: "Server error fetching projection filters" });
+  }
+};

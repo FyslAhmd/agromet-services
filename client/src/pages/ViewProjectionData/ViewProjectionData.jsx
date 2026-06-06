@@ -23,12 +23,39 @@ const ViewProjectionData = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [limit, setLimit] = useState(20);
 
+  const [filterOptions, setFilterOptions] = useState({
+    districts: [],
+    models: [],
+    scenarios: []
+  });
+
   const dataTypeOptions = [
     { value: "minimum-temperature", label: "Minimum Temperature" },
     { value: "maximum-temperature", label: "Maximum Temperature" },
     { value: "precipitation", label: "Precipitation" },
     { value: "relative-humidity", label: "Relative Humidity" },
   ];
+
+  const fetchFilters = useCallback(async () => {
+    try {
+      const response = await apiFetch(`${API_ENDPOINTS.projectionsFilters}?dataType=${dataType}`);
+      setFilterOptions({
+        districts: response.districts || [],
+        models: response.models || [],
+        scenarios: response.scenarios || []
+      });
+      // Clear selections if they are no longer valid for the new data type
+      setDistrict("");
+      setModel("");
+      setScenario("");
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  }, [dataType]);
+
+  useEffect(() => {
+    fetchFilters();
+  }, [fetchFilters]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -203,33 +230,42 @@ const ViewProjectionData = () => {
           <form onSubmit={handleApplyFilters} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">District</label>
-              <input
-                type="text"
-                placeholder="e.g. THAKURGAON"
+              <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+              >
+                <option value="">All Districts</option>
+                {filterOptions.districts.map((d, i) => (
+                  <option key={i} value={d}>{d}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Model</label>
-              <input
-                type="text"
-                placeholder="e.g. ACCESS-CM2"
+              <select
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+              >
+                <option value="">All Models</option>
+                {filterOptions.models.map((m, i) => (
+                  <option key={i} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Scenario</label>
-              <input
-                type="text"
-                placeholder="e.g. ssp245"
+              <select
                 value={scenario}
                 onChange={(e) => setScenario(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+              >
+                <option value="">All Scenarios</option>
+                {filterOptions.scenarios.map((s, i) => (
+                  <option key={i} value={s}>{s}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
