@@ -69,10 +69,16 @@ const processCSV = async (jobId, filePath, dataType) => {
 
     for await (const row of stream) {
       try {
-        const district = row.District || row.district || row.DISTRICT;
-        const dateRaw = row.Date || row.date || row.DATE;
-        const model = row.Model || row.model || row.MODEL;
-        const scenario = row.Scenario || row.scenario || row.SCENARIO;
+        // Convert all keys to lowercase and trim them to avoid case sensitivity issues
+        const normalizedRow = {};
+        for (const key in row) {
+          normalizedRow[key.trim().toLowerCase()] = row[key];
+        }
+
+        const district = normalizedRow['district'];
+        const dateRaw = normalizedRow['date'];
+        const model = normalizedRow['model'];
+        const scenario = normalizedRow['scenario'];
 
         const formattedDate = parseDate(dateRaw);
 
@@ -89,16 +95,16 @@ const processCSV = async (jobId, filePath, dataType) => {
         };
 
         if (dataType === "minimum-temperature") {
-          recordData.min_kelvin = parseNumeric(row.Min_kelvin || row.min_kelvin);
-          recordData.min_celcius = parseNumeric(row.Min_celcius || row.min_celcius);
+          recordData.min_kelvin = parseNumeric(normalizedRow['min_kelvin']);
+          recordData.min_celcius = parseNumeric(normalizedRow['min_celcius']);
         } else if (dataType === "maximum-temperature") {
-          recordData.max_kelvin = parseNumeric(row.Max_kelvin || row.max_kelvin);
-          recordData.max_celcius = parseNumeric(row.Max_celcius || row.max_celcius);
+          recordData.max_kelvin = parseNumeric(normalizedRow['max_kelvin']);
+          recordData.max_celcius = parseNumeric(normalizedRow['max_celcius']);
         } else if (dataType === "precipitation") {
-          recordData.precipitation_flux = parseNumeric(row.precipitation_flux || row.Precipitation_flux);
-          recordData.precipitation_mm = parseNumeric(row.precipitation_mm || row.Precipitation_mm);
+          recordData.precipitation_flux = parseNumeric(normalizedRow['precipitation_flux']);
+          recordData.precipitation_mm = parseNumeric(normalizedRow['precipitation_mm']);
         } else if (dataType === "relative-humidity") {
-          recordData.rh_percentage = parseNumeric(row['Rh (%)'] || row.rh || row.RH || row.rh_percentage);
+          recordData.rh_percentage = parseNumeric(normalizedRow['rh (%)'] || normalizedRow['rh']);
         }
 
         batch.push(recordData);
