@@ -93,7 +93,7 @@ const MapViewport = ({ selectedFeature }) => {
   return null;
 };
 
-const ProjectionMap = ({ district, onDistrictChange }) => {
+const ProjectionMap = ({ district, onDistrictChange, mapData, isSearching, queryError }) => {
   const [baseGeoJSON, setBaseGeoJSON] = useState(null);
   const [mapError, setMapError] = useState("");
 
@@ -182,6 +182,15 @@ const ProjectionMap = ({ district, onDistrictChange }) => {
     );
   }, [district, districtFeatures]);
 
+  const selectedDistrictData = useMemo(() => {
+    if (!district || !mapData?.data?.length) return [];
+
+    const normalizedDistrict = normalizeName(district);
+    return mapData.data.filter(
+      (item) => normalizeName(item.district) === normalizedDistrict
+    );
+  }, [district, mapData]);
+
   const isSelected = (feature) =>
     normalizeName(feature?.properties?.label) === normalizeName(district);
 
@@ -256,6 +265,35 @@ const ProjectionMap = ({ district, onDistrictChange }) => {
             ) : null}
           </MapContainer>
         )}
+
+        <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-450 flex justify-start">
+          <div className="max-w-md rounded-2xl border border-white/80 bg-white/92 px-4 py-3 shadow-xl backdrop-blur-sm">
+            {isSearching ? (
+              <p className="text-sm font-medium text-slate-600">Calculating projection summary...</p>
+            ) : queryError ? (
+              <p className="text-sm font-medium text-rose-600">{queryError}</p>
+            ) : mapData ? (
+              <div className="space-y-1.5">
+                <p className="text-sm font-semibold text-slate-800">
+                  {mapData.totalDistricts} districts, {mapData.periods?.length || 0} time ranges
+                </p>
+                <p className="text-xs text-slate-500">
+                  Data is calculated for all districts. The district filter only controls map zoom.
+                </p>
+                {district && selectedDistrictData.length ? (
+                  <p className="text-xs text-teal-700">
+                    {district}: {selectedDistrictData.length} aggregated point
+                    {selectedDistrictData.length > 1 ? "s" : ""} loaded
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm font-medium text-slate-500">
+                Choose filters and run search to calculate district projection data.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

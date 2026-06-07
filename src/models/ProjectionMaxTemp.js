@@ -39,6 +39,10 @@ const ProjectionMaxTemp = sequelize.define("ProjectionMaxTemp", {
       unique: true,
       fields: ['district', 'date', 'model', 'scenario'],
       name: 'unique_max_temp_projection'
+    },
+    {
+      fields: ['model', 'scenario', 'date', 'district'],
+      name: 'idx_max_temp_map_query'
     }
   ]
 });

@@ -39,6 +39,10 @@ const ProjectionMinTemp = sequelize.define("ProjectionMinTemp", {
       unique: true,
       fields: ['district', 'date', 'model', 'scenario'],
       name: 'unique_min_temp_projection'
+    },
+    {
+      fields: ['model', 'scenario', 'date', 'district'],
+      name: 'idx_min_temp_map_query'
     }
   ]
 });

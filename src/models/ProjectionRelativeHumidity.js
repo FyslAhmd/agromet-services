@@ -35,6 +35,10 @@ const ProjectionRelativeHumidity = sequelize.define("ProjectionRelativeHumidity"
       unique: true,
       fields: ['district', 'date', 'model', 'scenario'],
       name: 'unique_rh_projection'
+    },
+    {
+      fields: ['model', 'scenario', 'date', 'district'],
+      name: 'idx_rh_map_query'
     }
   ]
 });

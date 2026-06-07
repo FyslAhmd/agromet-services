@@ -39,6 +39,10 @@ const ProjectionPrecipitation = sequelize.define("ProjectionPrecipitation", {
       unique: true,
       fields: ['district', 'date', 'model', 'scenario'],
       name: 'unique_precipitation_projection'
+    },
+    {
+      fields: ['model', 'scenario', 'date', 'district'],
+      name: 'idx_precipitation_map_query'
     }
   ]
 });
