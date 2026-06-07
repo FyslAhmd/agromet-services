@@ -573,6 +573,36 @@ export const getProjectionMapData = async (req, res) => {
       };
     });
 
+    const districtAverages = Array.from(
+      data.reduce((districtMap, item) => {
+        if (!districtMap.has(item.district)) {
+          districtMap.set(item.district, {
+            district: item.district,
+            totalValue: 0,
+            periodCount: 0,
+            totalSampleCount: 0,
+          });
+        }
+
+        const districtEntry = districtMap.get(item.district);
+        districtEntry.totalValue += item.value ?? 0;
+        districtEntry.periodCount += 1;
+        districtEntry.totalSampleCount += item.sampleCount || 0;
+
+        return districtMap;
+      }, new Map()).values()
+    )
+      .map((item) => ({
+        district: item.district,
+        averageValue:
+          item.periodCount > 0
+            ? Number((item.totalValue / item.periodCount).toFixed(3))
+            : null,
+        periodCount: item.periodCount,
+        totalSampleCount: item.totalSampleCount,
+      }))
+      .sort((left, right) => left.district.localeCompare(right.district));
+
     return res.json({
       filters: {
         dataType,
@@ -585,6 +615,7 @@ export const getProjectionMapData = async (req, res) => {
         endYear: parsedEndYear,
       },
       periods,
+      districtAverages,
       totalDistricts: new Set(data.map((row) => row.district)).size,
       totalPoints: data.length,
       data,
