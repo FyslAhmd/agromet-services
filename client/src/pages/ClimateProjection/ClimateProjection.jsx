@@ -16,6 +16,14 @@ const TIME_PERIODS = [
   { value: "boro", label: "Boro (December to May)", months: [12, 1, 2, 3, 4, 5] },
 ];
 
+const AVERAGE_RANGES = [
+  { value: "1Y", label: "1Y" },
+  { value: "5Y", label: "5Y" },
+  { value: "10Y", label: "10Y" },
+  { value: "15Y", label: "15Y" },
+  { value: "20Y", label: "20Y" },
+];
+
 const THRESHOLDS = {
   "minimum-temperature": [
     { value: "<=6", label: "Min <= 6°C" },
@@ -49,11 +57,17 @@ const ClimateProjection = () => {
   const [model, setModel] = useState("");
   const [scenario, setScenario] = useState("");
   const [threshold, setThreshold] = useState("");
+  const [averageRange, setAverageRange] = useState("");
+  const [startYear, setStartYear] = useState("");
+  const [endYear, setEndYear] = useState("");
 
   const [filterOptions, setFilterOptions] = useState({
     districts: [],
     models: [],
-    scenarios: []
+    scenarios: [],
+    years: [],
+    startYear: null,
+    endYear: null,
   });
 
   useEffect(() => {
@@ -67,12 +81,18 @@ const ClimateProjection = () => {
         setFilterOptions({
           districts: response.districts || [],
           models: response.models || [],
-          scenarios: response.scenarios || []
+          scenarios: response.scenarios || [],
+          years: response.years || [],
+          startYear: response.startYear || null,
+          endYear: response.endYear || null,
         });
         setDistrict("");
         setModel("");
         setScenario("");
         setThreshold("");
+        setAverageRange("");
+        setStartYear(response.startYear ? String(response.startYear) : "");
+        setEndYear(response.endYear ? String(response.endYear) : "");
       } catch (error) {
         if (!cancelled) {
           console.error("Error fetching filter options:", error);
@@ -98,8 +118,12 @@ const ClimateProjection = () => {
         model={model}
         scenario={scenario}
         threshold={threshold}
+        averageRange={averageRange}
+        startYear={startYear}
+        endYear={endYear}
         dataTypes={DATA_TYPES}
         timePeriods={TIME_PERIODS}
+        averageRanges={AVERAGE_RANGES}
         currentThresholds={currentThresholds}
         filterOptions={filterOptions}
         onDataTypeChange={setDataType}
@@ -108,6 +132,9 @@ const ClimateProjection = () => {
         onModelChange={setModel}
         onScenarioChange={setScenario}
         onThresholdChange={setThreshold}
+        onAverageRangeChange={setAverageRange}
+        onStartYearChange={setStartYear}
+        onEndYearChange={setEndYear}
       />
       <ProjectionMap />
     </div>

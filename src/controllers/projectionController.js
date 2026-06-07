@@ -320,17 +320,36 @@ export const getProjectionFilters = async (req, res) => {
         return res.status(400).json({ message: "Invalid data type" });
     }
 
+    const getYearFromDate = (value) => {
+      if (!value) return null;
+      const parsedDate = new Date(value);
+      if (Number.isNaN(parsedDate.getTime())) return null;
+      return parsedDate.getFullYear();
+    };
+
     // Use group by to get unique values. Using raw: true for better performance.
-    const [districts, models, scenarios] = await Promise.all([
+    const [districts, models, scenarios, minDate, maxDate] = await Promise.all([
       Model.findAll({ attributes: ['district'], group: ['district'], order: [['district', 'ASC']], raw: true }),
       Model.findAll({ attributes: ['model'], group: ['model'], order: [['model', 'ASC']], raw: true }),
-      Model.findAll({ attributes: ['scenario'], group: ['scenario'], order: [['scenario', 'ASC']], raw: true })
+      Model.findAll({ attributes: ['scenario'], group: ['scenario'], order: [['scenario', 'ASC']], raw: true }),
+      Model.min("date"),
+      Model.max("date"),
     ]);
+
+    const startYear = getYearFromDate(minDate);
+    const endYear = getYearFromDate(maxDate);
+    const years =
+      startYear && endYear && endYear >= startYear
+        ? Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index)
+        : [];
 
     return res.json({
       districts: districts.map(d => d.district).filter(Boolean),
       models: models.map(m => m.model).filter(Boolean),
       scenarios: scenarios.map(s => s.scenario).filter(Boolean),
+      startYear,
+      endYear,
+      years,
     });
   } catch (error) {
     console.error("Error fetching projection filters:", error);

@@ -5,8 +5,12 @@ const ProjectionFilters = ({
   model,
   scenario,
   threshold,
+  averageRange,
+  startYear,
+  endYear,
   dataTypes,
   timePeriods,
+  averageRanges,
   currentThresholds,
   filterOptions,
   onDataTypeChange,
@@ -15,10 +19,13 @@ const ProjectionFilters = ({
   onModelChange,
   onScenarioChange,
   onThresholdChange,
+  onAverageRangeChange,
+  onStartYearChange,
+  onEndYearChange,
 }) => {
   return (
     <div className="border-b border-teal-100 bg-[#0c4a4a] px-2 py-3 sm:px-3 md:px-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-3 lg:grid-cols-9">
         <div className="space-y-1">
           <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
             Weather Parameter
@@ -121,6 +128,60 @@ const ProjectionFilters = ({
             {currentThresholds.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+            Average Range
+          </label>
+          <select
+            value={averageRange}
+            onChange={(e) => onAverageRangeChange(e.target.value)}
+            className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+          >
+            <option value="">None</option>
+            {averageRanges.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+            Start Year
+          </label>
+          <select
+            value={startYear}
+            onChange={(e) => onStartYearChange(e.target.value)}
+            className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+          >
+            <option value="">Start Year</option>
+            {filterOptions.years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+            End Year
+          </label>
+          <select
+            value={endYear}
+            onChange={(e) => onEndYearChange(e.target.value)}
+            className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+          >
+            <option value="">End Year</option>
+            {filterOptions.years.map((year) => (
+              <option key={year} value={year}>
+                {year}
               </option>
             ))}
           </select>
