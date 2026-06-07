@@ -2,10 +2,6 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { API_ENDPOINTS, apiFetch } from "../../config/api";
-import {
-  FunnelIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
 
 // Fix Leaflet marker icons not appearing out of the box in React
 import L from 'leaflet';
@@ -106,126 +102,117 @@ const ClimateProjection = () => {
 
   const currentThresholds = THRESHOLDS[dataType] || [];
 
-  const handleApply = (e) => {
-    e.preventDefault();
-    console.log("Applying filters:", { dataType, district, timePeriod, model, scenario, threshold });
-  };
-
   return (
     <div className="flex h-[calc(100vh-5.5rem)] min-h-170 flex-col overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-[0_24px_80px_rgba(8,53,53,0.12)]">
-      <div className="border-b border-teal-100 bg-linear-to-r from-[#083535] via-[#0d5555] to-[#0a3d3d] px-2 py-3 sm:px-4">
-        <form onSubmit={handleApply} className="space-y-4">
-          <div className="overflow-x-auto pb-1">
-            <div className="grid min-w-295 grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] items-end gap-3">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  Weather Parameter
-                </label>
-                <select
-                  value={dataType}
-                  onChange={(e) => setDataType(e.target.value)}
-                  className="h-12 max-w-40 rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  {DATA_TYPES.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="text-slate-900">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  Season
-                </label>
-                <select
-                  value={timePeriod}
-                  onChange={(e) => setTimePeriod(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  <option value="" className="text-slate-900">All Seasons</option>
-                  {TIME_PERIODS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="text-slate-900">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  District
-                </label>
-                <select
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  <option value="" className="text-slate-900">All Districts</option>
-                  {filterOptions.districts.map((option) => (
-                    <option key={option} value={option} className="text-slate-900">
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  Model
-                </label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  <option value="" className="text-slate-900">All Models</option>
-                  {filterOptions.models.map((option) => (
-                    <option key={option} value={option} className="text-slate-900">
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  Scenario
-                </label>
-                <select
-                  value={scenario}
-                  onChange={(e) => setScenario(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  <option value="" className="text-slate-900">All Scenarios</option>
-                  {filterOptions.scenarios.map((option) => (
-                    <option key={option} value={option} className="text-slate-900">
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-100/70">
-                  Threshold
-                </label>
-                <select
-                  value={threshold}
-                  onChange={(e) => setThreshold(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-white/10 px-4 text-sm font-medium text-white outline-none transition focus:border-teal-200 focus:bg-white/14"
-                >
-                  <option value="" className="text-slate-900">No Threshold</option>
-                  {currentThresholds.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="text-slate-900">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+      <div className="border-b border-teal-100 bg-[#0c4a4a] px-2 py-3 sm:px-3 md:px-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-3 lg:grid-cols-6">
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              Weather Parameter
+            </label>
+            <select
+              value={dataType}
+              onChange={(e) => setDataType(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              {DATA_TYPES.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
+
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              Season
+            </label>
+            <select
+              value={timePeriod}
+              onChange={(e) => setTimePeriod(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              <option value="">All Seasons</option>
+              {TIME_PERIODS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              District
+            </label>
+            <select
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              <option value="">All Districts</option>
+              {filterOptions.districts.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              Model
+            </label>
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              <option value="">All Models</option>
+              {filterOptions.models.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              Scenario
+            </label>
+            <select
+              value={scenario}
+              onChange={(e) => setScenario(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              <option value="">All Scenarios</option>
+              {filterOptions.scenarios.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+              Threshold
+            </label>
+            <select
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
+            >
+              <option value="">No Threshold</option>
+              {currentThresholds.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="relative flex-1 bg-[#edf5f4]">
