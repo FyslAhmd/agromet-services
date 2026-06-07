@@ -22,10 +22,12 @@ const ProjectionFilters = ({
   onAverageRangeChange,
   onStartYearChange,
   onEndYearChange,
+  onSearch,
+  isSearching,
 }) => {
   return (
     <div className="border-b border-teal-100 bg-[#0c4a4a] px-2 py-3 sm:px-3 md:px-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-3 lg:grid-cols-9">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-3 lg:grid-cols-10">
         <div className="space-y-1">
           <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
             Weather Parameter
@@ -142,7 +144,6 @@ const ProjectionFilters = ({
             onChange={(e) => onAverageRangeChange(e.target.value)}
             className="h-10 w-full rounded-xl border border-white/10 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-teal-200"
           >
-            <option value="">None</option>
             {averageRanges.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -185,6 +186,20 @@ const ProjectionFilters = ({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-100/70">
+            Action
+          </label>
+          <button
+            type="button"
+            onClick={onSearch}
+            disabled={isSearching}
+            className="h-10 w-full rounded-xl bg-emerald-500 px-3 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-300"
+          >
+            {isSearching ? "Searching..." : "Search"}
+          </button>
         </div>
       </div>
     </div>

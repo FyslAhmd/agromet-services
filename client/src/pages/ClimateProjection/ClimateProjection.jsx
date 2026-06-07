@@ -57,9 +57,12 @@ const ClimateProjection = () => {
   const [model, setModel] = useState("");
   const [scenario, setScenario] = useState("");
   const [threshold, setThreshold] = useState("");
-  const [averageRange, setAverageRange] = useState("");
+  const [averageRange, setAverageRange] = useState("1Y");
   const [startYear, setStartYear] = useState("");
   const [endYear, setEndYear] = useState("");
+  const [mapData, setMapData] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [queryError, setQueryError] = useState("");
 
   const [filterOptions, setFilterOptions] = useState({
     districts: [],
@@ -90,9 +93,11 @@ const ClimateProjection = () => {
         setModel("");
         setScenario("");
         setThreshold("");
-        setAverageRange("");
+        setAverageRange("1Y");
         setStartYear(response.startYear ? String(response.startYear) : "");
         setEndYear(response.endYear ? String(response.endYear) : "");
+        setMapData(null);
+        setQueryError("");
       } catch (error) {
         if (!cancelled) {
           console.error("Error fetching filter options:", error);
@@ -108,6 +113,44 @@ const ClimateProjection = () => {
   }, [dataType]);
 
   const currentThresholds = THRESHOLDS[dataType] || [];
+
+  const handleSearch = async () => {
+    if (!model || !scenario || !startYear || !endYear) {
+      setQueryError("Model, scenario, start year, and end year are required.");
+      return;
+    }
+
+    setIsSearching(true);
+    setQueryError("");
+
+    try {
+      const params = new URLSearchParams({
+        dataType,
+        model,
+        scenario,
+        averageRange,
+        startYear,
+        endYear,
+      });
+
+      if (timePeriod) {
+        params.set("season", timePeriod);
+      }
+
+      if (threshold) {
+        params.set("threshold", threshold);
+      }
+
+      const response = await apiFetch(`${API_ENDPOINTS.projectionsMapData}?${params.toString()}`);
+      setMapData(response);
+    } catch (error) {
+      console.error("Error fetching climate projection map data:", error);
+      setMapData(null);
+      setQueryError(error.message || "Unable to load projection data.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   return (
     <div className="flex h-[calc(100vh-5.5rem)] min-h-170 flex-col overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-[0_24px_80px_rgba(8,53,53,0.12)]">
@@ -135,8 +178,16 @@ const ClimateProjection = () => {
         onAverageRangeChange={setAverageRange}
         onStartYearChange={setStartYear}
         onEndYearChange={setEndYear}
+        onSearch={handleSearch}
+        isSearching={isSearching}
       />
-      <ProjectionMap district={district} onDistrictChange={setDistrict} />
+      <ProjectionMap
+        district={district}
+        onDistrictChange={setDistrict}
+        mapData={mapData}
+        isSearching={isSearching}
+        queryError={queryError}
+      />
     </div>
   );
 };

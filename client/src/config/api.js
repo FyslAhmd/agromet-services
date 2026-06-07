@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
   projectionsStatus: (jobId) => `${API_BASE_URL}/projections/status/${jobId}`,
   projectionsData: `${API_BASE_URL}/projections/data`,
   projectionsFilters: `${API_BASE_URL}/projections/filters`,
+  projectionsMapData: `${API_BASE_URL}/projections/map-data`,
   weatherAlertLocations: `${API_BASE_URL}/weather-alert/locations`,
   weatherAlert: `${API_BASE_URL}/weather-alert`,
 
