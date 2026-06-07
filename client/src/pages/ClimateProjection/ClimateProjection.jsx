@@ -136,7 +136,7 @@ const ClimateProjection = () => {
         onStartYearChange={setStartYear}
         onEndYearChange={setEndYear}
       />
-      <ProjectionMap />
+      <ProjectionMap district={district} onDistrictChange={setDistrict} />
     </div>
   );
 };
