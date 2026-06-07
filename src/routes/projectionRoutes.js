@@ -4,7 +4,13 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { uploadProjectionFile, getJobStatus, getProjectionData, getProjectionFilters } from "../controllers/projectionController.js";
+import {
+  uploadProjectionFile,
+  getJobStatus,
+  getProjectionData,
+  getProjectionFilters,
+  getProjectionMapData,
+} from "../controllers/projectionController.js";
 import { authMiddleware, adminMiddleware, guestOrUserMiddleware } from "../middleware/authMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,5 +47,8 @@ router.get("/filters", authMiddleware, guestOrUserMiddleware, getProjectionFilte
 
 // View projection data
 router.get("/data", authMiddleware, guestOrUserMiddleware, getProjectionData);
+
+// View aggregated projection data for climate projection map
+router.get("/map-data", authMiddleware, guestOrUserMiddleware, getProjectionMapData);
 
 export default router;
